@@ -1,0 +1,18 @@
+export const SCREENS = {
+    LOGIN: 'LoginScreen',
+    ONBOARDING: 'OnboardingScreen',
+    FORGET_PASSWORD: 'ForgetPasswordScreen',
+    VERIFY_EMAIL: 'VerifyEmailScreen',
+    RESET_PASSWORD: 'ResetPasswordScreen',
+    SIGNUP: 'SignupScreen',
+    USER_NAME: 'UserNameScreen',
+    PHONE_NUMBER: 'PhoneNumberScreen',
+    PROFILE_PICTURE: 'ProfilePictureScreen',
+    ABOUT: 'AboutScreen',
+    BIRTH_DATE: 'BirthdateScreen',
+    GENDER_SELECTION: 'GenderSelectionScreen',
+    GENDER_LOOKING: 'GenderLookingScreen',
+    YOUR_INTERESETS: 'YourIntersetsScren',
+    ENABLE_LOCATION: 'EnableLocationScreen',
+    ADD_LOCATION: 'AddLocationScreen',
+};
