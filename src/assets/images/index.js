@@ -1,0 +1,10 @@
+export const success_alert_img = require('../images/success_alert_img.png');
+export const error_alert_img = require('../images/error_alert_img.png');
+export const onboarding_img = require('../images/onboarding_img.png');
+export const onboardingCurveTop = require('../images/onboarding_curve_top_img.png');
+export const onboardingCurveCenter = require('../images/onboarding_curve_center_img.png');
+export const onboardingLabelImg = require('../images/onboarding_label_img.png');
+export const onboardingLogo = require('../images/onboarding_logo.png');
+export const googleIcon = require('../images/google_icon_img.png');
+export const birthdayImg = require('../images/birthday_img.png');
+export const mapImg = require('../images/map_img.png');
