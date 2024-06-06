@@ -167,10 +167,8 @@ const Login = ({ navigation }) => {
                             marginTop: 40
                         }} />
 
-                    <TouchableOpacity
-                        onPress={() => {
-                            resetNavigation(navigation, SCREENS.SIGNUP)
-                        }}
+                    <View
+
                         style={styles.createAccountItem}
                     >
 
@@ -178,11 +176,15 @@ const Login = ({ navigation }) => {
                             Don’t have an account?
                         </Text>
 
-                        <Text style={styles.createAccountText2}>
+                        <Text
+                            onPress={() => {
+                                resetNavigation(navigation, SCREENS.ROLE_SELECTOR)
+                            }}
+                            style={styles.createAccountText2}>
                             Create one
                         </Text>
 
-                    </TouchableOpacity>
+                    </View>
 
                 </View>
 

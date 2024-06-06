@@ -94,7 +94,7 @@ const GenderLookingFor = ({ navigation }) => {
                     <Button
                         onPress={() => {
                             //handleselectedGender();
-                            resetNavigation(navigation, SCREENS.YOUR_INTERESETS)
+                            resetNavigation(navigation, SCREENS.YOUR_INTERESTS)
                         }}
                         title={'Continue'}
                     />

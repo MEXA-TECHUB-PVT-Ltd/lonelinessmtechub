@@ -24,6 +24,14 @@
     {
       "path": "assets/fonts/Lexend-Thin.ttf",
       "sha1": "7061ef5f2b5aef62263dbe728114ccd25014aa4e"
+    },
+    {
+      "path": "assets/fonts/OleoScriptSwashCaps-Bold.ttf",
+      "sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+    },
+    {
+      "path": "assets/fonts/OleoScriptSwashCaps-Regular.ttf",
+      "sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
     }
   ]
 }

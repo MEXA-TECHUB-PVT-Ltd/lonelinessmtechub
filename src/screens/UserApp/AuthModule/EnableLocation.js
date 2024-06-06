@@ -10,13 +10,14 @@ import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
-import { mapImg } from '../../../assets/images';
+import { alertLogo, mapImg, successText, success_alert_img } from '../../../assets/images';
 import { color } from '@rneui/base';
+import Modal from "react-native-modal";
 
 const EnableLocation = ({ navigation }) => {
-
+    const [modalVisible, setModalVisible] = useState(false);
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.YOUR_INTERESETS)
+        resetNavigation(navigation, SCREENS.YOUR_INTERESTS)
         return true;
     };
     useBackHandler(handleBackPress);
@@ -25,11 +26,73 @@ const EnableLocation = ({ navigation }) => {
         resetNavigation(navigation, SCREENS.SIGNUP)
     }
 
+    const showHideModal = () => {
+        setModalVisible(true);
+        // Hide the modal after 3 seconds
+        setTimeout(() => {
+            setModalVisible(false);
+            resetNavigation(navigation, SCREENS.LOGIN)
+        }, 3000);
+    };
+
+    const showModalView = () => {
+
+        return <Modal
+            backdropOpacity={0.90}
+            backdropColor={'rgba(85, 85, 85, 0.70)'}
+            isVisible={modalVisible}
+            animationIn={'bounceIn'}
+            animationOut={'bounceOut'}
+            animationInTiming={1000}
+            animationOutTiming={1000}
+        >
+            <View style={{
+                backgroundColor: '#111111',
+                width: '90%',
+                height: '50%',
+                alignSelf: 'center',
+                borderRadius: 20,
+                elevation: 20,
+                padding: 20
+            }}>
+
+                <Image
+                    resizeMode='contain'
+                    source={alertLogo}
+                    style={{
+                        width: scaleWidth(120),
+                        height: scaleHeight(120),
+                        alignSelf: 'center'
+                    }}
+                />
+
+                <Image
+                    resizeMode='contain'
+                    source={successText}
+                    style={{
+                        width: scaleWidth(130),
+                        height: scaleHeight(45),
+                        alignSelf: 'center',
+                        marginTop: 10
+                    }}
+                />
+                <Text style={styles.subTitle}>
+                    {`Please wait...${'\n'}You will be directed to the homepage`}
+                </Text>
+
+
+
+
+
+            </View>
+        </Modal>
+    }
+
 
     return (
         <SafeAreaView style={styles.container}>
             <ProfileProgressBar progress={100} onPress={() => {
-                resetNavigation(navigation, SCREENS.YOUR_INTERESETS)
+                resetNavigation(navigation, SCREENS.YOUR_INTERESTS)
             }} />
             <CustomLayout>
                 <View style={styles.contentContainer}>
@@ -55,7 +118,7 @@ const EnableLocation = ({ navigation }) => {
                     <Button
                         onPress={() => {
                             //handlebirthDate();
-
+                            showHideModal()
                         }}
                         title={'Use My Current Location'}
                         customStyle={{
@@ -81,6 +144,7 @@ const EnableLocation = ({ navigation }) => {
                 </View>
 
             </CustomLayout>
+            {showModalView()}
 
         </SafeAreaView>
     );

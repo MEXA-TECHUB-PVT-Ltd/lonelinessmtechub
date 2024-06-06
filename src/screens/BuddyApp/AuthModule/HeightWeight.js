@@ -1,154 +1,374 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, FlatList, TextInput, ScrollView } from 'react-native';
+import { resetNavigation } from '../../../utils/resetNavigation';
+import { SCREENS } from '../../../constant/constants';
+import useBackHandler from '../../../utils/useBackHandler';
+import { theme } from '../../../assets';
+import CustomTextInput from '../../../components/TextInputComponent';
+import CustomLayout from '../../../components/CustomLayout';
+import fonts from '../../../styles/fonts';
+import { scaleHeight, scaleWidth } from '../../../styles/responsive';
+import HorizontalDivider from '../../../components/HorizontalDivider';
+import Button from '../../../components/ButtonComponent';
+import ProfileProgressBar from '../../../components/ProfileProgressBar';
+import { BottomSheet } from "@rneui/themed";
+import Icon from 'react-native-vector-icons/MaterialIcons'
+import DynamicOptionSelector from '../../../components/DynamicOptionSelector';
 
-const HeightWeightScreen = () => {
-  const [heightFt, setHeightFt] = useState('');
-  const [heightIn, setHeightIn] = useState('');
-  const [weight, setWeight] = useState('');
-  const [heightUnit, setHeightUnit] = useState('ft');
-  const [weightUnit, setWeightUnit] = useState('kg');
+const HeightWeight = ({ navigation }) => {
+  const gender = ["Male", "Female", "Prefer not to say"]
+  const [selectedGender, setSelectedGender] = useState(null);
+
+  const handleBackPress = () => {
+    resetNavigation(navigation, SCREENS.BUDDY_GENDER_SELECTION)
+    return true;
+  };
+  useBackHandler(handleBackPress);
+
+  const handleLoginNavigation = () => {
+    resetNavigation(navigation, SCREENS.SIGNUP)
+  }
+
+  const handleItemSelected = (item) => {
+    console.log(item)
+    setSelectedGender(item);
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Let's Get to Know You Better!</Text>
-      <Text style={styles.subHeader}>Your height and weight can help us provide a more personalized experience</Text>
+    <SafeAreaView style={styles.container}>
+      <ProfileProgressBar progress={70} onPress={() => {
+        resetNavigation(navigation, SCREENS.BUDDY_GENDER_SELECTION)
+      }} />
+      <CustomLayout>
+        <View style={styles.contentContainer}>
+          <Text style={styles.welcomeText}>
+            Let's Get to Know You Better!
+          </Text>
+          <Text style={styles.subTitle}>
+            Your height and weight can help us provide a more personalized experience.
+          </Text>
 
-      <Text style={styles.label}>Height</Text>
-      <View style={styles.row}>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          placeholder="00"
-          value={heightFt}
-          onChangeText={setHeightFt}
-        />
-        {heightUnit === 'ft' && (
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            placeholder="00"
-            value={heightIn}
-            onChangeText={setHeightIn}
+          <View style={{ marginTop: scaleHeight(30) }}>
+
+            <Text style={styles.label}>{'Height'}</Text>
+
+            <View
+
+              style={{
+
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: theme.dark.inputBg,
+                height: 45,
+                borderRadius: 30,
+                borderWidth: 1,
+                borderColor: theme.dark.text,
+                marginTop: scaleHeight(30)
+
+              }}>
+
+              <View style={{ flexDirection: 'row', marginHorizontal: scaleWidth(10), flex: 1 }}>
+
+                <TextInput
+                  style={{
+                    fontFamily: fonts.fontsType.medium,
+                    fontSize: scaleHeight(14),
+                    color: theme.dark.text,
+                    marginHorizontal: 10
+                  }}
+                  maxLength={2}
+                  placeholder='00'
+                  keyboardType='number-pad'
+                  placeholderTextColor={theme.dark.text}
+                />
+
+                <View style={styles.verticleLine}></View>
+
+                <TextInput
+                  style={{
+                    fontFamily: fonts.fontsType.medium,
+                    fontSize: scaleHeight(14),
+                    color: theme.dark.text
+                  }}
+                  maxLength={2}
+                  placeholder='00'
+                  keyboardType='number-pad'
+                  placeholderTextColor={theme.dark.text}
+                />
+
+              </View>
+
+              <View style={{
+                flexDirection: 'row',
+                borderRadius: 30,
+                borderWidth: 1,
+                borderColor: theme.dark.secondary,
+                width: scaleWidth(70),
+                height: '70%',
+                marginEnd: scaleWidth(10),
+                justifyContent: 'space-evenly',
+              }}>
+
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: theme.dark.secondary,
+                    width: scaleWidth(35),
+                    height: '100%',
+                    alignSelf: 'center',
+                    borderBottomLeftRadius: 30,
+                    borderTopLeftRadius: 30,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Text style={{
+                    fontFamily: fonts.fontsType.medium,
+                    fontSize: scaleHeight(12),
+                    color: theme.dark.black,
+                    alignSelf: 'center'
+
+                  }}>Ft</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#333333',
+                    width: scaleWidth(35),
+                    height: '100%',
+                    alignSelf: 'center',
+                    borderBottomEndRadius: 30,
+                    borderTopEndRadius: 30,
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <Text style={{
+                    fontFamily: fonts.fontsType.medium,
+                    fontSize: scaleHeight(12),
+                    color: theme.dark.white,
+                    alignSelf: 'center'
+
+                  }}>In</Text>
+                </TouchableOpacity>
+
+              </View>
+
+
+            </View>
+
+            <Text style={styles.label}>{'Weight'}</Text>
+
+            <View
+
+              style={{
+
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: theme.dark.inputBg,
+                height: 45,
+                borderRadius: 30,
+                borderWidth: 1,
+                borderColor: theme.dark.text,
+                marginTop: scaleHeight(30)
+
+              }}>
+
+              <View style={{ flexDirection: 'row', marginHorizontal: scaleWidth(10), flex: 1 }}>
+
+                <TextInput
+                  style={{
+                    fontFamily: fonts.fontsType.medium,
+                    fontSize: scaleHeight(14),
+                    color: theme.dark.text,
+                    marginHorizontal: 10
+                  }}
+                  maxLength={2}
+                  keyboardType='number-pad'
+                  placeholder='00'
+                  placeholderTextColor={theme.dark.text}
+                />
+
+                <View style={styles.verticleLine}></View>
+
+                <TextInput
+                  style={{
+                    fontFamily: fonts.fontsType.medium,
+                    fontSize: scaleHeight(14),
+                    color: theme.dark.text
+                  }}
+                  maxLength={2}
+                  keyboardType='number-pad'
+                  placeholder='00'
+                  placeholderTextColor={theme.dark.text}
+                />
+
+              </View>
+
+              <View style={{
+                flexDirection: 'row',
+                borderRadius: 30,
+                borderWidth: 1,
+                borderColor: theme.dark.secondary,
+                width: scaleWidth(70),
+                height: '70%',
+                marginEnd: scaleWidth(10),
+                justifyContent: 'space-evenly',
+              }}>
+
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: theme.dark.secondary,
+                    width: scaleWidth(35),
+                    height: '100%',
+                    alignSelf: 'center',
+                    borderBottomLeftRadius: 30,
+                    borderTopLeftRadius: 30,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Text style={{
+                    fontFamily: fonts.fontsType.medium,
+                    fontSize: scaleHeight(12),
+                    color: theme.dark.black,
+                    alignSelf: 'center'
+
+                  }}>Kg</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#333333',
+                    width: scaleWidth(35),
+                    height: '100%',
+                    alignSelf: 'center',
+                    borderBottomEndRadius: 30,
+                    borderTopEndRadius: 30,
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <Text style={{
+                    fontFamily: fonts.fontsType.medium,
+                    fontSize: scaleHeight(12),
+                    color: theme.dark.white,
+                    alignSelf: 'center'
+
+                  }}>Lb</Text>
+                </TouchableOpacity>
+
+              </View>
+
+
+            </View>
+
+          </View>
+
+        </View>
+
+        <View style={styles.buttonContainer}>
+
+          <HorizontalDivider
+            customStyle={{
+              marginTop: 40
+            }} />
+
+          <Button
+            onPress={() => {
+              //handleselectedGender();
+              resetNavigation(navigation, SCREENS.SELECT_LANGUAGE)
+            }}
+            title={'Continue'}
           />
-        )}
-        <View style={styles.selectorContainer}>
-          <TouchableOpacity
-            style={[styles.selectorButton, heightUnit === 'ft' && styles.selectedButton]}
-            onPress={() => setHeightUnit('ft')}
-          >
-            <Text style={styles.selectorText}>Ft</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.selectorButton, heightUnit === 'cm' && styles.selectedButton]}
-            onPress={() => setHeightUnit('cm')}
-          >
-            <Text style={styles.selectorText}>Cm</Text>
-          </TouchableOpacity>
         </View>
-      </View>
 
-      <Text style={styles.label}>Weight</Text>
-      <View style={styles.row}>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          placeholder="00"
-          value={weight}
-          onChangeText={setWeight}
-        />
-        <View style={styles.selectorContainer}>
-          <TouchableOpacity
-            style={[styles.selectorButton, weightUnit === 'kg' && styles.selectedButton]}
-            onPress={() => setWeightUnit('kg')}
-          >
-            <Text style={styles.selectorText}>Kg</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.selectorButton, weightUnit === 'lb' && styles.selectedButton]}
-            onPress={() => setWeightUnit('lb')}
-          >
-            <Text style={styles.selectorText}>Lb</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      </CustomLayout>
 
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Continue</Text>
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
-    padding: 20,
+    backgroundColor: theme.dark.background
   },
-  header: {
-    fontSize: 24,
-    color: '#FFF',
-    fontWeight: 'bold',
-    marginBottom: 10,
+  contentContainer: {
+    padding: 25,
+    flex: 1
   },
-  subHeader: {
-    fontSize: 14,
-    color: '#AAA',
-    marginBottom: 20,
+  welcomeText: {
+    fontFamily: fonts.fontsType.semiBold,
+    fontSize: scaleHeight(22),
+    color: theme.dark.white,
+    marginTop: 15
   },
-  label: {
-    fontSize: 18,
-    color: '#FFF',
-    marginBottom: 10,
+  subTitle: {
+    fontFamily: fonts.fontsType.regular,
+    fontSize: scaleHeight(14),
+    color: theme.dark.heading,
+    marginTop: 5
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
+  forgetText: {
+    fontFamily: fonts.fontsType.semiBold,
+    fontSize: scaleHeight(14),
+    color: theme.dark.secondary,
+    alignSelf: 'center'
   },
-  input: {
-    flex: 1,
-    height: 40,
-    borderColor: '#555',
-    borderWidth: 1,
-    borderRadius: 5,
-    color: '#FFF',
-    paddingHorizontal: 10,
-    backgroundColor: '#333',
-    marginRight: 10,
+  createAccountText1: {
+    fontFamily: fonts.fontsType.regular,
+    fontSize: scaleHeight(16),
+    color: theme.dark.white
   },
-  selectorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  selectorButton: {
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#333',
-    borderRadius: 5,
-    paddingHorizontal: 10,
+  createAccountText2: {
+    fontFamily: fonts.fontsType.bold,
+    fontSize: scaleHeight(16),
+    color: theme.dark.secondary,
     marginHorizontal: 5,
+    textDecorationLine: 'underline'
   },
-  selectedButton: {
-    backgroundColor: '#FFC107',
+  createAccountItem: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    marginTop: 30,
   },
-  selectorText: {
-    color: '#FFF',
+  buttonContainer: {
+    width: '90%',
+    alignSelf: 'center',
+    marginTop: scaleHeight(200),
+    marginBottom: scaleHeight(20)
   },
-  button: {
-    height: 50,
-    backgroundColor: '#FFC107',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 25,
+  createAccountView: {
+    flex: 1
+  },
+  forgetPassContainer: {
+    flexDirection: 'row',
     marginTop: 20,
   },
-  buttonText: {
-    fontSize: 18,
-    color: '#000',
-    fontWeight: 'bold',
+  backButton: {
+    alignSelf: 'center'
   },
+  errorText: {
+    fontFamily: fonts.fontsType.regular,
+    fontSize: scaleHeight(12),
+    color: theme.dark.error,
+    marginTop: 8,
+    marginHorizontal: scaleWidth(15),
+  },
+  verticleLine: {
+    height: '60%',
+    width: 1,
+    backgroundColor: '#909090',
+    alignSelf: 'center'
+  },
+  label: {
+    fontFamily: fonts.fontsType.medium,
+    fontSize: scaleHeight(17),
+    color: theme.dark.inputLabel,
+    marginHorizontal: 8,
+    top: scaleHeight(20)
+  }
 });
 
-export default HeightWeightScreen;
+
+export default HeightWeight;
