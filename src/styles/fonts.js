@@ -5,6 +5,8 @@ export const fontsType = {
     semiBold: 'Lexend-SemiBold',
     light: 'Lexend-Light',
     thin: 'Lexend-Thin',
+    oleoRegular: 'OleoScriptSwashCaps-Regular',
+    oleoBold: 'OleoScriptSwashCaps-Bold'
 };
 
 export default {

@@ -54,7 +54,7 @@ const Signup = ({ navigation }) => {
     };
 
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.LOGIN)
+        resetNavigation(navigation, SCREENS.ROLE_SELECTOR)
         return true;
     };
     useBackHandler(handleBackPress);
@@ -112,7 +112,7 @@ const Signup = ({ navigation }) => {
         <SafeAreaView style={styles.container}>
             <TouchableOpacity
                 onPress={() => {
-                    resetNavigation(navigation, SCREENS.LOGIN)
+                    resetNavigation(navigation, SCREENS.ROLE_SELECTOR)
                 }}
                 style={styles.backButton}>
 

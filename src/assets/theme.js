@@ -20,7 +20,8 @@ const darkTheme = {
     inputBg: palette.grayDark,
     inputLabel: palette.gray,
     error: palette.danger,
-    heading: palette.gray
+    heading: palette.gray,
+    inActiveColor: palette.grayLight
 };
 
 export default {

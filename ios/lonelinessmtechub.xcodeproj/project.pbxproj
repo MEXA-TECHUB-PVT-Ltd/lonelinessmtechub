@@ -20,6 +20,8 @@
 		2D1D72E3B30A48B38F2ED98E /* Lexend-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4A6251CD2607464DB24A27A8 /* Lexend-Regular.ttf */; };
 		809936DFDBA54ABCBB098304 /* Lexend-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 18CC343A7A0446DB9EC3C97D /* Lexend-SemiBold.ttf */; };
 		3947ED54C8BC4CBFBC234ACE /* Lexend-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A9CB9854684244218169F543 /* Lexend-Thin.ttf */; };
+		2B1668BBF3414DA5ABE30412 /* OleoScriptSwashCaps-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 487C3E3013884356AB860846 /* OleoScriptSwashCaps-Bold.ttf */; };
+		F1066A893CC847F1B2A6901F /* OleoScriptSwashCaps-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CADB91BDB5264C7FABC887B8 /* OleoScriptSwashCaps-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +59,8 @@
 		4A6251CD2607464DB24A27A8 /* Lexend-Regular.ttf */ = {isa = PBXFileReference; name = "Lexend-Regular.ttf"; path = "../assets/fonts/Lexend-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		18CC343A7A0446DB9EC3C97D /* Lexend-SemiBold.ttf */ = {isa = PBXFileReference; name = "Lexend-SemiBold.ttf"; path = "../assets/fonts/Lexend-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		A9CB9854684244218169F543 /* Lexend-Thin.ttf */ = {isa = PBXFileReference; name = "Lexend-Thin.ttf"; path = "../assets/fonts/Lexend-Thin.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		487C3E3013884356AB860846 /* OleoScriptSwashCaps-Bold.ttf */ = {isa = PBXFileReference; name = "OleoScriptSwashCaps-Bold.ttf"; path = "../assets/fonts/OleoScriptSwashCaps-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		CADB91BDB5264C7FABC887B8 /* OleoScriptSwashCaps-Regular.ttf */ = {isa = PBXFileReference; name = "OleoScriptSwashCaps-Regular.ttf"; path = "../assets/fonts/OleoScriptSwashCaps-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -172,6 +176,8 @@
 				4A6251CD2607464DB24A27A8 /* Lexend-Regular.ttf */,
 				18CC343A7A0446DB9EC3C97D /* Lexend-SemiBold.ttf */,
 				A9CB9854684244218169F543 /* Lexend-Thin.ttf */,
+				487C3E3013884356AB860846 /* OleoScriptSwashCaps-Bold.ttf */,
+				CADB91BDB5264C7FABC887B8 /* OleoScriptSwashCaps-Regular.ttf */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -278,6 +284,8 @@
 				2D1D72E3B30A48B38F2ED98E /* Lexend-Regular.ttf in Resources */,
 				809936DFDBA54ABCBB098304 /* Lexend-SemiBold.ttf in Resources */,
 				3947ED54C8BC4CBFBC234ACE /* Lexend-Thin.ttf in Resources */,
+				2B1668BBF3414DA5ABE30412 /* OleoScriptSwashCaps-Bold.ttf in Resources */,
+				F1066A893CC847F1B2A6901F /* OleoScriptSwashCaps-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

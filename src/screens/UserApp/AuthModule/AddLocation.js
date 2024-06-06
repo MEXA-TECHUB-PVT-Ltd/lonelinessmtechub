@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
 import useBackHandler from '../../../utils/useBackHandler';
@@ -15,8 +15,11 @@ import Icon from 'react-native-vector-icons/MaterialIcons'
 import EmailIcon from 'react-native-vector-icons/Zocial'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
+import Modal from "react-native-modal";
+import { alertLogo, successText } from '../../../assets/images';
 
 const AddLocation = ({ navigation }) => {
+    const [modalVisible, setModalVisible] = useState(false);
     const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' });
     const [errors, setErrors] = useState({ email: '', password: '', confirmPassword: '' });
     const [showPassword, setShowPassword] = useState(false);
@@ -108,6 +111,68 @@ const AddLocation = ({ navigation }) => {
         }
     };
 
+    const showHideModal = () => {
+        setModalVisible(true);
+        // Hide the modal after 3 seconds
+        setTimeout(() => {
+            setModalVisible(false);
+            resetNavigation(navigation, SCREENS.LOGIN)
+        }, 3000);
+    };
+
+    const showModalView = () => {
+
+        return <Modal
+            backdropOpacity={0.90}
+            backdropColor={'rgba(85, 85, 85, 0.70)'}
+            isVisible={modalVisible}
+            animationIn={'bounceIn'}
+            animationOut={'bounceOut'}
+            animationInTiming={1000}
+            animationOutTiming={1000}
+        >
+            <View style={{
+                backgroundColor: '#111111',
+                width: '90%',
+                height: '50%',
+                alignSelf: 'center',
+                borderRadius: 20,
+                elevation: 20,
+                padding: 20
+            }}>
+
+                <Image
+                    resizeMode='contain'
+                    source={alertLogo}
+                    style={{
+                        width: scaleWidth(120),
+                        height: scaleHeight(120),
+                        alignSelf: 'center'
+                    }}
+                />
+
+                <Image
+                    resizeMode='contain'
+                    source={successText}
+                    style={{
+                        width: scaleWidth(130),
+                        height: scaleHeight(45),
+                        alignSelf: 'center',
+                        marginTop: 10
+                    }}
+                />
+                <Text style={styles.subTitle}>
+                    {`Please wait...${'\n'}You will be directed to the homepage`}
+                </Text>
+
+
+
+
+
+            </View>
+        </Modal>
+    }
+
     return (
         <SafeAreaView style={styles.container}>
             <ProfileProgressBar title={"Add Location"} progress={50} onPress={() => {
@@ -176,14 +241,6 @@ const AddLocation = ({ navigation }) => {
                         value={form.confirmPassword}
                         onValueChange={(value) => handleChange('confirmPassword', value)}
                         mainContainer={{ marginTop: 15 }}
-                        iconComponent={
-                            <MaterialIcons
-                                style={{
-                                    marginEnd: 8
-
-                                }} name={"keyboard-arrow-down"} size={24}
-                                color={theme.dark.text} />
-                        }
                     />
                     {errors.confirmPassword ? <Text style={styles.errorText}>{errors.confirmPassword}</Text> : null}
 
@@ -194,14 +251,14 @@ const AddLocation = ({ navigation }) => {
                 <View style={styles.buttonContainer}>
                     <Button
                         onPress={() => {
-
+                            showHideModal()
                         }}
                         title={'Add Location'}
                     />
                 </View>
 
             </CustomLayout>
-
+            {showModalView()}
         </SafeAreaView>
     );
 };
