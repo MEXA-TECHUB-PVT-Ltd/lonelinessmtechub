@@ -62,9 +62,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.6)', // Make the container transparent
+        backgroundColor: '#4C4615', 
         height: Platform.OS === 'ios' ? 80 : 56,
-        paddingBottom: Platform.OS === 'ios' ? 15 : 0, // Adjust padding for iOS
+        paddingBottom: Platform.OS === 'ios' ? 15 : 0, 
         // shadowOpacity: 0.05,
         // elevation: 4,
     },

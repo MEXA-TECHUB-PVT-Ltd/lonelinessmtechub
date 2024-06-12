@@ -32,5 +32,15 @@ export const SCREENS = {
     HOME: "HomeScreen",
     SERVICES: "ServicesScreen",
     CHAT: "ChatScreen",
-    PROFILE: "ProfileScreen"
+    PROFILE: "ProfileScreen",
+    SEND_REQUEST: "SendRequestScreen",
+    IMAGE_VIEWER: "ImageViewerScreen",
+    MAIN_DASHBOARD: "MainDashboard",
+    RATING: "RatingScreen",
+    PREMIUM: "PremiumScreen",
+    NOTIFICATION: "NotificationScreen",
+    NOTIFICATION_SETTING: "NotificationSettingScreen",
+    SEARCH_FILTER: "SearchFilterScreen",
+    SERVICE_DETAILS: "ServiceDetails",
+    BUDDY_SEND_REQUEST: "BuddySendRequest"
 };

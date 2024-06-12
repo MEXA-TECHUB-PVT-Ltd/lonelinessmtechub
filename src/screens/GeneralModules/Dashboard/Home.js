@@ -1,24 +1,102 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Image, SafeAreaView, StyleSheet, Dimensions, View, FlatList, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { Image, SafeAreaView, StyleSheet, Dimensions, View, FlatList, Text, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import LottieView from 'lottie-react-native';
-import { Icon } from 'react-native-elements';
+import Icon from 'react-native-vector-icons/AntDesign'
 import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import { theme } from '../../../assets';
-import { bellHome, chatHome, disLikeHome, dummyImg, filterHome, homeLogo, labelHome, likeHome, onboardingLogo, screen1, screen2, screen3, sendHome } from '../../../assets/images';
+import {
+    bellHome,
+    chatHome,
+    disLikeHome,
+    dummy1,
+    dummy2,
+    dummyImg,
+    filterHome,
+    homeLogo,
+    labelHome,
+    likeHome,
+    locationPin,
+    lockImg,
+    ratingStar,
+    sendHome,
+    warningImg
+} from '../../../assets/images';
 import fonts from '../../../styles/fonts';
+import { resetNavigation } from '../../../utils/resetNavigation';
+import { SCREENS } from '../../../constant/constants';
+import DetailItem from '../../../components/DetailItem';
+import CategoryList from '../../../components/CategoryList';
+import Button from '../../../components/ButtonComponent';
+import { color } from '@rneui/base';
+import CustomModal from '../../../components/CustomModal';
+import Modal from 'react-native-modal';
+import HorizontalDivider from '../../../components/HorizontalDivider';
+import CustomRangeSlider from '../../../components/CustomSlider';
+import CheckBox from '../../../components/CheckboxComponent';
+import CustomTextInput from '../../../components/TextInputComponent';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-const Home = () => {
+const categories = [
+    { id: '1', text: 'Date', image: bellHome },
+    { id: '2', text: 'Lunch', image: filterHome },
+    { id: '3', text: 'Dinner', image: homeLogo },
+    { id: '4', text: 'Movie Night', image: likeHome },
+];
+
+const Home = ({ navigation }) => {
     const lottieRef = useRef(null);
     const [showCarousel, setShowCarousel] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
+    const [min, setMin] = useState(20);
+    const [max, setMax] = useState(80);
+    const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' });
+
+    const [modalVisible1, setModalVisible1] = useState(false);
+    const [modalVisible2, setModalVisible2] = useState(false);
+    const [modalVisible3, setModalVisible3] = useState(false);
+    const [showFilterModal, setFilterModal] = useState(false);
+
+    const scrollOffsetY = useRef(0);
+    const [scrollDirection, setScrollDirection] = useState(null);
+
+    const handleScroll = (event) => {
+        const currentOffsetY = event.nativeEvent.contentOffset.y;
+        const direction = currentOffsetY > scrollOffsetY.current ? 'down' : 'up';
+        setScrollDirection(direction);
+        scrollOffsetY.current = currentOffsetY;
+    };
+
+    const handleOpenModal1 = () => {
+        setModalVisible1(true);
+    };
+
+    const handleCloseModal1 = () => {
+        setModalVisible1(false);
+    };
+
+    const handleOpenModal2 = () => {
+        setModalVisible2(true);
+    };
+
+    const handleCloseModal2 = () => {
+        setModalVisible2(false);
+    };
+
+    const handleOpenModal3 = () => {
+        setModalVisible3(true);
+    };
+
+    const handleCloseModal3 = () => {
+        setModalVisible3(false);
+    };
 
     const images = [
         dummyImg, // Replace with actual image sources
-        dummyImg,
-        dummyImg
+        dummy1,
+        dummy2
     ];
 
     useEffect(() => {
@@ -32,71 +110,536 @@ const Home = () => {
         return () => clearTimeout(timer);
     }, []);
 
+    const handleCategoryPress = (item) => {
+        console.log('Category pressed:', item);
+    };
+
+    // const renderItem = ({ item }) => (
+
+    //     <View style={styles.carouselItem}>
+    //         <Image source={item} style={[styles.carouselImage]} resizeMode="cover" />
+    //     </View>
+    // );
+
     const renderItem = ({ item }) => (
-
         <View style={styles.carouselItem}>
-
-            <Image source={item} style={[styles.carouselImage]} resizeMode="cover" />
-
-            <View style={styles.overlay}>
-                <View style={{ flexDirection: 'row' }}>
-                    <Text style={styles.nameText}>Olivia (24)</Text>
-                    <Image source={chatHome} style={{
-                        width: scaleWidth(50),
-                        height: scaleHeight(50),
-                        alignSelf: 'center',
-                        marginEnd:20
-                        //right: scaleWidth(-20),
-
-                    }} />
-                </View>
-                <Text style={styles.distanceText}>5 km away</Text>
-                <View style={styles.actionButtons}>
-                    <TouchableOpacity style={styles.iconButton}>
-                        {/* <Icon name="close" type="material" color="#ff4d4d" /> */}
-                        <Image source={disLikeHome} style={{
-                            width: scaleWidth(40),
-                            height: scaleHeight(40),
-                            alignSelf: 'center',
-                            //right: scaleWidth(-20),
-
-                        }} />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconButton2}>
-                        {/* <Icon name="favorite" type="material" color={theme.dark.secondary} /> */}
-                        <Image source={likeHome}
-                            resizeMode='contain'
-                            style={{
-                                width: scaleWidth(45),
-                                height: scaleHeight(45),
-                                alignSelf: 'center',
-                                //right: scaleWidth(-20),
-
-                            }} />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconButton3}>
-                        {/* <Icon name="send" type="material" color="#4da6ff" /> */}
-                        <Image source={sendHome} style={{
-                            width: scaleWidth(40),
-                            height: scaleHeight(40),
-                            alignSelf: 'center',
-                            //right: scaleWidth(-20),
-
-                        }} />
-                    </TouchableOpacity>
-                </View>
-            </View>
+            <Image source={item} style={styles.carouselImage} resizeMode="cover" />
         </View>
     );
 
+    const onChange = (min, max) => {
+        console.log('Max: ', max);
+        console.log('Min: ', min);
+    };
+
+    const handleChange = (name, value) => {
+        setForm({ ...form, [name]: value });
+    };
+
+    const renderFilterModal = () => {
+        return <Modal
+            backdropOpacity={0.90}
+            backdropColor={'rgba(85, 85, 85, 0.95)'}
+            isVisible={showFilterModal}
+            animationIn={'slideInUp'}
+            animationOut={'slideOutDown'}
+            animationInTiming={1000}
+            animationOutTiming={1000}
+        >
+            <View style={{
+                backgroundColor: '#111111',
+                width: '110%',
+                height: '110%',
+                alignSelf: 'center',
+                elevation: 20,
+                padding: 20,
+                marginTop: scaleHeight(120),
+                borderTopEndRadius: 30,
+                borderTopStartRadius: 30,
+
+            }}>
+
+                <Icon
+                    name='close'
+                    size={24}
+                    color={theme.dark.white}
+                    style={{
+                        alignSelf: 'flex-end'
+                    }}
+
+                    onPress={() => {
+                        setFilterModal(false)
+                    }}
+                />
+
+                <Text style={{
+                    fontFamily: fonts.fontsType.semiBold,
+                    fontSize: scaleHeight(20),
+                    color: theme.dark.white,
+                    alignSelf: 'center'
+                }}>
+                    Appy Filter
+                </Text>
+
+                <HorizontalDivider customStyle={{
+                    marginTop: 15
+                }} />
+
+                <ScrollView style={{
+                    flex: 1,
+                    marginBottom: scaleHeight(40)
+                }}>
+
+                    <View style={{
+                        flexDirection: 'row',
+                        marginHorizontal: 15,
+
+                    }}>
+                        <Text style={{
+                            fontFamily: fonts.fontsType.semiBold,
+                            fontSize: scaleHeight(17),
+                            color: theme.dark.white,
+                            flex: 1
+                        }}>
+                            Age Range
+                        </Text>
+                        <Text style={{
+                            fontFamily: fonts.fontsType.regular,
+                            fontSize: scaleHeight(17),
+                            color: theme.dark.inputBackground
+                        }}>
+                            {`${min} - ${max}`}
+                        </Text>
+                    </View>
+
+                    <CustomRangeSlider
+                        min={0}
+                        max={100}
+                        step={1}
+                        initialLow={20}
+                        initialHigh={80}
+                        onValueChange={onChange}
+                    />
+
+                    <HorizontalDivider customStyle={{
+                        marginTop: 60
+                    }} />
+
+                    <View style={{
+                        marginHorizontal: 15
+                    }}>
+                        <Text style={{
+                            fontFamily: fonts.fontsType.semiBold,
+                            fontSize: scaleHeight(17),
+                            color: theme.dark.white,
+                        }}>
+                            Show Me
+                        </Text>
+
+                        <View style={{
+                            flexDirection: 'row',
+                            marginTop: 10,
+                            justifyContent: 'space-between'
+                        }}>
+                            <CheckBox label={"Men"} labelStyle={{
+                                color: theme.dark.inputBackground,
+                                fontFamily: fonts.fontsType.semiBold,
+                                fontSize: scaleHeight(15),
+                            }} />
+                            <CheckBox label={"Women"} labelStyle={{
+                                color: theme.dark.inputBackground,
+                                fontFamily: fonts.fontsType.semiBold,
+                                fontSize: scaleHeight(15),
+                            }} />
+                            <CheckBox label={"Other"} labelStyle={{
+                                color: theme.dark.inputBackground,
+                                fontFamily: fonts.fontsType.semiBold,
+                                fontSize: scaleHeight(15),
+                            }} />
+                        </View>
+                    </View>
+
+                    <HorizontalDivider customStyle={{
+                        marginTop: 20
+                    }} />
+
+                    <View style={{
+                        marginHorizontal: 15,
+                        marginTop: 10
+                    }}>
+                        <CheckBox label={"Top liked Profiles"} labelStyle={{
+                            color: theme.dark.white,
+                            fontFamily: fonts.fontsType.semiBold,
+                            fontSize: scaleHeight(15),
+                        }}
+                            checkBoxStyle={{
+                                backgroundColor: theme.dark.white
+                            }}
+                        />
+                    </View>
+
+                    <HorizontalDivider customStyle={{
+                        marginTop: 20
+                    }} />
+
+                    <View style={{
+                        marginHorizontal: 15,
+                        marginTop: 10
+                    }}>
+                        <CheckBox label={"Top Rated Profiles"} labelStyle={{
+                            color: theme.dark.white,
+                            fontFamily: fonts.fontsType.semiBold,
+                            fontSize: scaleHeight(15),
+                        }}
+                            checkBoxStyle={{
+                                backgroundColor: theme.dark.white
+                            }}
+                        />
+                    </View>
+
+                    <HorizontalDivider customStyle={{
+                        marginTop: 20
+                    }} />
+
+                    <CustomTextInput
+                        label={'Category'}
+                        placeholder={"Select Category"}
+                        identifier={'password'}
+                        value={form.password}
+                        onValueChange={(value) => handleChange('password', value)}
+                        mainContainer={{ marginTop: 15 }}
+                        iconComponent={
+                            <MaterialIcons
+                                style={{
+                                    marginEnd: 8
+
+                                }} name={"keyboard-arrow-down"} size={24}
+                                color={theme.dark.text} />
+                        }
+                    />
+
+                    <HorizontalDivider customStyle={{
+                        marginTop: 20
+                    }} />
+
+                    {/* // height wieght */}
+
+                    <View style={{ marginTop: scaleHeight(10) }}>
+
+                        <Text style={styles.label}>{'Height'}</Text>
+
+                        <View
+
+                            style={{
+
+                                flexDirection: "row",
+                                alignItems: "center",
+                                backgroundColor: theme.dark.white,
+                                height: 45,
+                                borderRadius: 30,
+                                borderWidth: 1,
+                                borderColor: theme.dark.text,
+                                marginTop: scaleHeight(30)
+
+                            }}>
+
+                            <View style={{ flexDirection: 'row', marginHorizontal: scaleWidth(10), flex: 1 }}>
+
+                                <TextInput
+                                    style={{
+                                        fontFamily: fonts.fontsType.medium,
+                                        fontSize: scaleHeight(14),
+                                        color: theme.dark.text,
+                                        marginHorizontal: 10
+                                    }}
+                                    maxLength={2}
+                                    placeholder='00'
+                                    keyboardType='number-pad'
+                                    placeholderTextColor={theme.dark.text}
+                                />
+
+                                <View style={styles.verticleLine}></View>
+
+                                <TextInput
+                                    style={{
+                                        fontFamily: fonts.fontsType.medium,
+                                        fontSize: scaleHeight(14),
+                                        color: theme.dark.text
+                                    }}
+                                    maxLength={2}
+                                    placeholder='00'
+                                    keyboardType='number-pad'
+                                    placeholderTextColor={theme.dark.text}
+                                />
+
+                            </View>
+
+                            <View style={{
+                                flexDirection: 'row',
+                                borderRadius: 30,
+                                borderWidth: 1,
+                                borderColor: theme.dark.secondary,
+                                width: scaleWidth(70),
+                                height: '70%',
+                                marginEnd: scaleWidth(10),
+                                justifyContent: 'space-evenly',
+                            }}>
+
+                                <TouchableOpacity
+                                    style={{
+                                        backgroundColor: theme.dark.secondary,
+                                        width: scaleWidth(35),
+                                        height: '100%',
+                                        alignSelf: 'center',
+                                        borderBottomLeftRadius: 30,
+                                        borderTopLeftRadius: 30,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    <Text style={{
+                                        fontFamily: fonts.fontsType.medium,
+                                        fontSize: scaleHeight(12),
+                                        color: theme.dark.black,
+                                        alignSelf: 'center'
+
+                                    }}>Ft</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={{
+                                        backgroundColor: '#333333',
+                                        width: scaleWidth(35),
+                                        height: '100%',
+                                        alignSelf: 'center',
+                                        borderBottomEndRadius: 30,
+                                        borderTopEndRadius: 30,
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    <Text style={{
+                                        fontFamily: fonts.fontsType.medium,
+                                        fontSize: scaleHeight(12),
+                                        color: theme.dark.white,
+                                        alignSelf: 'center'
+
+                                    }}>In</Text>
+                                </TouchableOpacity>
+
+                            </View>
+
+
+                        </View>
+
+                        <Text style={styles.label}>{'Weight'}</Text>
+
+                        <View
+
+                            style={{
+
+                                flexDirection: "row",
+                                alignItems: "center",
+                                backgroundColor: theme.dark.white,
+                                height: 45,
+                                borderRadius: 30,
+                                borderWidth: 1,
+                                borderColor: theme.dark.text,
+                                marginTop: scaleHeight(30)
+
+                            }}>
+
+                            <View style={{ flexDirection: 'row', marginHorizontal: scaleWidth(10), flex: 1 }}>
+
+                                <TextInput
+                                    style={{
+                                        fontFamily: fonts.fontsType.medium,
+                                        fontSize: scaleHeight(14),
+                                        color: theme.dark.text,
+                                        marginHorizontal: 10
+                                    }}
+                                    maxLength={2}
+                                    keyboardType='number-pad'
+                                    placeholder='00'
+                                    placeholderTextColor={theme.dark.text}
+                                />
+
+                                <View style={styles.verticleLine}></View>
+
+                                <TextInput
+                                    style={{
+                                        fontFamily: fonts.fontsType.medium,
+                                        fontSize: scaleHeight(14),
+                                        color: theme.dark.text
+                                    }}
+                                    maxLength={2}
+                                    keyboardType='number-pad'
+                                    placeholder='00'
+                                    placeholderTextColor={theme.dark.text}
+                                />
+
+                            </View>
+
+                            <View style={{
+                                flexDirection: 'row',
+                                borderRadius: 30,
+                                borderWidth: 1,
+                                borderColor: theme.dark.secondary,
+                                width: scaleWidth(70),
+                                height: '70%',
+                                marginEnd: scaleWidth(10),
+                                justifyContent: 'space-evenly',
+                            }}>
+
+                                <TouchableOpacity
+                                    style={{
+                                        backgroundColor: theme.dark.secondary,
+                                        width: scaleWidth(35),
+                                        height: '100%',
+                                        alignSelf: 'center',
+                                        borderBottomLeftRadius: 30,
+                                        borderTopLeftRadius: 30,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    <Text style={{
+                                        fontFamily: fonts.fontsType.medium,
+                                        fontSize: scaleHeight(12),
+                                        color: theme.dark.black,
+                                        alignSelf: 'center'
+
+                                    }}>Kg</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={{
+                                        backgroundColor: '#333333',
+                                        width: scaleWidth(35),
+                                        height: '100%',
+                                        alignSelf: 'center',
+                                        borderBottomEndRadius: 30,
+                                        borderTopEndRadius: 30,
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    <Text style={{
+                                        fontFamily: fonts.fontsType.medium,
+                                        fontSize: scaleHeight(12),
+                                        color: theme.dark.white,
+                                        alignSelf: 'center'
+
+                                    }}>Lb</Text>
+                                </TouchableOpacity>
+
+                            </View>
+
+
+                        </View>
+
+                    </View>
+
+                    <HorizontalDivider customStyle={{
+                        marginTop: 20
+                    }} />
+
+                    <CustomTextInput
+                        label={'City'}
+                        placeholder={"Select City"}
+                        identifier={'password'}
+                        value={form.password}
+                        onValueChange={(value) => handleChange('password', value)}
+                        mainContainer={{ marginTop: 10 }}
+                        iconComponent={
+                            <MaterialIcons
+                                style={{
+                                    marginEnd: 8
+
+                                }} name={"keyboard-arrow-down"} size={24}
+                                color={theme.dark.text} />
+                        }
+                    />
+
+                    <HorizontalDivider customStyle={{
+                        marginTop: 20
+                    }} />
+
+                    <CustomTextInput
+                        label={'Language'}
+                        placeholder={"Select Language"}
+                        identifier={'password'}
+                        value={form.password}
+                        onValueChange={(value) => handleChange('password', value)}
+                        mainContainer={{ marginTop: 10 }}
+                        iconComponent={
+                            <MaterialIcons
+                                style={{
+                                    marginEnd: 8
+
+                                }} name={"keyboard-arrow-down"} size={24}
+                                color={theme.dark.text} />
+                        }
+                    />
+
+                    <View style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-evenly',
+                        marginTop: 20
+                    }}>
+
+                        <Button title={"Reset"}
+                            customStyle={{
+                                width: '48%',
+                                marginHorizontal: '2%',
+                                borderWidth: 1,
+                                borderColor: theme.dark.secondary,
+                                backgroundColor: theme.dark.transparentBg,
+                            }}
+                            textCustomStyle={{
+                                color: theme.dark.secondary,
+                            }}
+
+                        />
+
+                        <Button title={"Apply"} customStyle={{
+                            width: '48%',
+                        }} />
+
+                    </View>
+
+
+
+                </ScrollView>
+
+            </View>
+        </Modal>
+    }
+
+    // console.log('scrollDirection',scrollDirection)
+
+    const getBackgroundColor = () => {
+        if (scrollDirection === 'up') {
+            return '#4C4615';  // Color when scrolling up
+        } else if (scrollDirection === 'down') {
+            return theme.dark.primary;    // Color when scrolling down
+        } else {
+            return '#4C4615';   // Default color
+        }
+    };
+
     return (
         <LinearGradient
-            colors={['black', 'rgba(252, 226, 32, 0.7)']}
-            locations={[0.19, 0.7]}
+            colors={[theme.dark.primary, '#4C4615', '#4C4615']}
+            locations={[0.19, 0.7, 0.7]}
             style={styles.gradient}
         >
             <SafeAreaView style={styles.container}>
-                <View style={{ marginTop: scaleHeight(10), flexDirection: 'row', justifyContent: 'space-evenly' }}>
+                <View style={{
+                    marginTop: scaleHeight(10),
+                    flexDirection: 'row',
+                    justifyContent: 'space-evenly'
+                }}>
                     <Image source={homeLogo} style={{
                         width: scaleWidth(35),
                         height: scaleHeight(42),
@@ -111,20 +654,34 @@ const Home = () => {
 
                     }} />
 
-                    <Image source={bellHome} style={{
-                        width: scaleWidth(27),
-                        height: scaleHeight(27),
-                        alignSelf: 'center',
-                        right: scaleWidth(-20),
+                    <TouchableOpacity style={{
+                        justifyContent: 'center'
+                    }} onPress={() => {
+                        resetNavigation(navigation, SCREENS.NOTIFICATION)
+                    }}>
+                        <Image source={bellHome} style={{
+                            width: scaleWidth(27),
+                            height: scaleHeight(27),
+                            alignSelf: 'center',
+                            right: scaleWidth(-20),
 
-                    }} />
+                        }} />
+                    </TouchableOpacity>
 
-                    <Image source={filterHome} style={{
-                        width: scaleWidth(27),
-                        height: scaleHeight(27),
-                        alignSelf: 'center',
+                    <TouchableOpacity style={{
+                        justifyContent: 'center'
+                    }} onPress={() => {
+                        setFilterModal(true)
+                    }}>
+                        <Image source={filterHome} style={{
+                            width: scaleWidth(27),
+                            height: scaleHeight(27),
+                            alignSelf: 'center',
 
-                    }} />
+                        }} />
+                    </TouchableOpacity>
+
+
 
                 </View>
                 {!showCarousel ? (
@@ -146,7 +703,10 @@ const Home = () => {
                         </View>
                     </>
                 ) : (
-                    <ScrollView style={styles.carouselContainer}>
+                    <ScrollView
+                        onScroll={handleScroll}
+                        scrollEventThrottle={1}
+                        style={[styles.carouselContainer, { backgroundColor: getBackgroundColor() }]}>
                         <FlatList
                             data={images}
                             horizontal
@@ -159,6 +719,8 @@ const Home = () => {
                             renderItem={renderItem}
                             keyExtractor={(item, index) => index.toString()}
                         />
+
+
                         <View style={styles.dotContainer}>
                             {images.map((_, index) => (
                                 <View
@@ -171,42 +733,308 @@ const Home = () => {
                             ))}
                         </View>
 
-                        <Image
-                            resizeMode='contain'
-                            source={screen1} style={{
-                                width: '95%',
-                                //height: scaleHeight(27),
-                                alignSelf: 'center',
-                                marginTop: scaleHeight(-220),
-                                marginBottom: scaleHeight(-40)
+                        <View style={styles.overlay}>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={styles.nameText}>Olivia (24)</Text>
+                                <TouchableOpacity onPress={() => {
+                                    handleOpenModal2();
+                                }}>
+                                    <Image source={chatHome} style={{
+                                        width: scaleWidth(50),
+                                        height: scaleHeight(50),
+                                        alignSelf: 'center',
+                                        marginEnd: 20,
+                                        top:scaleHeight(20)
 
-                            }} />
+                                    }} />
+                                </TouchableOpacity>
+                            </View>
+                            <Text style={styles.distanceText}>5 km away</Text>
+                            <View style={styles.actionButtons}>
+                                <TouchableOpacity style={styles.iconButton}>
+                                    {/* <Icon name="close" type="material" color="#ff4d4d" /> */}
+                                    <Image source={disLikeHome} 
+                                    resizeMode='contain'
+                                    style={{
+                                        width: scaleWidth(40),
+                                        height: scaleHeight(40),
+                                        alignSelf: 'center',
+                                        //right: scaleWidth(-20),
 
-                        <Image
-                            resizeMode='contain'
-                            source={screen2} style={{
-                                width: '95%',
-                                //height: scaleHeight(27),
-                                alignSelf: 'center',
-                                marginTop: scaleHeight(-250),
-                                marginBottom: scaleHeight(-50)
+                                    }} />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.iconButton2}>
+                                    {/* <Icon name="favorite" type="material" color={theme.dark.secondary} /> */}
+                                    <Image source={likeHome}
+                                        resizeMode='contain'
+                                        style={{
+                                            width: scaleWidth(45),
+                                            height: scaleHeight(45),
+                                            alignSelf: 'center',
+                                            //right: scaleWidth(-20),
 
-                            }} />
+                                        }} />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.iconButton3}>
+                                    {/* <Icon name="send" type="material" color="#4da6ff" /> */}
+                                    <Image source={sendHome} 
+                                    resizeMode='contain'
+                                    style={{
+                                        width: scaleWidth(40),
+                                        height: scaleHeight(40),
+                                        alignSelf: 'center',
+                                        //right: scaleWidth(-20),
+
+                                    }} />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <View style={styles.detailContainer}>
+
+                            <View style={styles.profileDescription}>
 
 
-                        <Image
-                            resizeMode='contain'
-                            source={screen3} style={{
-                                width: '95%',
-                                //height: scaleHeight(27),
-                                alignSelf: 'center',
-                                marginTop: scaleHeight(-100)
+                                <Text style={{
+                                    color: theme.dark.secondary,
+                                    fontSize: scaleHeight(18),
+                                    fontFamily: fonts.fontsType.medium,
 
-                            }} />
+                                }}>
+                                    About
+                                </Text>
 
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        resetNavigation(navigation, SCREENS.RATING)
+                                    }}
+                                    style={{
+                                        flexDirection: 'row',
+                                        alignSelf: 'center'
+                                    }}>
+
+                                    <Image
+                                        resizeMode='cover'
+                                        style={{
+
+                                            width: scaleWidth(18),
+                                            height: scaleHeight(18),
+                                            alignSelf: 'center',
+                                            marginHorizontal: 5
+                                        }} source={ratingStar} />
+
+                                    <Text style={{
+                                        color: theme.dark.inputLabel,
+                                        fontSize: scaleHeight(15),
+                                        fontFamily: fonts.fontsType.medium
+                                    }}>
+                                        4.5
+                                    </Text>
+
+                                </TouchableOpacity>
+
+                            </View>
+
+                            <Text style={{
+                                color: theme.dark.inputLabel,
+                                fontSize: scaleHeight(15),
+                                fontFamily: fonts.fontsType.light,
+                                lineHeight: scaleHeight(28),
+                                marginBottom: scaleHeight(20)
+                            }}>
+                                Hi there! I’m Olivia, a 24-year-old graphic designer in NYC.I love all things creative, from my work to cooking and exploring the city’s art scene.
+                            </Text>
+
+                            <DetailItem label="Gender" value="Female" />
+                            <DetailItem label="Height" value="5'4" />
+                            <DetailItem label="Weight" value="50 kg" />
+                            <DetailItem label="Hourly Rate" value="$45" />
+                            <DetailItem label="Languages" value="English, French, German" />
+                            <DetailItem label="Location" value="California, USA" />
+
+
+                            <View style={{
+                                flexDirection: 'row',
+                                marginTop: scaleHeight(20),
+                                marginHorizontal: -5
+                            }}>
+
+                                <Image
+                                    resizeMode='contain'
+                                    style={{
+
+                                        width: scaleWidth(22),
+                                        height: scaleHeight(22),
+                                        alignSelf: 'center',
+
+                                    }} source={locationPin} />
+
+                                <Text style={{
+                                    color: theme.dark.white,
+                                    fontSize: scaleHeight(16),
+                                    fontFamily: fonts.fontsType.medium,
+                                    marginHorizontal: 5
+                                }}>
+                                    California, USA
+                                </Text>
+
+                            </View>
+
+                            <Text style={{
+                                color: theme.dark.secondary,
+                                fontSize: scaleHeight(18),
+                                fontFamily: fonts.fontsType.medium,
+                                marginTop: scaleHeight(40)
+
+                            }}>
+                                Categories
+                            </Text>
+
+                            <View style={{
+                                marginHorizontal: -5,
+                                marginTop: scaleHeight(5)
+                            }}>
+                                <CategoryList
+                                    categories={categories}
+                                    onPress={handleCategoryPress} />
+
+                            </View>
+
+                            <TouchableOpacity onPress={() => {
+                                resetNavigation(navigation, SCREENS.IMAGE_VIEWER)
+                            }}>
+                                <Image style={{
+                                    width: '100%',
+                                    height: scaleHeight(300),
+                                    marginTop: scaleHeight(10),
+                                    borderRadius: 10
+                                }} source={dummyImg} />
+                            </TouchableOpacity>
+
+                            <View style={{
+                                flexDirection: 'row',
+                                justifyContent: 'space-between'
+                            }}>
+
+                                <Image style={{
+                                    width: scaleWidth(150),
+                                    height: scaleHeight(230),
+                                    marginTop: scaleHeight(10),
+                                    borderRadius: 10
+                                }} source={dummy1} />
+
+                                <Image style={{
+                                    width: scaleWidth(150),
+                                    height: scaleHeight(230),
+                                    marginTop: scaleHeight(10),
+                                    borderRadius: 10
+                                }} source={dummy2} />
+
+                            </View>
+
+
+
+                            <Button
+                                onPress={() => {
+                                    resetNavigation(navigation, SCREENS.SEND_REQUEST)
+                                }}
+                                title={"Send Request"}
+                                customStyle={{
+                                    width: '95%',
+                                    top: scaleHeight(30)
+                                }}
+                                textCustomStyle={{
+                                }}
+                            />
+
+                            <View style={{
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                                marginBottom: scaleHeight(-160)
+                            }}>
+
+                                <Button title={"Report"}
+                                    customStyle={{
+                                        width: '48%',
+                                        borderWidth: 1,
+                                        borderColor: theme.dark.secondary,
+                                        backgroundColor: theme.dark.transparentBg,
+                                    }}
+                                    textCustomStyle={{
+                                        color: theme.dark.secondary,
+                                        marginRight: '2%',
+                                    }}
+                                />
+
+                                <Button title={"Block"}
+                                    customStyle={{
+                                        width: '48%',
+                                        borderWidth: 1,
+                                        borderColor: theme.dark.secondary,
+                                        backgroundColor: theme.dark.transparentBg
+                                    }}
+                                    textCustomStyle={{
+                                        color: theme.dark.secondary
+                                    }}
+                                />
+
+                            </View>
+
+                        </View>
 
                     </ScrollView>
                 )}
+
+                <CustomModal
+                    isVisible={modalVisible1}
+                    onClose={handleCloseModal1}
+                    headerTitle={"Unlock More Friendships!"}
+                    imageSource={lockImg}
+                    text={`Want to meet more amazing friends? Unlock additional profiles with our premium access. Discover endless possibilities and connections!`}
+                    buttonText="Go Premium"
+                    isParallelButton={false}
+                    buttonAction={() => {
+                        alert('Hello')
+                    }}
+                />
+
+                <CustomModal
+                    isVisible={modalVisible2}
+                    onClose={handleCloseModal2}
+                    headerTitle={"Opps!"}
+                    imageSource={warningImg}
+                    isParallelButton={true}
+                    text={`Unlock the conversation for only $1 and dive into an engaging chat experience with us! 💬✨`}
+                    parallelButtonText1={"Cancel"}
+                    parallelButtonText2={"Pay Now!"}
+                    parallelButtonPress1={() => {
+                        handleCloseModal2()
+                    }}
+                    parallelButtonPress2={() => {
+                        handleCloseModal2()
+                        handleOpenModal3();
+                    }}
+                />
+
+                <CustomModal
+                    isVisible={modalVisible3}
+                    onClose={handleCloseModal3}
+                    headerTitle={"Payment Method"}
+                    imageSource={warningImg}
+                    isParallelButton={true}
+                    text={`Do you want to pay through your wallet?`}
+                    parallelButtonText1={"No"}
+                    parallelButtonText2={"Yes, Pay"}
+                    parallelButtonPress1={() => {
+                        handleCloseModal3()
+                    }}
+                    parallelButtonPress2={() => {
+
+                    }}
+                />
+
+                {renderFilterModal()}
+
             </SafeAreaView>
         </LinearGradient>
     );
@@ -249,7 +1077,7 @@ const styles = StyleSheet.create({
         borderColor: theme.dark.secondary,
         alignSelf: 'center',
         position: 'absolute',
-        top: scaleHeight(312),
+        top: scaleHeight(340),
         justifyContent: 'center'
     },
     imageStyle: {
@@ -260,7 +1088,7 @@ const styles = StyleSheet.create({
     },
     carouselContainer: {
         flex: 1,
-        backgroundColor: 'rgba(17, 17, 17, 1)'
+        //backgroundColor: 'rgba(17, 17, 17, 1)'
     },
     carouselItem: {
         width: screenWidth,
@@ -278,7 +1106,7 @@ const styles = StyleSheet.create({
     },
     overlay: {
         position: 'absolute',
-        bottom: 80,
+        top: scaleHeight(480),
         left: 20,
         right: 20,
         //alignItems: 'center',
@@ -289,7 +1117,7 @@ const styles = StyleSheet.create({
         fontFamily: fonts.fontsType.bold,
         left: 30,
         flex: 1,
-        top:10
+        top: 10
     },
     distanceText: {
         fontSize: scaleHeight(14),
@@ -305,13 +1133,14 @@ const styles = StyleSheet.create({
         marginBottom: scaleHeight(90),
     },
     iconButton: {
-        height: scaleHeight(40),
-        width: scaleWidth(40),
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: scaleWidth(40) / 2,
-        borderWidth: 2,
-        borderColor: '#ff4d4d',
+        top:scaleHeight(15)
+        // height: scaleHeight(40),
+        // width: scaleWidth(40),
+        // alignItems: 'center',
+        // justifyContent: 'center',
+        // borderRadius: scaleWidth(40) / 2,
+        // borderWidth: 2,
+        // borderColor: '#ff4d4d',
 
         //backgroundColor: 'rgba(0, 0, 0, 0.6)',
     },
@@ -326,14 +1155,15 @@ const styles = StyleSheet.create({
     },
 
     iconButton3: {
-        height: scaleHeight(40),
-        width: scaleWidth(40),
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: scaleWidth(40) / 2,
-        borderWidth: 2,
-        borderColor: '#4da6ff',
-        // backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        top:scaleHeight(15)
+        // height: scaleHeight(40),
+        // width: scaleWidth(40),
+        // alignItems: 'center',
+        // justifyContent: 'center',
+        // borderRadius: scaleWidth(40) / 2,
+        // borderWidth: 2,
+        // borderColor: '#4da6ff',
+        // // backgroundColor: 'rgba(0, 0, 0, 0.6)',
     },
     dotContainer: {
         position: 'absolute',
@@ -350,6 +1180,34 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         marginHorizontal: 5,
     },
+
+    detailContainer: {
+        padding: 30,
+        top: scaleHeight(-140)
+    },
+    profileDescription: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: scaleHeight(5)
+    },
+
+    slider: {
+        marginBottom: 15,
+    },
+
+    verticleLine: {
+        height: '60%',
+        width: 1,
+        backgroundColor: '#909090',
+        alignSelf: 'center'
+    },
+    label: {
+        fontFamily: fonts.fontsType.medium,
+        fontSize: scaleHeight(17),
+        color: theme.dark.inputLabel,
+        marginHorizontal: 8,
+        top: scaleHeight(20)
+    }
 
 });
 

@@ -5,7 +5,7 @@ import { scaleHeight, scaleWidth } from '../styles/responsive';
 import fonts from '../styles/fonts';
 import { theme } from '../assets';
 
-const CheckBox = ({ label }) => {
+const CheckBox = ({ label, labelStyle, checkBoxStyle }) => {
     const [checked, setChecked] = useState(false);
 
     const handleToggle = () => {
@@ -16,20 +16,15 @@ const CheckBox = ({ label }) => {
         <TouchableOpacity
             style={styles.mainContainer}
             onPress={handleToggle}>
-            <View style={[styles.checkbox, checked && styles.checked]}>
-                {checked && <Icon style={{alignSelf:'center'}} name="check" size={15} color={theme.dark.black} />}
+            <View style={[styles.checkbox, checked && styles.checked, checkBoxStyle]}>
+                {checked && <Icon style={{ alignSelf: 'center' }} name="check" size={15} color={theme.dark.black} />}
             </View>
-            <Text style={styles.label}>{label}</Text>
+            <Text style={[styles.label, labelStyle]}>{label}</Text>
         </TouchableOpacity>
     );
 };
 
 const styles = StyleSheet.create({
-    checkboxContainer: {
-        width: scaleWidth(30),
-        height: scaleHeight(30),
-        borderRadius: 10
-    },
     mainContainer: {
         flexDirection: 'row',
         alignItems: 'center',
