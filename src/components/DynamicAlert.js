@@ -1,12 +1,10 @@
-// DynamicAlert.js
-
 import React, { useEffect } from 'react';
 import { Dimensions, Text, StyleSheet, Image, View } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import { useAlert } from '../providers/AlertContext';
 import { success_alert_img, error_alert_img } from '../assets/images';
 import { theme } from '../assets';
-import { scaleWidth } from '../styles/responsive';
+import { scaleHeight, scaleWidth } from '../styles/responsive';
 
 const { width } = Dimensions.get('window');
 
@@ -39,20 +37,34 @@ const DynamicAlert = () => {
         }
     };
 
+    const getShadowStyle = () => {
+        switch (alert.type) {
+            case 'success':
+                return styles.successShadow;
+            case 'error':
+                return styles.errorShadow;
+            // case 'warning':
+            //     return styles.warningShadow;
+            default:
+                return {};
+        }
+    };
+
     return (
         <Animatable.View
             animation="slideInDown"
             duration={500}
-            style={[styles.container, styles[alert.type]]}
+            style={[styles.container, styles[alert.type], getShadowStyle()]}
         >
             <View style={{
-                flexDirection: 'row', alignItems: 'center',
+                flexDirection: 'row',
+                alignItems: 'center',
                 justifyContent: 'flex-start',
             }}>
                 <Image source={getImageSource()} style={styles.icon} />
                 <Text style={styles.text}>{alert.message}</Text>
             </View>
-            <Text style={styles.text}>{alert.description}</Text>
+            <Text style={[styles.text, { marginLeft: scaleWidth(30) }]}>{alert.description}</Text>
         </Animatable.View>
     );
 };
@@ -63,15 +75,12 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
         right: 0,
-        padding: width * 0.04,
-        margin: width * 0.02,
+        padding: width * 0.03,
+        margin: width * 0.04,
         borderRadius: 5,
         zIndex: 1000,
-        //flexDirection: 'row',
-        //alignItems: 'center',
-        //justifyContent: 'flex-start',
         backgroundColor: theme.dark.primary,
-        borderWidth: 0.5
+        borderWidth: 0.5,
     },
     text: {
         color: 'white',
@@ -86,17 +95,29 @@ const styles = StyleSheet.create({
     icon: {
         width: width * 0.06,
         height: width * 0.06,
+        top: scaleHeight(10)
     },
     success: {
-        //backgroundColor: '#4CAF50',
         borderColor: '#4CAF50',
     },
     error: {
-        //backgroundColor: '#F44336',
         borderColor: '#F44336',
     },
-    warning: {
-        backgroundColor: '#FFC107',
+    successShadow: {
+        shadowColor: '#4CAF50',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.8,
+        shadowRadius: 2,
+        elevation: 5,
     },
+    errorShadow: {
+        shadowColor: '#F44336',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.8,
+        shadowRadius: 2,
+        elevation: 5,
+    },
+    // Add other shadow styles as needed
 });
+
 export default DynamicAlert;

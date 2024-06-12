@@ -7,7 +7,7 @@ const Root = () => {
     return (
         <NavigationContainer>
 
-            {false ? <MainStack /> : <AuthStack />}
+            {true ? <MainStack /> : <AuthStack />}
 
         </NavigationContainer>
     );

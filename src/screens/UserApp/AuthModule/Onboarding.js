@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, Image, Animated } from 'react-native';
 import { theme } from '../../../assets';
 import { googleIcon, onboardingCurveCenter, onboardingCurveTop, onboardingLabelImg, onboardingLogo, onboarding_img } from '../../../assets/images';
 import { scaleHeight, scaleWidth } from '../../../styles/responsive';
@@ -7,12 +7,32 @@ import fonts from '../../../styles/fonts';
 import Button from '../../../components/ButtonComponent';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
+import * as Animatable from 'react-native-animatable';
 
 const Onboarding = ({ navigation }) => {
 
     const handleNavigation = () => {
         resetNavigation(navigation, SCREENS.LOGIN)
     }
+
+    const rotateAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.timing(rotateAnim, {
+            toValue: 1,
+            duration: 1000, // Duration set to 10 seconds
+            useNativeDriver: true,
+        }).start();
+    }, [rotateAnim]);
+
+    const rotateInterpolate = rotateAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['250deg', '360deg'],
+    });
+
+    const animatedStyle = {
+        transform: [{ rotate: rotateInterpolate }],
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -28,13 +48,19 @@ const Onboarding = ({ navigation }) => {
                 source={onboardingCurveCenter} />
             <View style={styles.contentConatiner}>
 
-                <Image resizeMode='contain'
-                    style={[styles.imagebg]}
+                <Animated.Image resizeMode='contain'
+                    style={[styles.imagebg, animatedStyle]}
                     source={onboarding_img} />
 
-                <Image resizeMode='contain'
-                    style={[styles.imageWithLabel]}
-                    source={onboardingLabelImg} />
+                <Animatable.View animation="fadeIn"
+                    duration={3000}
+                >
+                    <Image resizeMode='contain'
+                        style={[styles.imageWithLabel]}
+                        source={onboardingLabelImg} />
+                </Animatable.View>
+
+
 
                 <View style={styles.buttonContainer}>
                     <Button

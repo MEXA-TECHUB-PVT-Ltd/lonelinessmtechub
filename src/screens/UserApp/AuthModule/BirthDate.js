@@ -16,13 +16,23 @@ import Icon from 'react-native-vector-icons/MaterialIcons'
 import { birthdayImg } from '../../../assets/images';
 
 const BirthDate = ({ navigation }) => {
-    const [form, setForm] = useState({ birthDate: '' });
+    const [form, setForm] = useState({ day: '', month: '', year: '' });
     const [errors, setErrors] = useState({ birthDate: '' });
     const [countrySheet, setCountrySheetVisible] = useState(false);
     const [countries, setCountries] = useState([]);
 
+    const dayRef = useRef(null);
+    const monthRef = useRef(null);
+    const yearRef = useRef(null);
+
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
+
+        if (name === 'day' && value.length === 2) {
+            monthRef.current.focus();
+        } else if (name === 'month' && value.length === 2) {
+            yearRef.current.focus();
+        }
 
         let error = '';
         if (name === 'birthDate') {
@@ -45,11 +55,11 @@ const BirthDate = ({ navigation }) => {
 
 
     const handlebirthDate = () => {
-        const { birthDate } = form;
+        const { day, month, year } = form;
         let valid = true;
         let newErrors = { birthDate: '' };
 
-        if (birthDate === '') {
+        if (day === '' || month === '' || year === '') {
             newErrors.birthDate = 'Birthdate is required';
             valid = false;
         }
@@ -58,6 +68,16 @@ const BirthDate = ({ navigation }) => {
 
         if (valid) {
             // Proceed with birthDate logic
+        }
+    };
+
+    const handleKeyPress = (name, key) => {
+        if (key === 'Backspace') {
+            if (name === 'month' && form.month === '') {
+                dayRef.current.focus();
+            } else if (name === 'year' && form.year === '') {
+                monthRef.current.focus();
+            }
         }
     };
 
@@ -80,31 +100,43 @@ const BirthDate = ({ navigation }) => {
                     <View style={styles.inputContainerStyle}>
 
                         <TextInput
+                            ref={dayRef}
                             placeholder='DD'
                             placeholderTextColor={theme.dark.inputLabel}
                             maxLength={2}
                             keyboardType='number-pad'
                             style={styles.inputStyle}
+                            value={form.day}
+                            onChangeText={(value) => handleChange('day', value)}
+                            onKeyPress={({ nativeEvent }) => handleKeyPress('day', nativeEvent.key)}
                         />
 
                         <View style={styles.verticleLine}></View>
 
                         <TextInput
+                            ref={monthRef}
                             placeholder='MM'
                             placeholderTextColor={theme.dark.inputLabel}
                             maxLength={2}
                             keyboardType='number-pad'
                             style={styles.inputStyle}
+                            value={form.month}
+                            onChangeText={(value) => handleChange('month', value)}
+                            onKeyPress={({ nativeEvent }) => handleKeyPress('month', nativeEvent.key)}
                         />
 
                         <View style={styles.verticleLine}></View>
 
                         <TextInput
+                            ref={yearRef}
                             placeholder='YYYY'
                             placeholderTextColor={theme.dark.inputLabel}
                             maxLength={4}
                             keyboardType='number-pad'
                             style={styles.inputStyle}
+                            value={form.year}
+                            onChangeText={(value) => handleChange('year', value)}
+                            onKeyPress={({ nativeEvent }) => handleKeyPress('year', nativeEvent.key)}
                         />
 
                     </View>

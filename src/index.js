@@ -39,3 +39,14 @@ export { default as Home } from './screens/GeneralModules/Dashboard/Home'
 export { default as Services } from './screens/GeneralModules/Dashboard/Services'
 export { default as Chat } from './screens/GeneralModules/Dashboard/Chat'
 export { default as Profile } from './screens/GeneralModules/Dashboard/Profile'
+
+//User Dashboard Screens
+
+export { default as SendRequest } from './screens/GeneralModules/Dashboard/UserDashboard/SendRequest'
+export { default as ImageViewer } from './screens/GeneralModules/Dashboard/UserDashboard/ImageViewer'
+export { default as Rating } from './screens/GeneralModules/Dashboard/UserDashboard/Rating'
+export { default as Premium } from './screens/GeneralModules/Dashboard/UserDashboard/Premium'
+export { default as Notifications } from './screens/GeneralModules/Dashboard/UserDashboard/Notifications'
+export { default as NotificationSetting } from './screens/GeneralModules/Dashboard/UserDashboard/NotificationSetting'
+export { default as ServiceDetails } from './screens/GeneralModules/Dashboard/BuddyDashboard/ServiceDetails'
+export { default as BuddySendRequest } from './screens/GeneralModules/Dashboard/BuddyDashboard/BuddySendRequest'
