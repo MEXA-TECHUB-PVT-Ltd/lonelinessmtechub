@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     },
     errorText: {
         fontFamily: fonts.fontsType.regular,
-        fontSize: scaleHeight(12),
+        fontSize: scaleHeight(14),
         color: theme.dark.error,
         marginTop: 5,
         marginHorizontal: 8

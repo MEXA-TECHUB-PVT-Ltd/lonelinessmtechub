@@ -14,8 +14,10 @@ import { SCREENS } from '../../../../constant/constants';
 import useBackHandler from '../../../../utils/useBackHandler';
 import CustomTextInput from '../../../../components/TextInputComponent';
 import { TextInput } from 'react-native-gesture-handler';
+import { useAlert } from '../../../../providers/AlertContext';
 
 const BuddySendRequest = ({ navigation }) => {
+    const { showAlert } = useAlert();
     const [form, setForm] = useState({
         day: '',
         month: '',
@@ -55,6 +57,14 @@ const BuddySendRequest = ({ navigation }) => {
         return true;
     };
     useBackHandler(handleBackPress);
+
+    const handleButtonClick = (description) => {
+        showAlert("Success", "success", "Request send successfully")
+        setTimeout(() => {
+            resetNavigation(navigation, SCREENS.SERVICE_DETAILS)
+        }, 3000);
+
+    }
 
     const handleKeyPress = (name, key) => {
         if (key === 'Backspace') {
@@ -182,6 +192,10 @@ const BuddySendRequest = ({ navigation }) => {
                 </View>
             </View>
             <Button
+                onPress={() => {
+
+                    handleButtonClick()
+                }}
                 customStyle={{
                     marginBottom: scaleHeight(70)
                 }}

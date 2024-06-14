@@ -13,8 +13,12 @@ import ProfileProgressBar from '../../../components/ProfileProgressBar';
 import { alertLogo, mapImg, successText, success_alert_img } from '../../../assets/images';
 import { color } from '@rneui/base';
 import Modal from "react-native-modal";
+import Spinner from '../../../components/Spinner';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../../providers/AuthProvider';
 
 const EnableLocation = ({ navigation }) => {
+    const { login } = useAuth();
     const [modalVisible, setModalVisible] = useState(false);
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.YOUR_INTERESTS)
@@ -26,12 +30,30 @@ const EnableLocation = ({ navigation }) => {
         resetNavigation(navigation, SCREENS.SIGNUP)
     }
 
+    // Function to store the token and role
+    const storeUserCredentials = async (token) => {
+        try {
+            await AsyncStorage.setItem('userToken', token);
+        } catch (e) {
+            console.error('Failed to save the user credentials.', e);
+        }
+    };
+
+    const handleLogin = async () => {
+        // Assume loginApi is a function that returns a token and role on successful login
+        await storeUserCredentials('test');
+        const role = await AsyncStorage.getItem('userRole');
+        console.log('rollllllllll', role)
+        login('test', role)
+    };
+
     const showHideModal = () => {
         setModalVisible(true);
         // Hide the modal after 3 seconds
         setTimeout(() => {
             setModalVisible(false);
-            resetNavigation(navigation, SCREENS.LOGIN)
+            handleLogin();
+            // resetNavigation(navigation, SCREENS.LOGIN)
         }, 3000);
     };
 
@@ -79,11 +101,7 @@ const EnableLocation = ({ navigation }) => {
                 <Text style={styles.subTitle}>
                     {`Please wait...${'\n'}You will be directed to the homepage`}
                 </Text>
-
-
-
-
-
+                <Spinner />
             </View>
         </Modal>
     }

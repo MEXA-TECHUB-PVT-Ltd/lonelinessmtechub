@@ -3,6 +3,8 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Rating } from 'react-native-ratings';
 import fonts from '../styles/fonts';
 import { theme } from '../assets';
+import { scaleWidth } from '../styles/responsive';
+import { stars } from '../assets/images';
 
 const ReviewListItem = ({ profilePic, name, rating, comment }) => {
 
@@ -17,7 +19,20 @@ const ReviewListItem = ({ profilePic, name, rating, comment }) => {
                 <Image source={{ uri: profilePic }} style={styles.profilePic} />
                 <View style={styles.detailsContainer}>
                     <Text style={styles.name}>{name}</Text>
-                    <Rating
+
+                    <View style={{
+                        //marginTop: 10,
+                        //marginLeft:-20
+                    }}>
+                        <Image style={{
+                            height: 20,
+                            width: scaleWidth(150)
+                        }} source={stars}
+                            resizeMode='contain'
+                        />
+                    </View>
+
+                    {/* <Rating
                         type='star'
                         readonly={true}
                         startingValue={rating}
@@ -29,7 +44,7 @@ const ReviewListItem = ({ profilePic, name, rating, comment }) => {
                         ratingContainerStyle={{
                             backgroundColor:"red"
                         }}
-                    />
+                    /> */}
 
                 </View>
 
@@ -82,11 +97,12 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     name: {
-        fontSize: 18,
+        fontSize: 16,
         fontFamily: fonts.fontsType.semiBold,
         marginBottom: 5,
         // marginTop: 10,
-        color: theme.dark.white
+        color: theme.dark.white,
+        marginLeft:-65
     },
     comment: {
         fontSize: 14,

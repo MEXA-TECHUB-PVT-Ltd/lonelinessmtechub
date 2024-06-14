@@ -22,6 +22,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginVertical: 4,
+        marginHorizontal:10
     },
     detailLabel: {
         fontSize: scaleHeight(16),

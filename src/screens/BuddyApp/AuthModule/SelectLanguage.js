@@ -16,21 +16,44 @@ import CheckBox from '../../../components/CheckboxComponent';
 const SelectLanguage = ({ navigation }) => {
     const languages = [
         {
-            name: "Endlish",
+            name: "English",
         },
         {
-            name: "Urdu",
+            name: "Spanish",
         },
         {
-            name: "Sindhi",
+            name: "Chinese",
         }
         ,
         {
-            name: "Balochi",
+            name: "French",
         }
         ,
         {
-            name: "Punjabi",
+            name: "German",
+        },
+
+        {
+            name: "Japanese",
+        },
+
+        {
+            name: "Korean",
+        }
+        ,
+
+        {
+            name: "Italian",
+        }
+        ,
+
+        {
+            name: "Portuguese",
+        }
+        ,
+
+        {
+            name: "Russian",
         }
     ]
 
@@ -91,7 +114,7 @@ const SelectLanguage = ({ navigation }) => {
                 <Text style={styles.subTitle}>
                     Pick the language that suits you best!
                 </Text>
-                
+
 
                 <View style={{
                     flexDirection: 'row',
@@ -152,6 +175,9 @@ const SelectLanguage = ({ navigation }) => {
                             resetNavigation(navigation, SCREENS.BUDDY_YOUR_INTERESTS)
                         }}
                         title={'Continue'}
+                        customStyle={{
+                            width: '100%'
+                        }}
                     />
                 </View>
 

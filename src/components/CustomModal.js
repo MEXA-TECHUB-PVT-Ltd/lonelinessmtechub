@@ -5,7 +5,6 @@ import Button from './ButtonComponent';
 import { theme } from '../assets';
 import fonts from '../styles/fonts';
 import { scaleHeight, scaleWidth } from '../styles/responsive';
-import { color } from '@rneui/base';
 
 const CustomModal = ({
     isVisible,
@@ -62,7 +61,7 @@ const CustomModal = ({
                 )}
 
                 {
-                    isParallelButton  && <View style={{ flexDirection: 'row', marginTop: scaleHeight(20) }}>
+                    isParallelButton && <View style={{ flexDirection: 'row', marginTop: scaleHeight(10), }}>
                         <Button
                             title={parallelButtonText1}
                             onPress={parallelButtonPress1}
@@ -72,6 +71,7 @@ const CustomModal = ({
                                 backgroundColor: theme.dark.transparentBg,
                                 borderWidth: 1,
                                 borderColor: theme.dark.secondary,
+                                marginBottom:scaleHeight(0)
                             }}
                             textCustomStyle={{
                                 color: theme.dark.secondary
@@ -82,7 +82,8 @@ const CustomModal = ({
                             title={parallelButtonText2}
                             onPress={parallelButtonPress2}
                             customStyle={{
-                                width: '48%'
+                                width: '48%',
+                                marginBottom:scaleHeight(0)
                             }}
                         />
                     </View>
@@ -96,17 +97,18 @@ const styles = StyleSheet.create({
     modalContainer: {
         backgroundColor: '#111111',
         width: '90%',
-        height: '50%',
+        // height: '50%',
         alignSelf: 'center',
         borderRadius: 20,
         elevation: 20,
         padding: 20,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
     },
     image: {
         width: 120,
         height: 120,
+        marginTop: scaleHeight(-30)
     },
     text: {
         color: theme.dark.inputLabel,
@@ -123,7 +125,7 @@ const styles = StyleSheet.create({
         fontSize: scaleHeight(20),
         alignSelf: 'center',
         textAlign: 'center',
-
+        marginTop: scaleHeight(-15)
     },
 });
 

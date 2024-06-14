@@ -12,6 +12,7 @@ import Button from '../../components/ButtonComponent';
 import { resetNavigation } from '../../utils/resetNavigation';
 import { SCREENS } from '../../constant/constants';
 import Icon from 'react-native-vector-icons/MaterialIcons'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RoleSelector = ({ navigation }) => {
     const items = [{
@@ -24,6 +25,20 @@ const RoleSelector = ({ navigation }) => {
     const [selectedItem, setSelectedItem] = useState(null);
 
 
+    // Function to store the token and role
+    const storeUserCredentials = async (role) => {
+        try {
+            await AsyncStorage.setItem('userRole', role);
+        } catch (e) {
+            console.error('Failed to save the user credentials.', e);
+        }
+    };
+
+    const handleLogin = async () => {
+        console.log('selectedItem', selectedItem)
+        // Assume loginApi is a function that returns a token and role on successful login
+        await storeUserCredentials(selectedItem);
+    };
 
     return (
         <SafeAreaView style={styles.mainContainer}>
@@ -48,7 +63,7 @@ const RoleSelector = ({ navigation }) => {
                 source={onboardingCurveCenter} />
 
             <View style={{
-                marginTop: scaleHeight(120),
+                marginTop: scaleHeight(50),
                 flex: 1
             }}>
 
@@ -108,8 +123,10 @@ const RoleSelector = ({ navigation }) => {
                 onPress={() => {
                     if (selectedItem === 'Buddy Finder') {
                         resetNavigation(navigation, SCREENS.SIGNUP)
+                        handleLogin()
                     } else {
                         resetNavigation(navigation, SCREENS.BUDDY_SIGNUP)
+                        handleLogin()
                     }
 
                 }}
