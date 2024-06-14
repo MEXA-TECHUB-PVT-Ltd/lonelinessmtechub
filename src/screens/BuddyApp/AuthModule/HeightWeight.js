@@ -18,6 +18,10 @@ import DynamicOptionSelector from '../../../components/DynamicOptionSelector';
 const HeightWeight = ({ navigation }) => {
   const gender = ["Male", "Female", "Prefer not to say"]
   const [selectedGender, setSelectedGender] = useState(null);
+  const [hieghtFtSelected, setHeightFtSelected] = useState(true);
+  const [hieghtInSelected, setHeightInSelected] = useState(false);
+  const [weightKgSelected, setWeightKgSelected] = useState(true);
+  const [weightLbSelected, setWeightLbSelected] = useState(false);
 
   const handleBackPress = () => {
     resetNavigation(navigation, SCREENS.BUDDY_GENDER_SELECTION)
@@ -32,6 +36,26 @@ const HeightWeight = ({ navigation }) => {
   const handleItemSelected = (item) => {
     console.log(item)
     setSelectedGender(item);
+  };
+
+  const handleToggleFt = () => {
+    setHeightFtSelected(true);
+    setHeightInSelected(false);
+  };
+
+  const handleToggleInches = () => {
+    setHeightFtSelected(false);
+    setHeightInSelected(true);
+  };
+
+  const handleToggleKg = () => {
+    setWeightKgSelected(true);
+    setWeightLbSelected(false);
+  };
+
+  const handleToggleLb = () => {
+    setWeightKgSelected(false);
+    setWeightLbSelected(true);
   };
 
   return (
@@ -110,8 +134,11 @@ const HeightWeight = ({ navigation }) => {
               }}>
 
                 <TouchableOpacity
+                  onPress={() => {
+                    handleToggleFt();
+                  }}
                   style={{
-                    backgroundColor: theme.dark.secondary,
+                    backgroundColor: hieghtFtSelected ? theme.dark.secondary : '#333333',
                     width: scaleWidth(35),
                     height: '100%',
                     alignSelf: 'center',
@@ -124,15 +151,18 @@ const HeightWeight = ({ navigation }) => {
                   <Text style={{
                     fontFamily: fonts.fontsType.medium,
                     fontSize: scaleHeight(12),
-                    color: theme.dark.black,
+                    color: hieghtFtSelected ? theme.dark.black : theme.dark.white,
                     alignSelf: 'center'
 
                   }}>Ft</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
+                  onPress={() => {
+                    handleToggleInches();
+                  }}
                   style={{
-                    backgroundColor: '#333333',
+                    backgroundColor: hieghtInSelected ? theme.dark.secondary : '#333333',
                     width: scaleWidth(35),
                     height: '100%',
                     alignSelf: 'center',
@@ -145,7 +175,7 @@ const HeightWeight = ({ navigation }) => {
                   <Text style={{
                     fontFamily: fonts.fontsType.medium,
                     fontSize: scaleHeight(12),
-                    color: theme.dark.white,
+                    color: hieghtInSelected ? theme.dark.black : theme.dark.white,
                     alignSelf: 'center'
 
                   }}>In</Text>
@@ -216,8 +246,11 @@ const HeightWeight = ({ navigation }) => {
               }}>
 
                 <TouchableOpacity
+                  onPress={() => {
+                    handleToggleKg();
+                  }}
                   style={{
-                    backgroundColor: theme.dark.secondary,
+                    backgroundColor: weightKgSelected ? theme.dark.secondary : '#333333',
                     width: scaleWidth(35),
                     height: '100%',
                     alignSelf: 'center',
@@ -230,15 +263,18 @@ const HeightWeight = ({ navigation }) => {
                   <Text style={{
                     fontFamily: fonts.fontsType.medium,
                     fontSize: scaleHeight(12),
-                    color: theme.dark.black,
+                    color: weightKgSelected ? theme.dark.black : theme.dark.white,
                     alignSelf: 'center'
 
                   }}>Kg</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
+                  onPress={() => {
+                    handleToggleLb();
+                  }}
                   style={{
-                    backgroundColor: '#333333',
+                    backgroundColor: weightLbSelected ? theme.dark.secondary : '#333333',
                     width: scaleWidth(35),
                     height: '100%',
                     alignSelf: 'center',
@@ -251,7 +287,7 @@ const HeightWeight = ({ navigation }) => {
                   <Text style={{
                     fontFamily: fonts.fontsType.medium,
                     fontSize: scaleHeight(12),
-                    color: theme.dark.white,
+                    color: weightLbSelected ? theme.dark.black : theme.dark.white,
                     alignSelf: 'center'
 
                   }}>Lb</Text>

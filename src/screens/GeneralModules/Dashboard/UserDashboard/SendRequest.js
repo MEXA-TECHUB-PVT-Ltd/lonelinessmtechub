@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, TextInput } from 'react-native';
 import { SCREENS } from '../../../../constant/constants';
 import CustomLayout from '../../../../components/CustomLayout';
 import fonts from '../../../../styles/fonts';
@@ -7,14 +7,13 @@ import { scaleHeight } from '../../../../styles/responsive';
 import HorizontalDivider from '../../../../components/HorizontalDivider';
 import Button from '../../../../components/ButtonComponent';
 import Icon from 'react-native-vector-icons/MaterialIcons'
-
 import { theme } from '../../../../assets';
 import useBackHandler from '../../../../utils/useBackHandler';
 import { resetNavigation } from '../../../../utils/resetNavigation';
 import CategoryList from '../../../../components/CategoryList';
 import { bellHome, filterHome, homeLogo, likeHome } from '../../../../assets/images';
-import { TextInput } from 'react-native-gesture-handler';
 import CustomTextInput from '../../../../components/TextInputComponent';
+import { useAlert } from '../../../../providers/AlertContext';
 
 const categories = [
     { id: '1', text: 'Date', image: bellHome },
@@ -24,6 +23,7 @@ const categories = [
 ];
 
 const SendRequest = ({ navigation }) => {
+    const { showAlert } = useAlert();
     const [form, setForm] = useState({ day: '', month: '', year: '' });
     const [errors, setErrors] = useState({ birthDate: '' });
 
@@ -69,6 +69,15 @@ const SendRequest = ({ navigation }) => {
             }
         }
     };
+
+    const handleButtonClick = () => {
+        showAlert("Success", "success", "Request send successfully")
+        setTimeout(() => {
+            resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
+        }, 3000);
+
+    }
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -213,11 +222,11 @@ const SendRequest = ({ navigation }) => {
                         }} />
                     <Button
                         onPress={() => {
-
+                            handleButtonClick();
                         }}
                         title={'Send Request'}
                         customStyle={{
-                            marginBottom:scaleHeight(20)
+                            marginBottom: scaleHeight(20)
                         }}
                     />
                 </View>

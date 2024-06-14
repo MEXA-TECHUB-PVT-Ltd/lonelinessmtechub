@@ -26,7 +26,8 @@ const styles = {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 10,
-        marginTop: 15
+        marginTop: 15,
+        marginBottom:10
 
     },
     backButton: {

@@ -42,5 +42,11 @@ export const SCREENS = {
     NOTIFICATION_SETTING: "NotificationSettingScreen",
     SEARCH_FILTER: "SearchFilterScreen",
     SERVICE_DETAILS: "ServiceDetails",
-    BUDDY_SEND_REQUEST: "BuddySendRequest"
+    BUDDY_SEND_REQUEST: "BuddySendRequest",
+    SEARCH_SERVICES: "SearchServicesScreen",
+    USER_SERVICE_DETAIL: "UserServiceDetails",
+    REPORT_BUDDY: "ReportBuddyScreen",
+    BUDDY_SERVICE_DETAIL: "BuddyServiceDetails",
+    PAYMENT_CANCELLATION: "PaymentCancellationScreen",
+    GENERAL_CHAT: "GeneralChatScreen",
 };

@@ -5,6 +5,7 @@ import { useAlert } from '../providers/AlertContext';
 import { success_alert_img, error_alert_img } from '../assets/images';
 import { theme } from '../assets';
 import { scaleHeight, scaleWidth } from '../styles/responsive';
+import fonts from '../styles/fonts';
 
 const { width } = Dimensions.get('window');
 
@@ -62,9 +63,11 @@ const DynamicAlert = () => {
                 justifyContent: 'flex-start',
             }}>
                 <Image source={getImageSource()} style={styles.icon} />
-                <Text style={styles.text}>{alert.message}</Text>
+                <Text style={[styles.text, {
+                    color: alert.type === 'success' ? "#4CAF50" : "#F44336"
+                }]}>{alert.message}</Text>
             </View>
-            <Text style={[styles.text, { marginLeft: scaleWidth(30) }]}>{alert.description}</Text>
+            <Text style={[styles.descriptionText, { marginLeft: scaleWidth(30) }]}>{alert.description}</Text>
         </Animatable.View>
     );
 };
@@ -80,16 +83,18 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         zIndex: 1000,
         backgroundColor: theme.dark.primary,
-        borderWidth: 0.5,
+        borderWidth: 1.5,
     },
     text: {
+        fontFamily:fonts.fontsType.bold,
         color: 'white',
         fontSize: width * 0.04,
         marginLeft: width * 0.02,
     },
     descriptionText: {
-        color: 'white',
-        fontSize: width * 0.02,
+        fontFamily:fonts.fontsType.regular,
+        color: theme.dark.inputLabel,
+        fontSize: width * 0.04,
         marginLeft: width * 0.02,
     },
     icon: {

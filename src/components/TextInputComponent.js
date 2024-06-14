@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
         fontFamily: fonts.fontsType.medium,
         fontSize: scaleHeight(17),
         color: theme.dark.inputLabel,
-        marginHorizontal: 8,
+        marginHorizontal: 10,
         top: 10
     }
 });

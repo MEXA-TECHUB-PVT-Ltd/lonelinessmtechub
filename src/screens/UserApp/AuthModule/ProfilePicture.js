@@ -18,8 +18,11 @@ import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { requestCameraPermission } from '../../../utils/cameraPermission';
 import Modal from "react-native-modal";
+import { editImage } from '../../../assets/images';
+import { useAlert } from '../../../providers/AlertContext';
 
 const ProfilePicture = ({ navigation }) => {
+    const { showAlert } = useAlert();
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedImage, setSelectedImage] = useState('');
 
@@ -244,18 +247,26 @@ const ProfilePicture = ({ navigation }) => {
                             }
 
 
+                            {
+                                !selectedImage ? <Icon
+                                    onPress={() => {
+                                        setModalVisible(true);
+                                    }}
+                                    size={24}
+                                    color={theme.dark.secondary}
+                                    name='plus-circle' style={{
+                                        position: 'absolute',
+                                        bottom: -2,
+                                        right: 12
+                                    }} />
 
-                            <Icon
-                                onPress={() => {
-                                    setModalVisible(true);
-                                }}
-                                size={24}
-                                color={theme.dark.secondary}
-                                name='plus-circle' style={{
-                                    position: 'absolute',
-                                    bottom: -2,
-                                    right: 12
-                                }} />
+                                    : <Image source={editImage} style={[{
+                                        width: scaleWidth(40), height: scaleHeight(40), position: 'absolute',
+                                        bottom: -10,
+                                        right: 8
+                                    }]} />
+
+                            }
 
                         </TouchableOpacity>
 
@@ -273,7 +284,12 @@ const ProfilePicture = ({ navigation }) => {
                     <Button
                         onPress={() => {
                             //handleProfilePicture();
-                            resetNavigation(navigation, SCREENS.ABOUT)
+
+                            if (selectedImage) {
+                                resetNavigation(navigation, SCREENS.ABOUT)
+                            } else {
+                                showAlert("Error", "error", "Add at least 1 photo to continue.")
+                            }
                         }}
                         title={'Continue'}
                         customStyle={{ backgroundColor: !selectedImage ? '#E7E7E7' : theme.dark.secondary }}

@@ -48,9 +48,16 @@ const Onboarding = ({ navigation }) => {
                 source={onboardingCurveCenter} />
             <View style={styles.contentConatiner}>
 
-                <Animated.Image resizeMode='contain'
-                    style={[styles.imagebg, animatedStyle]}
-                    source={onboarding_img} />
+                <Animatable.View
+                    animation="slideInDown"
+                    duration={2500}
+                >
+                    <Image resizeMode='contain'
+                        style={[styles.imagebg]}
+                        source={onboarding_img} />
+                </Animatable.View>
+
+
 
                 <Animatable.View animation="fadeIn"
                     duration={3000}

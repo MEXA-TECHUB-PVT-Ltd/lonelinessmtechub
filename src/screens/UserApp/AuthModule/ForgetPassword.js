@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
@@ -16,7 +16,7 @@ import EmailIcon from 'react-native-vector-icons/Zocial'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 
 const ForgetPassword = ({ navigation }) => {
-
+    const [form, setForm] = useState({ email: '' });
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.LOGIN)
         return true;
@@ -26,6 +26,10 @@ const ForgetPassword = ({ navigation }) => {
     const handleVerifyEmailNavigation = () => {
         resetNavigation(navigation, SCREENS.VERIFY_EMAIL)
     }
+
+    const handleChange = (name, value) => {
+        setForm({ ...form, [name]: value });
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -49,6 +53,8 @@ const ForgetPassword = ({ navigation }) => {
                     <CustomTextInput
                         label={'Email Address'}
                         mainContainer={{ marginTop: scaleHeight(70) }}
+                        value={form.newPassword}
+                        onValueChange={(value) => handleChange('newPassword', value)}
                         leftIcon={<EmailIcon
                             style={{
                                 marginHorizontal: 8

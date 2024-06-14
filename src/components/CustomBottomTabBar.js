@@ -3,12 +3,14 @@ import { View, TouchableOpacity, StyleSheet, Text, Image, Platform } from 'react
 import fonts from '../styles/fonts';
 import { theme } from '../assets';
 import { scaleHeight } from '../styles/responsive';
+import { useAuth } from '../providers/AuthProvider';
 
 const CustomBottomTabBar = ({ state, descriptors, navigation, icons, chatBadgeCount }) => {
     const { routes } = state;
+    const { isLoggedIn, userRole } = useAuth();
 
     return (
-        <View style={styles.tabContainer}>
+        <View style={[styles.tabContainer, { backgroundColor: userRole === 'Buddy Finder' ? '#4C4615' : theme.dark.primary, }]}>
             {routes.map((route, index) => {
                 const { options } = descriptors[route.key];
                 const label = options.title !== undefined ? options.title : route.name;
@@ -62,9 +64,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        backgroundColor: '#4C4615', 
+        backgroundColor: '#4C4615',
         height: Platform.OS === 'ios' ? 80 : 56,
-        paddingBottom: Platform.OS === 'ios' ? 15 : 0, 
+        paddingBottom: Platform.OS === 'ios' ? 15 : 0,
         // shadowOpacity: 0.05,
         // elevation: 4,
     },

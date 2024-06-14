@@ -17,8 +17,12 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
 import Modal from "react-native-modal";
 import { alertLogo, successText } from '../../../assets/images';
+import Spinner from '../../../components/Spinner';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../../providers/AuthProvider';
 
 const AddLocation = ({ navigation }) => {
+    const { login } = useAuth();
     const [modalVisible, setModalVisible] = useState(false);
     const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' });
     const [errors, setErrors] = useState({ email: '', password: '', confirmPassword: '' });
@@ -111,12 +115,31 @@ const AddLocation = ({ navigation }) => {
         }
     };
 
+    // Function to store the token and role
+    const storeUserCredentials = async (token) => {
+        try {
+            await AsyncStorage.setItem('userToken', token);
+        } catch (e) {
+            console.error('Failed to save the user credentials.', e);
+        }
+    };
+
+    const handleLogin = async () => {
+        // Assume loginApi is a function that returns a token and role on successful login
+        await storeUserCredentials('test');
+        const role = await AsyncStorage.getItem('userRole');
+        console.log('rollllllllll', role)
+        login('test', role)
+    };
+
     const showHideModal = () => {
         setModalVisible(true);
         // Hide the modal after 3 seconds
         setTimeout(() => {
             setModalVisible(false);
-            resetNavigation(navigation, SCREENS.LOGIN)
+            handleLogin();
+
+            //resetNavigation(navigation, SCREENS.LOGIN)
         }, 3000);
     };
 
@@ -138,7 +161,9 @@ const AddLocation = ({ navigation }) => {
                 alignSelf: 'center',
                 borderRadius: 20,
                 elevation: 20,
-                padding: 20
+                padding: 20,
+                alignItems: 'center',
+                justifyContent: 'center'
             }}>
 
                 <Image
@@ -164,14 +189,14 @@ const AddLocation = ({ navigation }) => {
                 <Text style={styles.subTitle}>
                     {`Please wait...${'\n'}You will be directed to the homepage`}
                 </Text>
-
-
-
-
-
+                <Spinner />
             </View>
         </Modal>
     }
+
+
+
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -282,7 +307,8 @@ const styles = StyleSheet.create({
         fontFamily: fonts.fontsType.regular,
         fontSize: scaleHeight(14),
         color: theme.dark.heading,
-        marginTop: 5
+        marginTop: 5,
+        alignSelf: 'center'
     },
     forgetText: {
         fontFamily: fonts.fontsType.semiBold,

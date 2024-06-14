@@ -5,9 +5,11 @@ import DynamicAlert from './src/components/DynamicAlert';
 import { useAlert } from './src/providers/AlertContext';
 import { theme } from './src/assets';
 import Root from './src/navigations/Root';
+import { AuthProvider } from './src/providers/AuthProvider';
 
 const App = () => {
   return (
+    <AuthProvider>
     <AlertProvider>
       <View style={styles.container}>
         <StatusBar backgroundColor={theme.dark.background} />
@@ -15,6 +17,7 @@ const App = () => {
         <DynamicAlert />
       </View>
     </AlertProvider>
+    </AuthProvider>
   );
 };
 

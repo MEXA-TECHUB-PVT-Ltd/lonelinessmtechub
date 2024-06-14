@@ -17,8 +17,11 @@ import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { requestCameraPermission } from '../../../utils/cameraPermission';
 import Modal from "react-native-modal";
+import { editImage } from '../../../assets/images';
+import { useAlert } from '../../../providers/AlertContext';
 
 const BuddyProfilePicture = ({ navigation }) => {
+    const { showAlert } = useAlert();
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedImage, setSelectedImage] = useState('');
 
@@ -236,13 +239,16 @@ const BuddyProfilePicture = ({ navigation }) => {
 
 
 
-                            <Icon
+                            {!selectedImage ? <Icon
                                 onPress={() => {
                                     setModalVisible(true);
                                 }}
                                 size={24}
                                 color={theme.dark.secondary}
                                 name='plus-circle' style={styles.plusButton} />
+                                :
+                                <Image source={editImage} style={[styles.plusButton, { width: scaleWidth(40), height: scaleHeight(40), bottom: 0, right: 0 }]} />
+                            }
 
                         </TouchableOpacity>
 
@@ -263,13 +269,16 @@ const BuddyProfilePicture = ({ navigation }) => {
 
 
 
-                            <Icon
+                            {!selectedImage ? <Icon
                                 onPress={() => {
                                     setModalVisible(true);
                                 }}
                                 size={24}
                                 color={theme.dark.secondary}
                                 name='plus-circle' style={styles.plusButton} />
+                                :
+                                <Image source={editImage} style={[styles.plusButton, { width: scaleWidth(40), height: scaleHeight(40), bottom: 0, right: 0 }]} />
+                            }
 
                         </TouchableOpacity>
 
@@ -291,13 +300,16 @@ const BuddyProfilePicture = ({ navigation }) => {
 
 
 
-                            <Icon
+                            {!selectedImage ? <Icon
                                 onPress={() => {
                                     setModalVisible(true);
                                 }}
                                 size={24}
                                 color={theme.dark.secondary}
                                 name='plus-circle' style={styles.plusButton} />
+                                :
+                                <Image source={editImage} style={[styles.plusButton, { width: scaleWidth(40), height: scaleHeight(40), bottom: 0, right: 0 }]} />
+                            }
 
                         </TouchableOpacity>
 
@@ -315,7 +327,12 @@ const BuddyProfilePicture = ({ navigation }) => {
                     <Button
                         onPress={() => {
                             //handleBuddyProfilePicture();
-                            resetNavigation(navigation, SCREENS.BUDDY_ABOUT)
+                            if (selectedImage) {
+                                resetNavigation(navigation, SCREENS.BUDDY_ABOUT)
+                            } else {
+                                showAlert("Error", "error", "Add at least 1 photo to continue.")
+                            }
+
                         }}
                         title={'Continue'}
                         customStyle={{ backgroundColor: !selectedImage ? '#E7E7E7' : theme.dark.secondary }}

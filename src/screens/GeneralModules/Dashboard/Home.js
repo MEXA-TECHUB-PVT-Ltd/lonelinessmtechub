@@ -36,6 +36,10 @@ import CustomRangeSlider from '../../../components/CustomSlider';
 import CheckBox from '../../../components/CheckboxComponent';
 import CustomTextInput from '../../../components/TextInputComponent';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import BuddyHomeContent from './BuddyDashboard/BuddyHomeContent';
+import UserHomeContent from './UserDashboard/UserHomeContent';
+import { useAuth } from '../../../providers/AuthProvider';
+import Spinner from '../../../components/Spinner';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -48,16 +52,23 @@ const categories = [
 
 const Home = ({ navigation }) => {
     const lottieRef = useRef(null);
+    const { isLoggedIn, userRole, logout } = useAuth();
     const [showCarousel, setShowCarousel] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
     const [min, setMin] = useState(20);
     const [max, setMax] = useState(80);
     const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' });
 
+    const [hieghtFtSelected, setHeightFtSelected] = useState(true);
+    const [hieghtInSelected, setHeightInSelected] = useState(false);
+    const [weightKgSelected, setWeightKgSelected] = useState(true);
+    const [weightLbSelected, setWeightLbSelected] = useState(false);
+
     const [modalVisible1, setModalVisible1] = useState(false);
     const [modalVisible2, setModalVisible2] = useState(false);
     const [modalVisible3, setModalVisible3] = useState(false);
     const [showFilterModal, setFilterModal] = useState(false);
+    const [loader, setLoader] = useState(false);
 
     const scrollOffsetY = useRef(0);
     const [scrollDirection, setScrollDirection] = useState(null);
@@ -91,6 +102,26 @@ const Home = ({ navigation }) => {
 
     const handleCloseModal3 = () => {
         setModalVisible3(false);
+    };
+
+    const handleToggleFt = () => {
+        setHeightFtSelected(true);
+        setHeightInSelected(false);
+    };
+
+    const handleToggleInches = () => {
+        setHeightFtSelected(false);
+        setHeightInSelected(true);
+    };
+
+    const handleToggleKg = () => {
+        setWeightKgSelected(true);
+        setWeightLbSelected(false);
+    };
+
+    const handleToggleLb = () => {
+        setWeightKgSelected(false);
+        setWeightLbSelected(true);
     };
 
     const images = [
@@ -128,6 +159,8 @@ const Home = ({ navigation }) => {
     );
 
     const onChange = (min, max) => {
+        setMin(min)
+        setMax(Math.round(max))
         console.log('Max: ', max);
         console.log('Min: ', min);
     };
@@ -135,6 +168,19 @@ const Home = ({ navigation }) => {
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
     };
+
+    let loaderTimeout;
+
+    // Function to set loader to true
+    function setLoaderTrue() {
+        setLoader(true); // Replace setLoader with your actual function to set loader state
+        loaderTimeout = setTimeout(setLoaderFalse, 3000); // Set timeout for 3 seconds
+    }
+
+    // Function to set loader to false
+    function setLoaderFalse() {
+        setLoader(false); // Replace setLoader with your actual function to set loader state
+    }
 
     const renderFilterModal = () => {
         return <Modal
@@ -386,8 +432,11 @@ const Home = ({ navigation }) => {
                             }}>
 
                                 <TouchableOpacity
+                                    onPress={() => {
+                                        handleToggleFt();
+                                    }}
                                     style={{
-                                        backgroundColor: theme.dark.secondary,
+                                        backgroundColor: hieghtFtSelected ? theme.dark.secondary : '#333333',
                                         width: scaleWidth(35),
                                         height: '100%',
                                         alignSelf: 'center',
@@ -400,15 +449,18 @@ const Home = ({ navigation }) => {
                                     <Text style={{
                                         fontFamily: fonts.fontsType.medium,
                                         fontSize: scaleHeight(12),
-                                        color: theme.dark.black,
+                                        color: hieghtFtSelected ? theme.dark.black : theme.dark.white,
                                         alignSelf: 'center'
 
                                     }}>Ft</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
+                                    onPress={() => {
+                                        handleToggleInches();
+                                    }}
                                     style={{
-                                        backgroundColor: '#333333',
+                                        backgroundColor: hieghtInSelected ? theme.dark.secondary : '#333333',
                                         width: scaleWidth(35),
                                         height: '100%',
                                         alignSelf: 'center',
@@ -421,7 +473,7 @@ const Home = ({ navigation }) => {
                                     <Text style={{
                                         fontFamily: fonts.fontsType.medium,
                                         fontSize: scaleHeight(12),
-                                        color: theme.dark.white,
+                                        color: hieghtInSelected ? theme.dark.black : theme.dark.white,
                                         alignSelf: 'center'
 
                                     }}>In</Text>
@@ -492,8 +544,11 @@ const Home = ({ navigation }) => {
                             }}>
 
                                 <TouchableOpacity
+                                    onPress={() => {
+                                        handleToggleKg();
+                                    }}
                                     style={{
-                                        backgroundColor: theme.dark.secondary,
+                                        backgroundColor: weightKgSelected ? theme.dark.secondary : '#333333',
                                         width: scaleWidth(35),
                                         height: '100%',
                                         alignSelf: 'center',
@@ -506,15 +561,18 @@ const Home = ({ navigation }) => {
                                     <Text style={{
                                         fontFamily: fonts.fontsType.medium,
                                         fontSize: scaleHeight(12),
-                                        color: theme.dark.black,
+                                        color: weightKgSelected ? theme.dark.black : theme.dark.white,
                                         alignSelf: 'center'
 
                                     }}>Kg</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
+                                    onPress={() => {
+                                        handleToggleLb();
+                                    }}
                                     style={{
-                                        backgroundColor: '#333333',
+                                        backgroundColor: weightLbSelected ? theme.dark.secondary : '#333333',
                                         width: scaleWidth(35),
                                         height: '100%',
                                         alignSelf: 'center',
@@ -527,7 +585,7 @@ const Home = ({ navigation }) => {
                                     <Text style={{
                                         fontFamily: fonts.fontsType.medium,
                                         fontSize: scaleHeight(12),
-                                        color: theme.dark.white,
+                                        color: weightLbSelected ? theme.dark.black : theme.dark.white,
                                         alignSelf: 'center'
 
                                     }}>Lb</Text>
@@ -602,9 +660,15 @@ const Home = ({ navigation }) => {
 
                         />
 
-                        <Button title={"Apply"} customStyle={{
-                            width: '48%',
-                        }} />
+                        <Button
+                            onPress={() => {
+                                setLoaderTrue();
+                                setFilterModal(false)
+                            }}
+                            title={"Apply"}
+                            customStyle={{
+                                width: '48%',
+                            }} />
 
                     </View>
 
@@ -628,17 +692,19 @@ const Home = ({ navigation }) => {
         }
     };
 
+
     return (
-        <LinearGradient
-            colors={[theme.dark.primary, '#4C4615', '#4C4615']}
-            locations={[0.19, 0.7, 0.7]}
-            style={styles.gradient}
-        >
-            <SafeAreaView style={styles.container}>
-                <View style={{
-                    marginTop: scaleHeight(10),
-                    flexDirection: 'row',
-                    justifyContent: 'space-evenly'
+
+
+        <SafeAreaView style={styles.container}>
+
+            <View style={{
+                marginTop: scaleHeight(10),
+                flexDirection: 'row',
+                justifyContent: 'space-evenly',
+            }}>
+                <TouchableOpacity onPress={() => {
+                    logout();
                 }}>
                     <Image source={homeLogo} style={{
                         width: scaleWidth(35),
@@ -646,403 +712,68 @@ const Home = ({ navigation }) => {
                         alignSelf: 'center',
 
                     }} />
+                </TouchableOpacity>
 
-                    <Image source={labelHome} style={{
-                        width: scaleWidth(130),
+                <Image source={labelHome} style={{
+                    width: scaleWidth(130),
+                    height: scaleHeight(27),
+                    alignSelf: 'center',
+
+                }} />
+
+                <TouchableOpacity style={{
+                    justifyContent: 'center'
+                }} onPress={() => {
+                    resetNavigation(navigation, SCREENS.NOTIFICATION)
+                }}>
+                    <Image source={bellHome} style={{
+                        width: scaleWidth(27),
+                        height: scaleHeight(27),
+                        alignSelf: 'center',
+                        right: scaleWidth(-20),
+
+                    }} />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={{
+                    justifyContent: 'center'
+                }} onPress={() => {
+                    setFilterModal(true)
+                }}>
+                    <Image source={filterHome} style={{
+                        width: scaleWidth(27),
                         height: scaleHeight(27),
                         alignSelf: 'center',
 
                     }} />
+                </TouchableOpacity>
 
-                    <TouchableOpacity style={{
-                        justifyContent: 'center'
-                    }} onPress={() => {
-                        resetNavigation(navigation, SCREENS.NOTIFICATION)
-                    }}>
-                        <Image source={bellHome} style={{
-                            width: scaleWidth(27),
-                            height: scaleHeight(27),
-                            alignSelf: 'center',
-                            right: scaleWidth(-20),
+            </View>
 
-                        }} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={{
-                        justifyContent: 'center'
-                    }} onPress={() => {
-                        setFilterModal(true)
-                    }}>
-                        <Image source={filterHome} style={{
-                            width: scaleWidth(27),
-                            height: scaleHeight(27),
-                            alignSelf: 'center',
-
-                        }} />
-                    </TouchableOpacity>
-
-
-
-                </View>
-                {!showCarousel ? (
-                    <>
-                        <LottieView
-                            ref={lottieRef}
-                            style={styles.lottieView}
-                            source={require('../../../assets/ripple_lottie.json')}
-                            autoPlay
-                            loop
-                            speed={0.5}
-                        />
-                        <View style={styles.imageCircle}>
-                            <Image
-                                style={styles.imageStyle}
-                                resizeMode='cover'
-                                source={dummyImg}
-                            />
-                        </View>
-                    </>
-                ) : (
-                    <ScrollView
-                        onScroll={handleScroll}
-                        scrollEventThrottle={1}
-                        style={[styles.carouselContainer, { backgroundColor: getBackgroundColor() }]}>
-                        <FlatList
-                            data={images}
-                            horizontal
-                            pagingEnabled
-                            showsHorizontalScrollIndicator={false}
-                            onScroll={(e) => {
-                                const index = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
-                                setActiveIndex(index);
-                            }}
-                            renderItem={renderItem}
-                            keyExtractor={(item, index) => index.toString()}
-                        />
-
-
-                        <View style={styles.dotContainer}>
-                            {images.map((_, index) => (
-                                <View
-                                    key={index}
-                                    style={[
-                                        styles.dot,
-                                        { backgroundColor: index === activeIndex ? theme.dark.secondary : 'rgba(17, 17, 17, 1)' },
-                                    ]}
-                                />
-                            ))}
-                        </View>
-
-                        <View style={styles.overlay}>
-                            <View style={{ flexDirection: 'row' }}>
-                                <Text style={styles.nameText}>Olivia (24)</Text>
-                                <TouchableOpacity onPress={() => {
-                                    handleOpenModal2();
-                                }}>
-                                    <Image source={chatHome} style={{
-                                        width: scaleWidth(50),
-                                        height: scaleHeight(50),
-                                        alignSelf: 'center',
-                                        marginEnd: 20,
-                                        top:scaleHeight(20)
-
-                                    }} />
-                                </TouchableOpacity>
-                            </View>
-                            <Text style={styles.distanceText}>5 km away</Text>
-                            <View style={styles.actionButtons}>
-                                <TouchableOpacity style={styles.iconButton}>
-                                    {/* <Icon name="close" type="material" color="#ff4d4d" /> */}
-                                    <Image source={disLikeHome} 
-                                    resizeMode='contain'
-                                    style={{
-                                        width: scaleWidth(40),
-                                        height: scaleHeight(40),
-                                        alignSelf: 'center',
-                                        //right: scaleWidth(-20),
-
-                                    }} />
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.iconButton2}>
-                                    {/* <Icon name="favorite" type="material" color={theme.dark.secondary} /> */}
-                                    <Image source={likeHome}
-                                        resizeMode='contain'
-                                        style={{
-                                            width: scaleWidth(45),
-                                            height: scaleHeight(45),
-                                            alignSelf: 'center',
-                                            //right: scaleWidth(-20),
-
-                                        }} />
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.iconButton3}>
-                                    {/* <Icon name="send" type="material" color="#4da6ff" /> */}
-                                    <Image source={sendHome} 
-                                    resizeMode='contain'
-                                    style={{
-                                        width: scaleWidth(40),
-                                        height: scaleHeight(40),
-                                        alignSelf: 'center',
-                                        //right: scaleWidth(-20),
-
-                                    }} />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-
-                        <View style={styles.detailContainer}>
-
-                            <View style={styles.profileDescription}>
-
-
-                                <Text style={{
-                                    color: theme.dark.secondary,
-                                    fontSize: scaleHeight(18),
-                                    fontFamily: fonts.fontsType.medium,
-
-                                }}>
-                                    About
-                                </Text>
-
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        resetNavigation(navigation, SCREENS.RATING)
-                                    }}
-                                    style={{
-                                        flexDirection: 'row',
-                                        alignSelf: 'center'
-                                    }}>
-
-                                    <Image
-                                        resizeMode='cover'
-                                        style={{
-
-                                            width: scaleWidth(18),
-                                            height: scaleHeight(18),
-                                            alignSelf: 'center',
-                                            marginHorizontal: 5
-                                        }} source={ratingStar} />
-
-                                    <Text style={{
-                                        color: theme.dark.inputLabel,
-                                        fontSize: scaleHeight(15),
-                                        fontFamily: fonts.fontsType.medium
-                                    }}>
-                                        4.5
-                                    </Text>
-
-                                </TouchableOpacity>
-
-                            </View>
-
-                            <Text style={{
-                                color: theme.dark.inputLabel,
-                                fontSize: scaleHeight(15),
-                                fontFamily: fonts.fontsType.light,
-                                lineHeight: scaleHeight(28),
-                                marginBottom: scaleHeight(20)
-                            }}>
-                                Hi there! I’m Olivia, a 24-year-old graphic designer in NYC.I love all things creative, from my work to cooking and exploring the city’s art scene.
-                            </Text>
-
-                            <DetailItem label="Gender" value="Female" />
-                            <DetailItem label="Height" value="5'4" />
-                            <DetailItem label="Weight" value="50 kg" />
-                            <DetailItem label="Hourly Rate" value="$45" />
-                            <DetailItem label="Languages" value="English, French, German" />
-                            <DetailItem label="Location" value="California, USA" />
-
-
-                            <View style={{
-                                flexDirection: 'row',
-                                marginTop: scaleHeight(20),
-                                marginHorizontal: -5
-                            }}>
-
-                                <Image
-                                    resizeMode='contain'
-                                    style={{
-
-                                        width: scaleWidth(22),
-                                        height: scaleHeight(22),
-                                        alignSelf: 'center',
-
-                                    }} source={locationPin} />
-
-                                <Text style={{
-                                    color: theme.dark.white,
-                                    fontSize: scaleHeight(16),
-                                    fontFamily: fonts.fontsType.medium,
-                                    marginHorizontal: 5
-                                }}>
-                                    California, USA
-                                </Text>
-
-                            </View>
-
-                            <Text style={{
-                                color: theme.dark.secondary,
-                                fontSize: scaleHeight(18),
-                                fontFamily: fonts.fontsType.medium,
-                                marginTop: scaleHeight(40)
-
-                            }}>
-                                Categories
-                            </Text>
-
-                            <View style={{
-                                marginHorizontal: -5,
-                                marginTop: scaleHeight(5)
-                            }}>
-                                <CategoryList
-                                    categories={categories}
-                                    onPress={handleCategoryPress} />
-
-                            </View>
-
-                            <TouchableOpacity onPress={() => {
-                                resetNavigation(navigation, SCREENS.IMAGE_VIEWER)
-                            }}>
-                                <Image style={{
-                                    width: '100%',
-                                    height: scaleHeight(300),
-                                    marginTop: scaleHeight(10),
-                                    borderRadius: 10
-                                }} source={dummyImg} />
-                            </TouchableOpacity>
-
-                            <View style={{
-                                flexDirection: 'row',
-                                justifyContent: 'space-between'
-                            }}>
-
-                                <Image style={{
-                                    width: scaleWidth(150),
-                                    height: scaleHeight(230),
-                                    marginTop: scaleHeight(10),
-                                    borderRadius: 10
-                                }} source={dummy1} />
-
-                                <Image style={{
-                                    width: scaleWidth(150),
-                                    height: scaleHeight(230),
-                                    marginTop: scaleHeight(10),
-                                    borderRadius: 10
-                                }} source={dummy2} />
-
-                            </View>
-
-
-
-                            <Button
-                                onPress={() => {
-                                    resetNavigation(navigation, SCREENS.SEND_REQUEST)
-                                }}
-                                title={"Send Request"}
-                                customStyle={{
-                                    width: '95%',
-                                    top: scaleHeight(30)
-                                }}
-                                textCustomStyle={{
-                                }}
-                            />
-
-                            <View style={{
-                                flexDirection: 'row',
-                                justifyContent: 'space-between',
-                                marginBottom: scaleHeight(-160)
-                            }}>
-
-                                <Button title={"Report"}
-                                    customStyle={{
-                                        width: '48%',
-                                        borderWidth: 1,
-                                        borderColor: theme.dark.secondary,
-                                        backgroundColor: theme.dark.transparentBg,
-                                    }}
-                                    textCustomStyle={{
-                                        color: theme.dark.secondary,
-                                        marginRight: '2%',
-                                    }}
-                                />
-
-                                <Button title={"Block"}
-                                    customStyle={{
-                                        width: '48%',
-                                        borderWidth: 1,
-                                        borderColor: theme.dark.secondary,
-                                        backgroundColor: theme.dark.transparentBg
-                                    }}
-                                    textCustomStyle={{
-                                        color: theme.dark.secondary
-                                    }}
-                                />
-
-                            </View>
-
-                        </View>
-
-                    </ScrollView>
-                )}
-
-                <CustomModal
-                    isVisible={modalVisible1}
-                    onClose={handleCloseModal1}
-                    headerTitle={"Unlock More Friendships!"}
-                    imageSource={lockImg}
-                    text={`Want to meet more amazing friends? Unlock additional profiles with our premium access. Discover endless possibilities and connections!`}
-                    buttonText="Go Premium"
-                    isParallelButton={false}
-                    buttonAction={() => {
-                        alert('Hello')
+            {
+                loader ? <Spinner
+                    label={`Please wait... ${'\n'}We are applying filtering the list`}
+                    lottieCustomStyle={{
+                        width: scaleWidth(150),
+                        height: scaleHeight(150),
                     }}
-                />
+                /> : (userRole === 'Buddy Finder' ? <UserHomeContent /> : <BuddyHomeContent />)
+            }
 
-                <CustomModal
-                    isVisible={modalVisible2}
-                    onClose={handleCloseModal2}
-                    headerTitle={"Opps!"}
-                    imageSource={warningImg}
-                    isParallelButton={true}
-                    text={`Unlock the conversation for only $1 and dive into an engaging chat experience with us! 💬✨`}
-                    parallelButtonText1={"Cancel"}
-                    parallelButtonText2={"Pay Now!"}
-                    parallelButtonPress1={() => {
-                        handleCloseModal2()
-                    }}
-                    parallelButtonPress2={() => {
-                        handleCloseModal2()
-                        handleOpenModal3();
-                    }}
-                />
 
-                <CustomModal
-                    isVisible={modalVisible3}
-                    onClose={handleCloseModal3}
-                    headerTitle={"Payment Method"}
-                    imageSource={warningImg}
-                    isParallelButton={true}
-                    text={`Do you want to pay through your wallet?`}
-                    parallelButtonText1={"No"}
-                    parallelButtonText2={"Yes, Pay"}
-                    parallelButtonPress1={() => {
-                        handleCloseModal3()
-                    }}
-                    parallelButtonPress2={() => {
 
-                    }}
-                />
+            {renderFilterModal()}
 
-                {renderFilterModal()}
+        </SafeAreaView>
 
-            </SafeAreaView>
-        </LinearGradient>
+
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: theme.dark.primary
     },
     gradient: {
         flex: 1,
@@ -1133,7 +864,7 @@ const styles = StyleSheet.create({
         marginBottom: scaleHeight(90),
     },
     iconButton: {
-        top:scaleHeight(15)
+        top: scaleHeight(15)
         // height: scaleHeight(40),
         // width: scaleWidth(40),
         // alignItems: 'center',
@@ -1155,7 +886,7 @@ const styles = StyleSheet.create({
     },
 
     iconButton3: {
-        top:scaleHeight(15)
+        top: scaleHeight(15)
         // height: scaleHeight(40),
         // width: scaleWidth(40),
         // alignItems: 'center',
