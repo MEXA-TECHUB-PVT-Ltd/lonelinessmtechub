@@ -7,19 +7,24 @@ import { theme } from '../../../assets';
 import CustomTextInput from '../../../components/TextInputComponent';
 import CustomLayout from '../../../components/CustomLayout';
 import fonts from '../../../styles/fonts';
-import { scaleHeight } from '../../../styles/responsive';
+import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import CheckBox from '../../../components/CheckboxComponent';
 import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import EmailIcon from 'react-native-vector-icons/Zocial'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
+import { Image } from 'react-native';
+import { alertLogo, resetText } from '../../../assets/images';
+import Spinner from '../../../components/Spinner';
+import Modal from "react-native-modal";
 
 const ResetPassword = ({ navigation }) => {
     const [form, setForm] = useState({ newPassword: '', confirmPassword: '' });
     const [errors, setErrors] = useState({ newPassword: '', confirmPassword: '' });
     const [showPassword, setShowPassword] = useState(false);
     const [confirmPassShow, setConfirmPassShow] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
 
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
@@ -84,6 +89,66 @@ const ResetPassword = ({ navigation }) => {
             // Proceed with login logic
         }
     };
+
+
+    const showHideModal = () => {
+        setModalVisible(true);
+        // Hide the modal after 3 seconds
+        setTimeout(() => {
+            setModalVisible(false);
+
+            resetNavigation(navigation, SCREENS.LOGIN)
+        }, 3000);
+    };
+
+    const showModalView = () => {
+
+        return <Modal
+            backdropOpacity={0.90}
+            backdropColor={'rgba(85, 85, 85, 0.70)'}
+            isVisible={modalVisible}
+            animationIn={'bounceIn'}
+            animationOut={'bounceOut'}
+            animationInTiming={1000}
+            animationOutTiming={1000}
+        >
+            <View style={{
+                backgroundColor: '#111111',
+                width: '90%',
+                height: '50%',
+                alignSelf: 'center',
+                borderRadius: 20,
+                elevation: 20,
+                padding: 20
+            }}>
+
+                <Image
+                    resizeMode='contain'
+                    source={alertLogo}
+                    style={{
+                        width: scaleWidth(120),
+                        height: scaleHeight(120),
+                        alignSelf: 'center'
+                    }}
+                />
+
+                <Image
+                    resizeMode='contain'
+                    source={resetText}
+                    style={{
+                        width: scaleWidth(200),
+                        height: scaleHeight(55),
+                        alignSelf: 'center',
+                        marginTop: 10
+                    }}
+                />
+                <Text style={styles.subTitle}>
+                    {`Please wait...${'\n'}You will be directed to the Sign In Page`}
+                </Text>
+                <Spinner />
+            </View>
+        </Modal>
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -151,13 +216,16 @@ const ResetPassword = ({ navigation }) => {
                 <View style={styles.buttonContainer}>
                     <Button
                         onPress={() => {
-                            handleResetPassword();
+                            showHideModal()
+                            //handleResetPassword();
                         }}
                         title={'Reset'}
                     />
                 </View>
 
             </CustomLayout>
+
+            {showModalView()}
 
         </SafeAreaView>
     );
@@ -182,7 +250,8 @@ const styles = StyleSheet.create({
         fontFamily: fonts.fontsType.regular,
         fontSize: scaleHeight(14),
         color: theme.dark.white,
-        marginTop: 5
+        marginTop: 5,
+        textAlign:'center'
     },
 
     buttonContainer: {

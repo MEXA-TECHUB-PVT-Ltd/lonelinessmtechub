@@ -48,3 +48,4 @@ export const blockUserChat = require('../images/block_user_chat.png');
 export const deleteUser = require('../images/delete_user_chat.png');
 export const editImage = require('../images/edit_image.png');
 export const stars = require('../images/rating_stars.png');
+export const resetText = require('../images/reset_text.png');
