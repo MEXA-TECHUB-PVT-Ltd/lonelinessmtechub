@@ -11,24 +11,46 @@ import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
 import DynamicOptionSelector from '../../../components/DynamicOptionSelector';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
+import { setDataPayload } from '../../../redux/appSlice';
 
 const GenderLookingFor = ({ navigation }) => {
-    const gender = ["Male", "Female", "Both"]
-    const [selectedGender, setSelectedGender] = useState(null);
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { dataPayload } = useSelector((state) => state.app);
+    const gender = ["Male", "Female", "Other"]
+    const [selectedGender, setSelectedGender] = useState(null)
+
+
+
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.GENDER_SELECTION)
         return true;
     };
     useBackHandler(handleBackPress);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
+    useEffect(() => {
+        if (dataPayload?.gender?.length) {
+            const preSelectedGender = gender.filter(gender => dataPayload.gender.includes(gender));
+            setSelectedGender(preSelectedGender);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dataPayload]);
 
     const handleItemSelected = (item) => {
-        console.log(item)
         setSelectedGender(item);
     };
+
+    const handleGenderSelection = () => {
+        if (selectedGender == null) {
+            showAlert("Error", "error", "Please select gender.")
+            return
+        }
+        const newPayload = { ...dataPayload, looking_for_gender: selectedGender };
+        dispatch(setDataPayload(newPayload));
+        resetNavigation(navigation, SCREENS.YOUR_INTERESTS)
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -47,41 +69,8 @@ const GenderLookingFor = ({ navigation }) => {
                     <DynamicOptionSelector
                         items={gender}
                         onItemSelected={handleItemSelected}
+                        selectedItem={selectedGender}
                     />
-
-                    {/* {
-                        gender?.map((item, index) => {
-
-                            return <TouchableOpacity
-                                key={index}
-                                style={{
-
-                                    flexDirection: "row",
-                                    alignItems: "center",
-                                    backgroundColor: theme.dark.inputBg,
-                                    height: 45,
-                                    borderRadius: 30,
-                                    borderWidth: 1,
-                                    borderColor: theme.dark.text,
-                                    marginTop: scaleHeight(30)
-
-                                }}>
-
-                                <Text
-                                    style={{
-                                        fontFamily: fonts.fontsType.medium,
-                                        fontSize: scaleHeight(18),
-                                        color: theme.dark.inputLabel,
-                                        marginHorizontal: scaleWidth(20)
-                                    }}
-                                >{item}</Text>
-
-                            </TouchableOpacity>
-
-                        })
-                    } */}
-
-
                 </View>
 
                 <View style={styles.buttonContainer}>
@@ -93,8 +82,7 @@ const GenderLookingFor = ({ navigation }) => {
 
                     <Button
                         onPress={() => {
-                            //handleselectedGender();
-                            resetNavigation(navigation, SCREENS.YOUR_INTERESTS)
+                            handleGenderSelection();
                         }}
                         title={'Continue'}
                     />

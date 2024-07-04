@@ -13,47 +13,82 @@ import ProfileProgressBar from '../../../components/ProfileProgressBar';
 import { alertLogo, mapImg, successText } from '../../../assets/images';
 import Modal from "react-native-modal";
 import Spinner from '../../../components/Spinner';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '../../../providers/AuthProvider';
+import { login } from '../../../redux/AuthModule/signInSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
+import { setDataPayload } from '../../../redux/appSlice';
+import { requestLocationPermission } from '../../../utils/cameraPermission';
+import Geolocation from '@react-native-community/geolocation';
+import { updateProfile } from '../../../redux/AuthModule/updateProfileSlice';
 
 const BuddyEnableLocation = ({ navigation }) => {
-    const { login } = useAuth();
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { dataPayload } = useSelector((state) => state.app);
     const [modalVisible, setModalVisible] = useState(false);
+
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.AMOUNT)
         return true;
     };
     useBackHandler(handleBackPress);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
-
-
-    // Function to store the token and role
-    const storeUserCredentials = async (token) => {
+    const handleWithCurrentLocation = async () => {
         try {
-            await AsyncStorage.setItem('userToken', token);
-        } catch (e) {
-            console.error('Failed to save the user credentials.', e);
+            const granted = await requestLocationPermission();
+            if (granted) {
+                console.log('Permission granted!');
+                Geolocation.getCurrentPosition(info => {
+                    const { latitude, longitude } = info.coords;
+                    const newPayload = { ...dataPayload, latitude, longitude };
+                    const imageType = newPayload?.profile_pics[0]?.endsWith('.png') ? 'image/png' : 'image/jpeg';
+                    const formData = new FormData();
+        
+                    formData.append('file', {
+                        uri: newPayload?.profile_pic,
+                        type: imageType,
+                        name: `image_${Date.now()}.${imageType.split('/')[1]}`,
+                    });
+                    formData.append('full_name', newPayload?.userName);
+                    formData.append('about', newPayload?.about);
+                    formData.append('gender', newPayload?.gender);
+                    formData.append('category_ids', JSON.stringify(newPayload?.category_ids));
+                    formData.append('latitude', newPayload?.latitude);
+                    formData.append('longitude', newPayload?.longitude);
+                    formData.append('height_ft', newPayload?.height_ft);
+                    formData.append('height_in', newPayload?.height_in);
+                    formData.append('weight', newPayload?.weight);
+                    formData.append('weight_unit', newPayload?.weight_unit);
+                    formData.append('hourly_rate', newPayload?.hourly_rate);
+                    formData.append('languages', JSON.stringify(newPayload?.languages));
+                    formData.append('dob', newPayload?.languages);
+                    dispatch(setDataPayload(newPayload));
+                    dispatch(updateProfile()).then((result) => {
+                        if (result?.payload?.status === "success") {
+                            showHideModal();
+                        } else {
+                            showAlert("Error", "error", result?.payload?.message)
+                        }
+                    })
+                });
+
+            } else {
+                console.log('Permission denied!');
+            }
+        } catch (error) {
+            console.error('Error during login:', error);
         }
     };
 
-    const handleLogin = async () => {
-        // Assume loginApi is a function that returns a token and role on successful login
-        await storeUserCredentials('test');
-        const role = await AsyncStorage.getItem('userRole');
-        console.log('rollllllllll', role)
-        login('test', role)
-    };
+    const handleWithManualLocation = () => {
+        resetNavigation(navigation, SCREENS.BUDDY_ADD_LOCATION)
+    }
 
     const showHideModal = () => {
         setModalVisible(true);
-        // Hide the modal after 3 seconds
         setTimeout(() => {
             setModalVisible(false);
-            handleLogin();
-            // resetNavigation(navigation, SCREENS.LOGIN)
+            dispatch(login({ email: 'test123@gmail.com', password: '12345' }));
         }, 3000);
     };
 
@@ -136,8 +171,8 @@ const BuddyEnableLocation = ({ navigation }) => {
 
                     <Button
                         onPress={() => {
-                            //handlebirthDate();
-                            showHideModal()
+                            handleWithCurrentLocation();
+                            //showHideModal()
                         }}
                         title={'Use My Current Location'}
                         customStyle={{
@@ -147,7 +182,7 @@ const BuddyEnableLocation = ({ navigation }) => {
 
                     <Button
                         onPress={() => {
-                            resetNavigation(navigation, SCREENS.BUDDY_ADD_LOCATION)
+                            handleWithManualLocation();
                         }}
                         title={'Enter Location Manually'}
                         customStyle={{

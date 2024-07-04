@@ -13,12 +13,18 @@ import Button from '../../../components/ButtonComponent';
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
 import { BottomSheet } from "@rneui/themed";
 import Icon from 'react-native-vector-icons/MaterialIcons'
+import { useDispatch, useSelector } from 'react-redux';
+import { setDataPayload } from '../../../redux/appSlice';
 
 const PhoneNumber = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { dataPayload } = useSelector((state) => state.app)
     const [form, setForm] = useState({ PhoneNumber: '', countryCode: '' });
     const [errors, setErrors] = useState({ PhoneNumber: '' });
     const [countrySheet, setCountrySheetVisible] = useState(false);
     const [countries, setCountries] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredCountries, setFilteredCountries] = useState([]);
 
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
@@ -26,7 +32,7 @@ const PhoneNumber = ({ navigation }) => {
         let error = '';
         if (name === 'PhoneNumber') {
             if (value === '') {
-                error = 'Phone number is required';
+                error = 'Phone number is required.';
             }
         }
         setErrors({ ...errors, [name]: error });
@@ -38,9 +44,15 @@ const PhoneNumber = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
+    useEffect(() => {
+        if (dataPayload?.phone_country_code && dataPayload.phone_number) {
+            setForm({
+                PhoneNumber: dataPayload?.phone_number,
+                countryCode: dataPayload.phone_country_code
+            })
+        }
+
+    }, [dataPayload]);
 
     useEffect(() => {
 
@@ -55,7 +67,8 @@ const PhoneNumber = ({ navigation }) => {
                 const fetchCountriesPromis = fetch("https://restcountries.com/v3.1/all", requestOptions)
                     .then((response) => response.json())
                     .then((result) => {
-                        setCountries(result)
+                        setCountries(result);
+                        setFilteredCountries(result);
                     })
                     .catch((error) => console.error(error));
 
@@ -70,8 +83,23 @@ const PhoneNumber = ({ navigation }) => {
     }, [])
 
 
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+        if (query === '') {
+            setFilteredCountries(countries);
+        } else {
+            const filtered = countries?.filter(country =>
+                country?.name?.common?.toLowerCase().includes(query.toLowerCase()) ||
+                country?.idd?.root?.toLowerCase().includes(query.toLowerCase()) ||
+                (country?.idd?.suffixes && country.idd.suffixes.some(suffix => suffix.toLowerCase().includes(query.toLowerCase())))
+            );
+            setFilteredCountries(filtered);
+        }
+    };
+
+
     const handlePhoneNumber = () => {
-        const { PhoneNumber } = form;
+        const { PhoneNumber, countryCode } = form;
         let valid = true;
         let newErrors = { PhoneNumber: '' };
 
@@ -83,7 +111,9 @@ const PhoneNumber = ({ navigation }) => {
         setErrors(newErrors);
 
         if (valid) {
-            // Proceed with PhoneNumber logic
+            const newPayload = { ...dataPayload, phone_number: PhoneNumber, phone_country_code: countryCode?.split(' ')[1] };
+            dispatch(setDataPayload(newPayload));
+            resetNavigation(navigation, SCREENS.PROFILE_PICTURE);
         }
     };
 
@@ -93,6 +123,8 @@ const PhoneNumber = ({ navigation }) => {
             onPress={() => {
                 handleChange('countryCode', `${item?.cca2} ${item?.idd?.root}${item?.idd?.suffixes}`)
                 setCountrySheetVisible(false)
+                setSearchQuery('')
+                setFilteredCountries(countries)
             }}
 
             style={{
@@ -183,6 +215,8 @@ const PhoneNumber = ({ navigation }) => {
                         <TextInput
                             placeholder='Search here'
                             placeholderTextColor={theme.dark.white}
+                            value={searchQuery}
+                            onChangeText={handleSearch}
                             style={{
                                 fontFamily: fonts.fontsType.light,
                                 fontSize: scaleHeight(14),
@@ -196,9 +230,10 @@ const PhoneNumber = ({ navigation }) => {
                 </View>
 
                 <FlatList
-                    data={countries}
+                    data={filteredCountries}
                     renderItem={renderCountryItem}
                     extraData={(index) => index}
+                    keyboardShouldPersistTaps='always'
                 />
 
             </View>
@@ -248,33 +283,34 @@ const PhoneNumber = ({ navigation }) => {
 
                 </View>
 
-                <View style={styles.buttonContainer}>
 
-
-                    <View style={{ flexDirection: 'row' }}>
-                        <Icon name={'lock'} size={24} color={theme.dark.white} style={{ marginHorizontal: 8, alignSelf: 'center' }} />
-                        <Text style={[styles.subTitle, { width: scaleWidth(300), color: theme.dark.white }]}>
-                            We never share this with anyone and it won’t be on your profile.
-                        </Text>
-                    </View>
-
-                    <HorizontalDivider
-                        customStyle={{
-                            marginTop: 40
-                        }} />
-
-                    <Button
-                        onPress={() => {
-                            //handlePhoneNumber();
-                            resetNavigation(navigation, SCREENS.PROFILE_PICTURE)
-                        }}
-                        title={'Continue'}
-                    />
-                </View>
 
             </CustomLayout>
 
             {renderCountrySheet()}
+
+            <View style={styles.buttonContainer}>
+
+
+                <View style={{ flexDirection: 'row' }}>
+                    <Icon name={'lock'} size={24} color={theme.dark.white} style={{ marginHorizontal: 8, alignSelf: 'center' }} />
+                    <Text style={[styles.subTitle, { width: scaleWidth(300), color: theme.dark.white }]}>
+                        We never share this with anyone and it won’t be on your profile.
+                    </Text>
+                </View>
+
+                <HorizontalDivider
+                    customStyle={{
+                        marginTop: 40
+                    }} />
+
+                <Button
+                    onPress={() => {
+                        handlePhoneNumber();
+                    }}
+                    title={'Continue'}
+                />
+            </View>
 
         </SafeAreaView>
     );
@@ -327,8 +363,8 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(250),
-        marginBottom: scaleHeight(20)
+        // marginTop: scaleHeight(250),
+        // marginBottom: scaleHeight(20)
     },
     createAccountView: {
         flex: 1

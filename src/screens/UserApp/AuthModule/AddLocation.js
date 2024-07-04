@@ -20,43 +20,47 @@ import { alertLogo, successText } from '../../../assets/images';
 import Spinner from '../../../components/Spinner';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../../providers/AuthProvider';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
+import { setDataPayload } from '../../../redux/appSlice';
+import { updateProfile } from '../../../redux/AuthModule/updateProfileSlice';
+import { login } from '../../../redux/AuthModule/signInSlice';
 
 const AddLocation = ({ navigation }) => {
-    const { login } = useAuth();
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { dataPayload } = useSelector((state) => state.app);
+    const { credentials } = useSelector((state) => state.tempCredentials);
     const [modalVisible, setModalVisible] = useState(false);
-    const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' });
-    const [errors, setErrors] = useState({ email: '', password: '', confirmPassword: '' });
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPass] = useState(false);
+    const [form, setForm] = useState({ address: '', country: '', state: '', postal_code: '', city: '' });
+    const [errors, setErrors] = useState({ address: '', country: '', state: '', postal_code: '', city: '' });
+
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
 
         let error = '';
-        if (name === 'email') {
+        if (name === 'address') {
             if (value === '') {
-                error = 'Email address is required';
-            } else if (!validateEmail(value)) {
-                error = 'Please enter a valid email address';
+                error = 'Address is required';
             }
-        } else if (name === 'password') {
+        } else if (name === 'country') {
             if (value === '') {
-                error = 'Password is required';
+                error = 'Country is required';
             }
-
-            // else if (!validatePassword(value)) {
-            //     error = 'Password must be at least 6 characters long';
-            // }
+        } else if (name === 'state') {
+            if (value === '') {
+                error = 'State is required';
+            }
+        } else if (name === 'postal_code') {
+            if (value === '') {
+                error = 'Postal Code is required';
+            }
+        } else if (name === 'city') {
+            if (value === '') {
+                error = 'City is required';
+            }
         }
 
-        else if (name === 'confirmPassword') {
-            if (value === '') {
-                error = 'Confirm Password is required';
-            }
-
-            // else if (!validatePassword(value)) {
-            //     error = 'Password must be at least 6 characters long';
-            // }
-        }
         setErrors({ ...errors, [name]: error });
     };
 
@@ -66,80 +70,81 @@ const AddLocation = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.ENABLE_LOCATION)
-    }
+    const handleAddLocation = async () => {
 
-    const validateEmail = (email) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    };
-
-    const validatePassword = (password) => {
-        return password.length >= 6;
-    };
-
-    const handleSignup = () => {
-        const { email, password, confirmPassword } = form;
+        const { address, country, state, postal_code, city } = form;
         let valid = true;
-        let newErrors = { email: '', password: '', confirmPassword: '' };
+        let newErrors = { address: '', country: '', state: '', postal_code: '', city: '' };
 
-        if (email === '') {
-            newErrors.email = 'Email address is required';
-            valid = false;
-        } else if (!validateEmail(email)) {
-            newErrors.email = 'Please enter a valid email address';
+        if (address === '') {
+            newErrors.address = 'Address is required.';
             valid = false;
         }
 
-        if (password === '') {
-            newErrors.password = 'Password is required';
-            valid = false;
-        } else if (!validatePassword(password)) {
-            newErrors.password = 'Password must be at least 6 characters long';
+        if (country === '') {
+            newErrors.country = 'Country is required.';
             valid = false;
         }
 
-        if (confirmPassword === '') {
-            newErrors.confirmPassword = 'Confirm Password is required';
+        if (state === '') {
+            newErrors.state = 'State is required.';
             valid = false;
-        } else if (confirmPassword !== password) {
-            newErrors.confirmPassword = 'Password does not match.';
+        }
+
+        if (postal_code === '') {
+            newErrors.postal_code = 'Postal Code is required.';
+            valid = false;
+        }
+
+        if (city === '') {
+            newErrors.city = 'City is required.';
             valid = false;
         }
 
         setErrors(newErrors);
 
         if (valid) {
-            // Proceed with Signup logic
-        }
-    };
+            const newPayload = { ...dataPayload, address, country, state, postal_code, city };
+            const imageType = newPayload?.file?.endsWith('.png') ? 'image/png' : 'image/jpeg';
+            const formData = new FormData();
 
-    // Function to store the token and role
-    const storeUserCredentials = async (token) => {
-        try {
-            await AsyncStorage.setItem('userToken', token);
-        } catch (e) {
-            console.error('Failed to save the user credentials.', e);
+            formData.append('file', {
+                uri: newPayload?.file,
+                type: imageType,
+                name: `image_${Date.now()}.${imageType.split('/')[1]}`,
+            });
+            formData.append('full_name', newPayload?.userName);
+            formData.append('about', newPayload?.about);
+            formData.append('gender', newPayload?.gender);
+            formData.append('looking_for_gender', newPayload?.looking_for_gender);
+            formData.append('category_ids', JSON.stringify(newPayload?.category_ids));
+            formData.append('latitude', newPayload?.latitude);
+            formData.append('longitude', newPayload?.longitude);
+            formData.append('dob', newPayload?.dob);
+            formData.append('phone_country_code', newPayload?.phone_country_code);
+            formData.append('phone_number', newPayload?.phone_number);
+            formData.append('address', newPayload?.address);
+            formData.append('country', newPayload?.country);
+            formData.append('postal_code', newPayload?.postal_code);
+            formData.append('city', newPayload?.city);
+            formData.append('state', newPayload?.state);
+            //dispatch(setDataPayload(newPayload));
+            dispatch(updateProfile()).then((result) => {
+                if (result?.payload?.status === "success") {
+                    showHideModal();
+                } else if (result?.payload?.status === "error") {
+                    showAlert("Error", "error", result?.payload?.message)
+                }
+            })
         }
-    };
-
-    const handleLogin = async () => {
-        // Assume loginApi is a function that returns a token and role on successful login
-        await storeUserCredentials('test');
-        const role = await AsyncStorage.getItem('userRole');
-        console.log('rollllllllll', role)
-        login('test', role)
     };
 
     const showHideModal = () => {
         setModalVisible(true);
-        // Hide the modal after 3 seconds
         setTimeout(() => {
             setModalVisible(false);
-            handleLogin();
-
-            //resetNavigation(navigation, SCREENS.LOGIN)
+            resetNavigation(navigation, SCREENS.STRIPE_ACCOUNT_CREATION)
+            //dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: 'testing-token-remove-later' }));
         }, 3000);
     };
 
@@ -207,18 +212,18 @@ const AddLocation = ({ navigation }) => {
                 <View style={styles.contentContainer}>
                     <CustomTextInput
                         label={'Address'}
-                        identifier={'email'}
-                        value={form.email}
-                        onValueChange={(value) => handleChange('email', value)}
+                        identifier={'address'}
+                        value={form.address}
+                        onValueChange={(value) => handleChange('address', value)}
                         mainContainer={{ marginTop: 20 }}
                     />
-                    {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+                    {errors.address ? <Text style={styles.errorText}>{errors.address}</Text> : null}
                     <CustomTextInput
                         label={'Country'}
                         placeholder={"Select Country"}
-                        identifier={'password'}
-                        value={form.password}
-                        onValueChange={(value) => handleChange('password', value)}
+                        identifier={'country'}
+                        value={form.country}
+                        onValueChange={(value) => handleChange('country', value)}
                         mainContainer={{ marginTop: 15 }}
                         iconComponent={
                             <MaterialIcons
@@ -229,7 +234,7 @@ const AddLocation = ({ navigation }) => {
                                 color={theme.dark.text} />
                         }
                     />
-                    {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
+                    {errors.country ? <Text style={styles.errorText}>{errors.country}</Text> : null}
 
                     <View style={{
                         flexDirection: 'row',
@@ -237,53 +242,58 @@ const AddLocation = ({ navigation }) => {
 
                     }}>
 
-                        <CustomTextInput
-                            label={'State'}
-                            identifier={'state'}
-                            value={form.confirmPassword}
-                            onValueChange={(value) => handleChange('confirmPassword', value)}
-                            mainContainer={{ marginTop: 15, flex: 1, marginHorizontal: scaleWidth(4) }}
-                        />
+                        <View style={{
+                            marginTop: 15, flex: 1, marginHorizontal: scaleWidth(4)
+                        }}>
+                            <CustomTextInput
+                                label={'State'}
+                                identifier={'state'}
+                                value={form.state}
+                                onValueChange={(value) => handleChange('state', value)}
+                            // mainContainer={{ marginTop: 15, flex: 1, marginHorizontal: scaleWidth(4) }}
+                            />
+                            {errors.state ? <Text style={styles.errorText}>{errors.state}</Text> : null}
+                        </View>
 
 
-                        <CustomTextInput
-                            label={'Postal Code'}
-                            identifier={'postalCode'}
-                            value={form.confirmPassword}
-                            onValueChange={(value) => handleChange('confirmPassword', value)}
-                            mainContainer={{ marginTop: 15, flex: 1, marginHorizontal: scaleWidth(4) }}
-                        />
-
+                        <View style={{
+                            marginTop: 15, flex: 1, marginHorizontal: scaleWidth(4)
+                        }}>
+                            <CustomTextInput
+                                label={'Postal Code'}
+                                identifier={'postalCode'}
+                                value={form.postal_code}
+                                inputType={'number-pad'}
+                                onValueChange={(value) => handleChange('postal_code', value)}
+                            //mainContainer={{ marginTop: 15, flex: 1, marginHorizontal: scaleWidth(4) }}
+                            />
+                            {errors.postal_code ? <Text style={[styles.errorText, { width: '100%' }]}>{errors.postal_code}</Text> : null}
+                        </View>
 
 
                     </View>
 
-
                     <CustomTextInput
                         label={'City'}
-                        placeholder={"Select City"}
-                        identifier={'confirmPassword'}
-                        value={form.confirmPassword}
-                        onValueChange={(value) => handleChange('confirmPassword', value)}
+                        identifier={'city'}
+                        value={form.city}
+                        onValueChange={(value) => handleChange('city', value)}
                         mainContainer={{ marginTop: 15 }}
                     />
-                    {errors.confirmPassword ? <Text style={styles.errorText}>{errors.confirmPassword}</Text> : null}
+                    {errors.city ? <Text style={styles.errorText}>{errors.city}</Text> : null}
 
                 </View>
-
-
-
-                <View style={styles.buttonContainer}>
-                    <Button
-                        onPress={() => {
-                            showHideModal()
-                        }}
-                        title={'Add Location'}
-                    />
-                </View>
-
             </CustomLayout>
             {showModalView()}
+
+            <View style={styles.buttonContainer}>
+                <Button
+                    onPress={() => {
+                        handleAddLocation();
+                    }}
+                    title={'Add Location'}
+                />
+            </View>
         </SafeAreaView>
     );
 };
@@ -336,8 +346,8 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(100),
-        marginBottom: scaleHeight(30)
+        // marginTop: scaleHeight(100),
+        // marginBottom: scaleHeight(30)
     },
     createAccountView: {
         flex: 1

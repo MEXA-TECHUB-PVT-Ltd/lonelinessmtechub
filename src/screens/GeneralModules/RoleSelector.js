@@ -12,9 +12,13 @@ import Button from '../../components/ButtonComponent';
 import { resetNavigation } from '../../utils/resetNavigation';
 import { SCREENS } from '../../constant/constants';
 import Icon from 'react-native-vector-icons/MaterialIcons'
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDispatch } from 'react-redux';
+import { setDataPayload } from '../../redux/appSlice';
+import { useAlert } from '../../providers/AlertContext';
 
 const RoleSelector = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
     const items = [{
         role: "Buddy",
         img: buddyImg
@@ -24,21 +28,16 @@ const RoleSelector = ({ navigation }) => {
     }]
     const [selectedItem, setSelectedItem] = useState(null);
 
-
-    // Function to store the token and role
-    const storeUserCredentials = async (role) => {
-        try {
-            await AsyncStorage.setItem('userRole', role);
-        } catch (e) {
-            console.error('Failed to save the user credentials.', e);
+    const handleRoleSelector = async () => {
+        if (!selectedItem) {
+            showAlert("Error", "error", "Please select role.");
+            return;
         }
+        const screen = selectedItem === 'Buddy Finder' ? SCREENS.SIGNUP : SCREENS.BUDDY_SIGNUP;
+        resetNavigation(navigation, screen);
+        dispatch(setDataPayload({ role: selectedItem }));
     };
 
-    const handleLogin = async () => {
-        console.log('selectedItem', selectedItem)
-        // Assume loginApi is a function that returns a token and role on successful login
-        await storeUserCredentials(selectedItem);
-    };
 
     return (
         <SafeAreaView style={styles.mainContainer}>
@@ -121,14 +120,7 @@ const RoleSelector = ({ navigation }) => {
 
             <Button
                 onPress={() => {
-                    if (selectedItem === 'Buddy Finder') {
-                        resetNavigation(navigation, SCREENS.SIGNUP)
-                        handleLogin()
-                    } else {
-                        resetNavigation(navigation, SCREENS.BUDDY_SIGNUP)
-                        handleLogin()
-                    }
-
+                    handleRoleSelector()
                 }}
                 title={'Continue'}
                 customStyle={{

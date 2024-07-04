@@ -20,8 +20,12 @@ import { requestCameraPermission } from '../../../utils/cameraPermission';
 import Modal from "react-native-modal";
 import { editImage } from '../../../assets/images';
 import { useAlert } from '../../../providers/AlertContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { setDataPayload } from '../../../redux/appSlice';
 
 const ProfilePicture = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { dataPayload } = useSelector((state) => state.app);
     const { showAlert } = useAlert();
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedImage, setSelectedImage] = useState('');
@@ -32,17 +36,23 @@ const ProfilePicture = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    // useEffect(() => {
-    //     requestCameraPermission();
-    // }, []);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
+    useEffect(() => {
+        if (dataPayload?.file) {
+            setSelectedImage(dataPayload?.file)
+        }
+    }, [dataPayload]);
 
 
-    const handleProfilePicture = () => {
 
+    const handleNavigation = () => {
+        if (selectedImage) {
+            const newPayload = { ...dataPayload, file: selectedImage };
+            dispatch(setDataPayload(newPayload))
+            resetNavigation(navigation, SCREENS.ABOUT);
+        } else {
+            showAlert("Error", "error", "Add at least 1 photo to continue.")
+        }
     };
 
     const openImagePicker = () => {
@@ -283,13 +293,7 @@ const ProfilePicture = ({ navigation }) => {
 
                     <Button
                         onPress={() => {
-                            //handleProfilePicture();
-
-                            if (selectedImage) {
-                                resetNavigation(navigation, SCREENS.ABOUT)
-                            } else {
-                                showAlert("Error", "error", "Add at least 1 photo to continue.")
-                            }
+                            handleNavigation();
                         }}
                         title={'Continue'}
                         customStyle={{ backgroundColor: !selectedImage ? '#E7E7E7' : theme.dark.secondary }}

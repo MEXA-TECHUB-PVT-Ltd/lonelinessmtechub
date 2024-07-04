@@ -14,22 +14,85 @@ import Button from '../../../components/ButtonComponent';
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import EmailIcon from 'react-native-vector-icons/Zocial'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
+import { useDispatch, useSelector } from 'react-redux';
+import { setDataPayload } from '../../../redux/appSlice';
+import { verifyEmail } from '../../../redux/AuthModule/verifyEmailSlice';
+import { useAlert } from '../../../providers/AlertContext';
 
 const ForgetPassword = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
     const [form, setForm] = useState({ email: '' });
+    const [errors, setErrors] = useState({ userName: '' });
+
+
+
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.LOGIN)
         return true;
     };
     useBackHandler(handleBackPress);
 
-    const handleVerifyEmailNavigation = () => {
-        resetNavigation(navigation, SCREENS.VERIFY_EMAIL)
-    }
+    const validateEmail = (email) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
 
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
+
+        let error = '';
+        if (name === 'email') {
+            if (value === '') {
+                error = 'Email address is required.';
+            } else if (!validateEmail(value)) {
+                error = 'Please enter a valid email address.';
+            }
+        }
+        setErrors({ ...errors, [name]: error });
     };
+
+    const handleVerifyEmailNavigation = () => {
+        const { email } = form;
+        let valid = true;
+        let newErrors = { email: '' };
+
+        if (email === '') {
+            newErrors.email = 'Email address is required.';
+            valid = false;
+        } else if (!validateEmail(email)) {
+            newErrors.email = 'Please enter a valid email address.';
+            valid = false;
+        }
+
+        setErrors(newErrors);
+
+        if (valid) {
+            const payload = {
+                email: email
+            }
+            resetNavigation(navigation, SCREENS.VERIFY_EMAIL)
+            dispatch(setDataPayload(payload))
+            return
+            dispatch(verifyEmail(payload)).then((result) => {
+                if (result?.payload?.status === "success") {
+                    showAlert("Success", "success", result?.payload?.message)
+                    setTimeout(() => {
+                        const newPayload = { email };
+                        dispatch(setDataPayload(newPayload))
+                        resetNavigation(navigation, SCREENS.VERIFY_EMAIL)
+                    }, 3000);
+
+                } else {
+                    showAlert("Error", "error", result?.payload?.message)
+                }
+
+
+            })
+
+        }
+    };
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -52,9 +115,10 @@ const ForgetPassword = ({ navigation }) => {
                     </Text>
                     <CustomTextInput
                         label={'Email Address'}
+                        identifier={'email'}
                         mainContainer={{ marginTop: scaleHeight(70) }}
-                        value={form.newPassword}
-                        onValueChange={(value) => handleChange('newPassword', value)}
+                        value={form.email}
+                        onValueChange={(value) => handleChange('email', value)}
                         leftIcon={<EmailIcon
                             style={{
                                 marginHorizontal: 8
@@ -63,20 +127,19 @@ const ForgetPassword = ({ navigation }) => {
                             color={theme.dark.text} />}
                     />
 
-
-                </View>
-
-
-                <View style={styles.buttonContainer}>
-                    <Button
-                        onPress={() => {
-                            handleVerifyEmailNavigation();
-                        }}
-                        title={'Send Code'}
-                    />
+                    {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
                 </View>
 
             </CustomLayout>
+
+            <View style={styles.buttonContainer}>
+                <Button
+                    onPress={() => {
+                        handleVerifyEmailNavigation();
+                    }}
+                    title={'Send Code'}
+                />
+            </View>
 
         </SafeAreaView>
     );
@@ -128,7 +191,7 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(170)
+        //marginTop: scaleHeight(170)
     },
     createAccountView: {
         flex: 1
@@ -140,7 +203,14 @@ const styles = StyleSheet.create({
     backButton: {
         paddingHorizontal: 25,
         marginTop: 20
-    }
+    },
+    errorText: {
+        fontFamily: fonts.fontsType.regular,
+        fontSize: scaleHeight(14),
+        color: theme.dark.error,
+        marginTop: 5,
+        marginHorizontal: 8
+    },
 });
 
 

@@ -80,6 +80,9 @@ const Onboarding = ({ navigation }) => {
 
                 <View style={styles.buttonContainer2}>
                     <Button
+                        onPress={() => {
+                            resetNavigation(navigation, SCREENS.STRIPE_ACCOUNT_CREATION)
+                        }}
                         title={'Continue with Google'}
                         icon={<Image
                             resizeMode='contain'

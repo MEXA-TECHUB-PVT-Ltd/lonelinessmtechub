@@ -6,18 +6,34 @@ import { useAlert } from './src/providers/AlertContext';
 import { theme } from './src/assets';
 import Root from './src/navigations/Root';
 import { AuthProvider } from './src/providers/AuthProvider';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { persistor, store } from './src/redux/store';
 
 const App = () => {
   return (
-    <AuthProvider>
-    <AlertProvider>
-      <View style={styles.container}>
-        <StatusBar backgroundColor={theme.dark.background} />
-        <Root />
-        <DynamicAlert />
-      </View>
-    </AlertProvider>
-    </AuthProvider>
+    // <AuthProvider>
+    // <AlertProvider>
+    //   <View style={styles.container}>
+    //     <StatusBar backgroundColor={theme.dark.background} />
+    //     <Root />
+    //     <DynamicAlert />
+    //   </View>
+    // </AlertProvider>
+    // </AuthProvider>
+
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <AlertProvider>
+          <View style={styles.container}>
+            <StatusBar backgroundColor={theme.dark.background} />
+            <Root />
+            <DynamicAlert />
+          </View>
+        </AlertProvider>
+      </PersistGate>
+    </Provider>
+
   );
 };
 

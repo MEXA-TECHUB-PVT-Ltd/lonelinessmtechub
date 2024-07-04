@@ -11,13 +11,23 @@ import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
-import { BottomSheet } from "@rneui/themed";
-import Icon from 'react-native-vector-icons/MaterialIcons'
-import DynamicOptionSelector from '../../../components/DynamicOptionSelector';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
+import { setDataPayload } from '../../../redux/appSlice';
 
 const HeightWeight = ({ navigation }) => {
-  const gender = ["Male", "Female", "Prefer not to say"]
-  const [selectedGender, setSelectedGender] = useState(null);
+  const dispatch = useDispatch();
+  const { showAlert } = useAlert();
+  const { dataPayload } = useSelector((state) => state.app);
+
+  const [inputValues, setInputValues] = useState({
+    height_ft: '',
+    height_in: '',
+    weight_kg: '',
+    weight_lb: '',
+    weight_unit: ''
+  });
+
   const [hieghtFtSelected, setHeightFtSelected] = useState(true);
   const [hieghtInSelected, setHeightInSelected] = useState(false);
   const [weightKgSelected, setWeightKgSelected] = useState(true);
@@ -29,34 +39,47 @@ const HeightWeight = ({ navigation }) => {
   };
   useBackHandler(handleBackPress);
 
-  const handleLoginNavigation = () => {
-    resetNavigation(navigation, SCREENS.SIGNUP)
-  }
-
-  const handleItemSelected = (item) => {
-    console.log(item)
-    setSelectedGender(item);
-  };
 
   const handleToggleFt = () => {
     setHeightFtSelected(true);
     setHeightInSelected(false);
+    setInputValues({ ...inputValues, height_unit: 'ft' });
   };
 
   const handleToggleInches = () => {
     setHeightFtSelected(false);
     setHeightInSelected(true);
+    setInputValues({ ...inputValues, height_unit: 'in' });
   };
 
   const handleToggleKg = () => {
     setWeightKgSelected(true);
     setWeightLbSelected(false);
+    setInputValues(prevValues => ({
+      ...prevValues,
+      weight_lb: '',
+      weight_unit: 'KG'
+    }));
   };
 
   const handleToggleLb = () => {
     setWeightKgSelected(false);
     setWeightLbSelected(true);
+    setInputValues(prevValues => ({
+      ...prevValues,
+      weight_kg: '',
+      weight_unit: 'LB'
+    }));
+
   };
+
+  const handleHeightWeight = () => {
+    const { height_ft, height_in, weight_kg, weight_lb, weight_unit } = inputValues
+    const weight = weight_kg ? weight_kg : weight_lb;
+    const newPayload = { ...dataPayload, height_ft, height_in, weight, weight_unit };
+    dispatch(setDataPayload(newPayload));
+    resetNavigation(navigation, SCREENS.SELECT_LANGUAGE)
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -98,12 +121,15 @@ const HeightWeight = ({ navigation }) => {
                     fontFamily: fonts.fontsType.medium,
                     fontSize: scaleHeight(14),
                     color: theme.dark.text,
-                    marginHorizontal: 10
+                    marginHorizontal: 10,
+                    width: scaleWidth(50)
                   }}
                   maxLength={2}
                   placeholder='00'
                   keyboardType='number-pad'
                   placeholderTextColor={theme.dark.text}
+                  value={inputValues.height_ft}
+                  onChangeText={(text) => setInputValues({ ...inputValues, height_ft: text })}
                 />
 
                 <View style={styles.verticleLine}></View>
@@ -112,12 +138,15 @@ const HeightWeight = ({ navigation }) => {
                   style={{
                     fontFamily: fonts.fontsType.medium,
                     fontSize: scaleHeight(14),
-                    color: theme.dark.text
+                    color: theme.dark.text,
+                    width: scaleWidth(50)
                   }}
                   maxLength={2}
                   placeholder='00'
                   keyboardType='number-pad'
                   placeholderTextColor={theme.dark.text}
+                  value={inputValues.height_in}
+                  onChangeText={(text) => setInputValues({ ...inputValues, height_in: text })}
                 />
 
               </View>
@@ -210,12 +239,16 @@ const HeightWeight = ({ navigation }) => {
                     fontFamily: fonts.fontsType.medium,
                     fontSize: scaleHeight(14),
                     color: theme.dark.text,
-                    marginHorizontal: 10
+                    marginHorizontal: 10,
+                    width: scaleWidth(50)
                   }}
+                  editable={weightKgSelected}
                   maxLength={2}
                   keyboardType='number-pad'
                   placeholder='00'
                   placeholderTextColor={theme.dark.text}
+                  value={inputValues.weight_kg}
+                  onChangeText={(text) => setInputValues({ ...inputValues, weight_kg: text })}
                 />
 
                 <View style={styles.verticleLine}></View>
@@ -224,12 +257,16 @@ const HeightWeight = ({ navigation }) => {
                   style={{
                     fontFamily: fonts.fontsType.medium,
                     fontSize: scaleHeight(14),
-                    color: theme.dark.text
+                    color: theme.dark.text,
+                    width: scaleWidth(50)
                   }}
+                  editable={weightLbSelected}
                   maxLength={2}
                   keyboardType='number-pad'
                   placeholder='00'
                   placeholderTextColor={theme.dark.text}
+                  value={inputValues.weight_lb}
+                  onChangeText={(text) => setInputValues({ ...inputValues, weight_lb: text })}
                 />
 
               </View>
@@ -302,23 +339,25 @@ const HeightWeight = ({ navigation }) => {
 
         </View>
 
-        <View style={styles.buttonContainer}>
 
-          <HorizontalDivider
-            customStyle={{
-              marginTop: 40
-            }} />
-
-          <Button
-            onPress={() => {
-              //handleselectedGender();
-              resetNavigation(navigation, SCREENS.SELECT_LANGUAGE)
-            }}
-            title={'Continue'}
-          />
-        </View>
 
       </CustomLayout>
+
+      <View style={styles.buttonContainer}>
+
+        <HorizontalDivider
+          customStyle={{
+            marginTop: 40
+          }} />
+
+        <Button
+          onPress={() => {
+            handleHeightWeight();
+
+          }}
+          title={'Continue'}
+        />
+      </View>
 
     </SafeAreaView>
   );
@@ -371,8 +410,8 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: '90%',
     alignSelf: 'center',
-    marginTop: scaleHeight(200),
-    marginBottom: scaleHeight(20)
+    // marginTop: scaleHeight(200),
+    // marginBottom: scaleHeight(20)
   },
   createAccountView: {
     flex: 1

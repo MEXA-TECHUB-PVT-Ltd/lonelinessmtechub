@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
 import useBackHandler from '../../../utils/useBackHandler';
@@ -7,18 +7,28 @@ import { theme } from '../../../assets';
 import CustomTextInput from '../../../components/TextInputComponent';
 import CustomLayout from '../../../components/CustomLayout';
 import fonts from '../../../styles/fonts';
-import { scaleHeight } from '../../../styles/responsive';
+import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import CheckBox from '../../../components/CheckboxComponent';
 import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import EmailIcon from 'react-native-vector-icons/Zocial'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
+import { login } from '../../../redux/AuthModule/signInSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
+import { alertLogo, successText } from '../../../assets/images';
+import Spinner from '../../../components/Spinner';
+import Modal from "react-native-modal";
 
 const Login = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { loading } = useSelector((state) => state.auth);
+    const { showAlert } = useAlert();
     const [form, setForm] = useState({ email: '', password: '' });
     const [errors, setErrors] = useState({ email: '', password: '' });
     const [showPassword, setShowPassword] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
 
@@ -33,10 +43,6 @@ const Login = ({ navigation }) => {
             if (value === '') {
                 error = 'Password is required';
             }
-
-            // else if (!validatePassword(value)) {
-            //     error = 'Password must be at least 6 characters long';
-            // }
         }
         setErrors({ ...errors, [name]: error });
     };
@@ -84,9 +90,77 @@ const Login = ({ navigation }) => {
         setErrors(newErrors);
 
         if (valid) {
-            // Proceed with login logic
+            const credentials = {
+                email: email,
+                password: password,
+                device_token: "testingdevicetoken",
+            }
+            dispatch(login(credentials)).then((result) => {
+                if (result?.payload?.status === "success") {
+                    showHideModal();
+                    showAlert("Success", "success", result?.payload?.message)
+                } else {
+                    showAlert("Error", "error", result?.payload?.message)
+                }
+            })
         }
     };
+
+    const showHideModal = () => {
+        setModalVisible(true);
+        setTimeout(() => {
+            setModalVisible(false);
+        }, 3000);
+    };
+
+    const showModalView = () => {
+
+        return <Modal
+            backdropOpacity={0.90}
+            backdropColor={'rgba(85, 85, 85, 0.70)'}
+            isVisible={modalVisible}
+            animationIn={'bounceIn'}
+            animationOut={'bounceOut'}
+            animationInTiming={1000}
+            animationOutTiming={1000}
+        >
+            <View style={{
+                backgroundColor: '#111111',
+                width: '90%',
+                height: '50%',
+                alignSelf: 'center',
+                borderRadius: 20,
+                elevation: 20,
+                padding: 20
+            }}>
+
+                <Image
+                    resizeMode='contain'
+                    source={alertLogo}
+                    style={{
+                        width: scaleWidth(120),
+                        height: scaleHeight(120),
+                        alignSelf: 'center'
+                    }}
+                />
+
+                <Image
+                    resizeMode='contain'
+                    source={successText}
+                    style={{
+                        width: scaleWidth(130),
+                        height: scaleHeight(45),
+                        alignSelf: 'center',
+                        marginTop: 10
+                    }}
+                />
+                <Text style={styles.subTitle}>
+                    {`Please wait...${'\n'}You will be directed to the homepage`}
+                </Text>
+                <Spinner />
+            </View>
+        </Modal>
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -187,19 +261,17 @@ const Login = ({ navigation }) => {
                     </View>
 
                 </View>
-
-
-                <View style={styles.buttonContainer}>
-                    <Button
-                        onPress={() => {
-                            handleLogin();
-                        }}
-                        title={'Log In'}
-                    />
-                </View>
-
             </CustomLayout>
-
+            {showModalView()}
+            <View style={styles.buttonContainer}>
+                <Button
+                    loading={loading}
+                    onPress={() => {
+                        handleLogin();
+                    }}
+                    title={'Log In'}
+                />
+            </View>
         </SafeAreaView>
     );
 };
@@ -250,7 +322,7 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(120)
+        //marginTop: scaleHeight(120)
     },
     createAccountView: {
         flex: 1

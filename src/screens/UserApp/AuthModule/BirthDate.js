@@ -14,18 +14,28 @@ import ProfileProgressBar from '../../../components/ProfileProgressBar';
 import { BottomSheet } from "@rneui/themed";
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import { birthdayImg } from '../../../assets/images';
+import { useDispatch, useSelector } from 'react-redux';
+import { setDataPayload } from '../../../redux/appSlice';
 
 const BirthDate = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { dataPayload } = useSelector((state) => state.app);
     const [form, setForm] = useState({ day: '', month: '', year: '' });
     const [errors, setErrors] = useState({ birthDate: '' });
-    const [countrySheet, setCountrySheetVisible] = useState(false);
-    const [countries, setCountries] = useState([]);
 
     const dayRef = useRef(null);
     const monthRef = useRef(null);
     const yearRef = useRef(null);
 
     const handleChange = (name, value) => {
+
+        if (name === 'day' && parseInt(value) > 31) {
+            value = '31'; // Reset to max valid value if greater than 31
+        }
+        if (name === 'month' && parseInt(value) > 12) {
+            value = '12'; // Reset to max valid value if greater than 12
+        }
+
         setForm({ ...form, [name]: value });
 
         if (name === 'day' && value.length === 2) {
@@ -37,7 +47,7 @@ const BirthDate = ({ navigation }) => {
         let error = '';
         if (name === 'birthDate') {
             if (value === '') {
-                error = 'Birthdate is required';
+                error = 'Birthdate is required.';
             }
         }
         setErrors({ ...errors, [name]: error });
@@ -49,10 +59,15 @@ const BirthDate = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
+    useEffect(() => {
+        if (dataPayload?.dob) {
+            const [year, month, day] = dataPayload?.dob.split("-");
+            setForm({
+                day: day, month: month, year: year
+            })
+        }
 
+    }, [dataPayload]);
 
     const handlebirthDate = () => {
         const { day, month, year } = form;
@@ -60,14 +75,17 @@ const BirthDate = ({ navigation }) => {
         let newErrors = { birthDate: '' };
 
         if (day === '' || month === '' || year === '') {
-            newErrors.birthDate = 'Birthdate is required';
+            newErrors.birthDate = 'Birthdate is required.';
             valid = false;
         }
 
         setErrors(newErrors);
 
         if (valid) {
-            // Proceed with birthDate logic
+            const birthDate = `${year}-${month}-${day}`;
+            const newPayload = { ...dataPayload, dob: birthDate };
+            dispatch(setDataPayload(newPayload));
+            resetNavigation(navigation, SCREENS.GENDER_SELECTION)
         }
     };
 
@@ -143,23 +161,22 @@ const BirthDate = ({ navigation }) => {
 
                 </View>
 
-                <View style={styles.buttonContainer}>
-
-                    <HorizontalDivider
-                        customStyle={{
-                            marginTop: 40
-                        }} />
-
-                    <Button
-                        onPress={() => {
-                            //handlebirthDate();
-                            resetNavigation(navigation, SCREENS.GENDER_SELECTION)
-                        }}
-                        title={'Continue'}
-                    />
-                </View>
-
             </CustomLayout>
+
+            <View style={styles.buttonContainer}>
+
+                <HorizontalDivider
+                    customStyle={{
+                        marginTop: 40
+                    }} />
+
+                <Button
+                    onPress={() => {
+                        handlebirthDate();
+                    }}
+                    title={'Continue'}
+                />
+            </View>
 
         </SafeAreaView>
     );
@@ -189,8 +206,8 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(200),
-        marginBottom: scaleHeight(20)
+        // marginTop: scaleHeight(200),
+        // marginBottom: scaleHeight(20)
     },
 
     verticleLine: {

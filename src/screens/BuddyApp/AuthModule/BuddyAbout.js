@@ -11,9 +11,13 @@ import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
+import { useDispatch, useSelector } from 'react-redux';
+import { setDataPayload } from '../../../redux/appSlice';
 
 
 const BuddyAbout = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { dataPayload } = useSelector((state) => state.app);
     const [form, setForm] = useState({ about: '' });
     const [errors, setErrors] = useState({ about: '' });
 
@@ -24,7 +28,7 @@ const BuddyAbout = ({ navigation }) => {
         let error = '';
         if (name === 'about') {
             if (value === '') {
-                error = 'About can not be empty';
+                error = 'Please write something.';
             }
         }
         setErrors({ ...errors, [name]: error });
@@ -36,10 +40,6 @@ const BuddyAbout = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
-
 
     const handleAbout = () => {
         const { about } = form;
@@ -47,14 +47,16 @@ const BuddyAbout = ({ navigation }) => {
         let newErrors = { about: '' };
 
         if (about === '') {
-            newErrors.about = 'Phone number is required';
+            newErrors.about = 'Please write something.';
             valid = false;
         }
 
         setErrors(newErrors);
 
         if (valid) {
-            // Proceed with About logic
+            const newPayload = { ...dataPayload, about };
+            dispatch(setDataPayload(newPayload))
+            resetNavigation(navigation, SCREENS.BUDDY_BIRTH_DATE)
         }
     };
 
@@ -72,36 +74,40 @@ const BuddyAbout = ({ navigation }) => {
                     <Text style={styles.subTitle}>
                         Tell us about yourself so others can get to know you.
                     </Text>
-                    <CustomTextInput
-                        identifier={'about'}
-                        value={form.about}
-                        onValueChange={(value) => handleChange('about', value)}
-                        mainContainer={{ marginTop: 50 }}
-                        customInputStyle={{}}
-                        customContainerStyle={{}}
-                        multiline={true}
-                    />
+                    <View style={styles.inputContainer}>
+                        <CustomTextInput
+                            identifier={'about'}
+                            value={form.about}
+                            onValueChange={(value) => handleChange('about', value)}
+                            mainContainer={{ marginTop: 50 }}
+                            customInputStyle={{}}
+                            customContainerStyle={{}}
+                            multiline={true}
+                        />
+                        <Text style={styles.textLength}>
+                            {form.about.length} / 250
+                        </Text>
+                    </View>
                     {errors.about ? <Text style={styles.errorText}>{errors.about}</Text> : null}
 
                 </View>
 
-                <View style={styles.buttonContainer}>
-
-                    <HorizontalDivider
-                        customStyle={{
-                            marginTop: 40
-                        }} />
-
-                    <Button
-                        onPress={() => {
-                            //handleAbout();
-                            resetNavigation(navigation, SCREENS.BUDDY_BIRTH_DATE)
-                        }}
-                        title={'Continue'}
-                    />
-                </View>
-
             </CustomLayout>
+
+            <View style={styles.buttonContainer}>
+
+                <HorizontalDivider
+                    customStyle={{
+                        marginTop: 40
+                    }} />
+
+                <Button
+                    onPress={() => {
+                        handleAbout();
+                    }}
+                    title={'Continue'}
+                />
+            </View>
 
         </SafeAreaView>
     );
@@ -154,8 +160,8 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(200),
-        marginBottom: scaleHeight(20)
+        // marginTop: scaleHeight(200),
+        // marginBottom: scaleHeight(20)
     },
     createAccountView: {
         flex: 1
@@ -173,6 +179,17 @@ const styles = StyleSheet.create({
         color: theme.dark.error,
         marginTop: 8,
         marginHorizontal: scaleWidth(15),
+    },
+    inputContainer: {
+        position: 'relative',
+    },
+    textLength: {
+        position: 'absolute',
+        right: 15,
+        top: 40,
+        fontSize: 12,
+        fontFamily: fonts.fontsType.medium,
+        color: theme.dark.secondary,
     },
 });
 

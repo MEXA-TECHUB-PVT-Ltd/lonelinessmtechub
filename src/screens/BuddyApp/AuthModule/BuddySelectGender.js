@@ -14,8 +14,14 @@ import ProfileProgressBar from '../../../components/ProfileProgressBar';
 import { BottomSheet } from "@rneui/themed";
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import DynamicOptionSelector from '../../../components/DynamicOptionSelector';
+import { useDispatch, useSelector } from 'react-redux';
+import { setDataPayload } from '../../../redux/appSlice';
+import { useAlert } from '../../../providers/AlertContext';
 
 const BuddySelectGender = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { dataPayload } = useSelector((state) => state.app);
     const gender = ["Male", "Female", "Prefer not to say"]
     const [selectedGender, setSelectedGender] = useState(null);
 
@@ -25,14 +31,19 @@ const BuddySelectGender = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
-
     const handleItemSelected = (item) => {
-        console.log(item)
         setSelectedGender(item);
     };
+
+    const handleGenderSelection = () => {
+        if (selectedGender == null) {
+            showAlert("Error", "error", "Please select gender.")
+            return
+        }
+        const newPayload = { ...dataPayload, gender: selectedGender };
+        dispatch(setDataPayload(newPayload));
+        resetNavigation(navigation, SCREENS.HEIGHT_WEIGHT)
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -97,8 +108,7 @@ const BuddySelectGender = ({ navigation }) => {
 
                     <Button
                         onPress={() => {
-                            //handleselectedGender();
-                            resetNavigation(navigation, SCREENS.HEIGHT_WEIGHT)
+                            handleGenderSelection();
                         }}
                         title={'Continue'}
                     />

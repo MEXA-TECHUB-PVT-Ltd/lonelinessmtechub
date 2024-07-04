@@ -11,8 +11,12 @@ import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
 import { birthdayImg } from '../../../assets/images';
+import { useDispatch, useSelector } from 'react-redux';
+import { setDataPayload } from '../../../redux/appSlice';
 
 const BuddyBirthDate = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { dataPayload } = useSelector((state) => state.app);
     const [form, setForm] = useState({ day: '', month: '', year: '' });
     const [errors, setErrors] = useState({ birthDate: '' });
 
@@ -21,6 +25,14 @@ const BuddyBirthDate = ({ navigation }) => {
     const yearRef = useRef(null);
 
     const handleChange = (name, value) => {
+
+        if (name === 'day' && parseInt(value) > 31) {
+            value = '31'; // Reset to max valid value if greater than 31
+        }
+        if (name === 'month' && parseInt(value) > 12) {
+            value = '12'; // Reset to max valid value if greater than 12
+        }
+
         setForm({ ...form, [name]: value });
 
         if (name === 'day' && value.length === 2) {
@@ -32,7 +44,7 @@ const BuddyBirthDate = ({ navigation }) => {
         let error = '';
         if (name === 'birthDate') {
             if (value === '') {
-                error = 'Birthdate is required';
+                error = 'Birthdate is required.';
             }
         }
         setErrors({ ...errors, [name]: error });
@@ -44,25 +56,23 @@ const BuddyBirthDate = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
-
-
     const handlebirthDate = () => {
         const { day, month, year } = form;
         let valid = true;
         let newErrors = { birthDate: '' };
 
         if (day === '' || month === '' || year === '') {
-            newErrors.birthDate = 'Birthdate is required';
+            newErrors.birthDate = 'Birthdate is required.';
             valid = false;
         }
 
         setErrors(newErrors);
 
         if (valid) {
-            // Proceed with birthDate logic
+            const birthDate = `${year}-${month}-${day}`;
+            const newPayload = { ...dataPayload, birthDate };
+            dispatch(setDataPayload(newPayload));
+            resetNavigation(navigation, SCREENS.BUDDY_GENDER_SELECTION)
         }
     };
 
@@ -135,26 +145,27 @@ const BuddyBirthDate = ({ navigation }) => {
                         />
 
                     </View>
-
+                    {errors.birthDate ? <Text style={styles.errorText}>{errors.birthDate}</Text> : null}
                 </View>
 
-                <View style={styles.buttonContainer}>
 
-                    <HorizontalDivider
-                        customStyle={{
-                            marginTop: 40
-                        }} />
-
-                    <Button
-                        onPress={() => {
-                            //handlebirthDate();
-                            resetNavigation(navigation, SCREENS.BUDDY_GENDER_SELECTION)
-                        }}
-                        title={'Continue'}
-                    />
-                </View>
 
             </CustomLayout>
+
+            <View style={styles.buttonContainer}>
+
+                <HorizontalDivider
+                    customStyle={{
+                        marginTop: 40
+                    }} />
+
+                <Button
+                    onPress={() => {
+                        handlebirthDate();
+                    }}
+                    title={'Continue'}
+                />
+            </View>
 
         </SafeAreaView>
     );
@@ -184,8 +195,8 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(200),
-        marginBottom: scaleHeight(20)
+        // marginTop: scaleHeight(200),
+        // marginBottom: scaleHeight(20)
     },
 
     verticleLine: {
@@ -216,7 +227,14 @@ const styles = StyleSheet.create({
         height: scaleHeight(100),
         marginTop: scaleHeight(30),
         alignSelf: 'center'
-    }
+    },
+    errorText: {
+        fontFamily: fonts.fontsType.regular,
+        fontSize: scaleHeight(12),
+        color: theme.dark.error,
+        marginTop: 8,
+        marginHorizontal: scaleWidth(15),
+    },
 });
 
 

@@ -40,6 +40,8 @@ import BuddyHomeContent from './BuddyDashboard/BuddyHomeContent';
 import UserHomeContent from './UserDashboard/UserHomeContent';
 import { useAuth } from '../../../providers/AuthProvider';
 import Spinner from '../../../components/Spinner';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../../../redux/AuthModule/signInSlice';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -51,8 +53,10 @@ const categories = [
 ];
 
 const Home = ({ navigation }) => {
+    const dispatch = useDispatch();
     const lottieRef = useRef(null);
-    const { isLoggedIn, userRole, logout } = useAuth();
+    const { role } = useSelector((state) => state.auth);
+    // const { isLoggedIn, userRole, logout } = useAuth();
     const [showCarousel, setShowCarousel] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
     const [min, setMin] = useState(20);
@@ -704,7 +708,7 @@ const Home = ({ navigation }) => {
                 justifyContent: 'space-evenly',
             }}>
                 <TouchableOpacity onPress={() => {
-                    logout();
+                    dispatch(logout())
                 }}>
                     <Image source={homeLogo} style={{
                         width: scaleWidth(35),
@@ -757,7 +761,7 @@ const Home = ({ navigation }) => {
                         width: scaleWidth(150),
                         height: scaleHeight(150),
                     }}
-                /> : (userRole === 'Buddy Finder' ? <UserHomeContent /> : <BuddyHomeContent />)
+                /> : (role === 'Buddy Finder' ? <UserHomeContent /> : <BuddyHomeContent />)
             }
 
 

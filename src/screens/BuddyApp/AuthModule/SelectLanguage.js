@@ -10,103 +10,85 @@ import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
-import Icon from 'react-native-vector-icons/MaterialIcons'
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import CheckBox from '../../../components/CheckboxComponent';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
+import { setDataPayload } from '../../../redux/appSlice';
 
 const SelectLanguage = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { dataPayload } = useSelector((state) => state.app);
+    const [selectedLanguages, setSelectedLanguages] = useState([]);
+    const [searchText, setSearchText] = useState('');
     const languages = [
-        {
-            name: "English",
-        },
-        {
-            name: "Spanish",
-        },
-        {
-            name: "Chinese",
-        }
-        ,
-        {
-            name: "French",
-        }
-        ,
-        {
-            name: "German",
-        },
+        { name: "English" },
+        { name: "Spanish" },
+        { name: "Chinese" },
+        { name: "French" },
+        { name: "German" },
+        { name: "Japanese" },
+        { name: "Korean" },
+        { name: "Italian" },
+        { name: "Portuguese" },
+        { name: "Russian" }
+    ];
 
-        {
-            name: "Japanese",
-        },
+    const filteredLanguages = languages.filter(language =>
+        language.name.toLowerCase().includes(searchText.toLowerCase())
+    );
 
-        {
-            name: "Korean",
-        }
-        ,
-
-        {
-            name: "Italian",
-        }
-        ,
-
-        {
-            name: "Portuguese",
-        }
-        ,
-
-        {
-            name: "Russian",
-        }
-    ]
+    const handleLanguageSelect = (language) => {
+        setSelectedLanguages(prevState => {
+            if (prevState.includes(language)) {
+                return prevState.filter(item => item !== language);
+            } else {
+                return [...prevState, language];
+            }
+        });
+    };
 
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.HEIGHT_WEIGHT)
+        resetNavigation(navigation, SCREENS.HEIGHT_WEIGHT);
         return true;
     };
     useBackHandler(handleBackPress);
 
-    const renderLanguages = ({ item, index }) => {
-        return <TouchableOpacity
-            key={index}
-            onPress={() => {
-
-            }}
-
-            style={{
-
-
-            }}>
-
-            <View style={{ flexDirection: 'row', }}>
-
-                <Text style={{
-                    color: theme.dark.white,
-                    fontFamily: fonts.fontsType.regular,
-                    fontSize: scaleHeight(16),
-                    marginHorizontal: 10,
-                    flex: 1,
-                    alignSelf: 'center'
-                }}>
-                    {item?.name}
-                </Text>
-
-                <CheckBox />
-
-            </View>
-
-            <HorizontalDivider
-                customStyle={{
-                    marginTop: 15,
-                }} />
-
-        </TouchableOpacity>
+    const handleSelectLanguages = () => {
+        const newPayload = { ...dataPayload, languages: selectedLanguages };
+        dispatch(setDataPayload(newPayload));
+        resetNavigation(navigation, SCREENS.BUDDY_YOUR_INTERESTS);
     }
 
+    const renderLanguages = ({ item, index }) => {
+        return (
+            <TouchableOpacity
+                key={index}
+                onPress={() => { handleLanguageSelect(item.name); }}
+                style={styles.languageContainer}
+            >
+                <View style={styles.languageRow}>
+                    <Text style={styles.languageText}>
+                        {item?.name}
+                    </Text>
+                    <View style={[
+                        styles.radioButtonOuter,
+                        selectedLanguages.includes(item.name) && styles.radioButtonSelected
+                    ]}>
+                        {selectedLanguages.includes(item.name) && <View style={styles.radioButtonInner} />}
+                    </View>
+                </View>
+                <HorizontalDivider customStyle={styles.divider} />
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <SafeAreaView style={styles.container}>
             <ProfileProgressBar progress={80} onPress={() => {
-                resetNavigation(navigation, SCREENS.HEIGHT_WEIGHT)
+                resetNavigation(navigation, SCREENS.HEIGHT_WEIGHT);
             }} />
-
             <View style={styles.contentContainer}>
                 <Text style={styles.welcomeText}>
                     Select Language
@@ -114,77 +96,35 @@ const SelectLanguage = ({ navigation }) => {
                 <Text style={styles.subTitle}>
                     Pick the language that suits you best!
                 </Text>
-
-
-                <View style={{
-                    flexDirection: 'row',
-                    marginBottom: scaleHeight(20),
-                    alignSelf: 'center',
-                    marginTop: scaleHeight(40)
-                }}>
-
-                    <View style={{
-                        width: '100%',
-                        height: scaleHeight(42),
-                        borderRadius: 20,
-                        borderWidth: 0.5,
-                        borderColor: 'white',
-                        backgroundColor: 'transparent',
-                        marginHorizontal: 10,
-                        justifyContent: 'center',
-                        flexDirection: 'row',
-                        alignItems: 'center'
-                    }}>
-                        <Icon name={'search'} size={22} color={theme.dark.white} style={{ marginHorizontal: 8 }} />
-
+                <View style={styles.searchContainer}>
+                    <View style={styles.searchBox}>
+                        <Icon name={'search'} size={22} color={theme.dark.white} style={styles.searchIcon} />
                         <TextInput
                             placeholder='Search here'
                             placeholderTextColor={theme.dark.white}
-                            style={{
-                                fontFamily: fonts.fontsType.light,
-                                fontSize: scaleHeight(14),
-                                color: theme.dark.white,
-                                flex: 1,
-
-
-                            }} />
+                            style={styles.searchInput}
+                            value={searchText}
+                            onChangeText={setSearchText}
+                        />
                     </View>
-
                 </View>
-
-                <View style={{ height: scaleHeight(450) }}>
+                <View style={styles.languageListContainer}>
                     <FlatList
-                        data={languages}
+                        data={filteredLanguages}
                         renderItem={renderLanguages}
                         extraData={(index) => index}
                     />
                 </View>
-
-
-
                 <View style={styles.buttonContainer}>
-
-                    {/* <HorizontalDivider
-                        customStyle={{
-
-                        }} /> */}
-
                     <Button
                         onPress={() => {
-                            //handleUserName();
-                            resetNavigation(navigation, SCREENS.BUDDY_YOUR_INTERESTS)
+                            handleSelectLanguages()
                         }}
                         title={'Continue'}
-                        customStyle={{
-                            width: '100%'
-                        }}
+                        customStyle={styles.continueButton}
                     />
                 </View>
-
-
             </View>
-
-
         </SafeAreaView>
     );
 };
@@ -196,7 +136,6 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         padding: 25,
-
     },
     welcomeText: {
         fontFamily: fonts.fontsType.semiBold,
@@ -210,53 +149,78 @@ const styles = StyleSheet.create({
         color: theme.dark.heading,
         marginTop: 5
     },
-    forgetText: {
-        fontFamily: fonts.fontsType.semiBold,
-        fontSize: scaleHeight(14),
-        color: theme.dark.secondary,
-        alignSelf: 'center'
-    },
-    createAccountText1: {
-        fontFamily: fonts.fontsType.regular,
-        fontSize: scaleHeight(16),
-        color: theme.dark.white
-    },
-    createAccountText2: {
-        fontFamily: fonts.fontsType.bold,
-        fontSize: scaleHeight(16),
-        color: theme.dark.secondary,
-        marginHorizontal: 5,
-        textDecorationLine: 'underline'
-    },
-    createAccountItem: {
+    searchContainer: {
         flexDirection: 'row',
+        marginBottom: scaleHeight(20),
         alignSelf: 'center',
-        marginTop: 30,
+        marginTop: scaleHeight(25)
+    },
+    searchBox: {
+        width: '100%',
+        height: scaleHeight(42),
+        borderRadius: 20,
+        borderWidth: 0.5,
+        borderColor: 'white',
+        backgroundColor: 'transparent',
+        marginHorizontal: 10,
+        justifyContent: 'center',
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    searchIcon: {
+        marginHorizontal: 8
+    },
+    searchInput: {
+        fontFamily: fonts.fontsType.light,
+        fontSize: scaleHeight(14),
+        color: theme.dark.white,
+        flex: 1,
+    },
+    languageListContainer: {
+        height: scaleHeight(450)
     },
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
         marginTop: scaleHeight(10),
-        // marginBottom: scaleHeight(-40)
     },
-    createAccountView: {
-        flex: 1
+    continueButton: {
+        width: '100%'
     },
-    forgetPassContainer: {
+    languageContainer: {},
+    languageRow: {
         flexDirection: 'row',
-        marginTop: 20,
     },
-    backButton: {
+    languageText: {
+        color: theme.dark.white,
+        fontFamily: fonts.fontsType.regular,
+        fontSize: scaleHeight(16),
+        marginHorizontal: 10,
+        flex: 1,
         alignSelf: 'center'
     },
-    errorText: {
-        fontFamily: fonts.fontsType.regular,
-        fontSize: scaleHeight(12),
-        color: theme.dark.error,
-        marginTop: 5,
-        marginHorizontal: 8
+    divider: {
+        marginTop: 15,
+    },
+    radioButtonOuter: {
+        height: 22,
+        width: 22,
+        borderRadius: 11,
+        borderWidth: 2,
+        borderColor: theme.dark.white,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginHorizontal: 10
+    },
+    radioButtonSelected: {
+        borderColor: theme.dark.secondary,
+    },
+    radioButtonInner: {
+        height: 12,
+        width: 12,
+        borderRadius: 6,
+        backgroundColor: theme.dark.secondary,
     },
 });
-
 
 export default SelectLanguage;
