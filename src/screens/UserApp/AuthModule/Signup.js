@@ -15,12 +15,21 @@ import Icon from 'react-native-vector-icons/MaterialIcons'
 import EmailIcon from 'react-native-vector-icons/Zocial'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
+import { signupUser } from '../../../redux/AuthModule/signupSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
+import { setTempCred } from '../../../redux/setTempCredentialsSlice';
 
 const Signup = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { dataPayload } = useSelector((state) => state.app)
+    const { loading } = useSelector((state) => state.signup)
     const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' });
     const [errors, setErrors] = useState({ email: '', password: '', confirmPassword: '' });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPass] = useState(false);
+
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
 
@@ -29,7 +38,7 @@ const Signup = ({ navigation }) => {
             if (value === '') {
                 error = 'Email address is required';
             } else if (!validateEmail(value)) {
-                error = 'Please enter a valid email address';
+                error = 'Please enter a valid email address'
             }
         } else if (name === 'password') {
             if (value === '') {
@@ -69,7 +78,8 @@ const Signup = ({ navigation }) => {
     };
 
     const validatePassword = (password) => {
-        return password.length >= 6;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+        return passwordRegex.test(password);
     };
 
     const handleSignup = () => {
@@ -89,7 +99,7 @@ const Signup = ({ navigation }) => {
             newErrors.password = 'Password is required';
             valid = false;
         } else if (!validatePassword(password)) {
-            newErrors.password = 'Password must be at least 6 characters long';
+            newErrors.password = 'Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number and one special character';
             valid = false;
         }
 
@@ -104,9 +114,33 @@ const Signup = ({ navigation }) => {
         setErrors(newErrors);
 
         if (valid) {
-            // Proceed with Signup logic
+            const credentials = {
+                email: email,
+                password: password,
+                confirm_password: confirmPassword,
+                role: "USER",
+            }
+            dispatch(signupUser(credentials)).then((result) => {
+                if (result?.payload?.status === "success") {
+                    dispatch(setTempCred({email, password}));
+                    handleSuccessNavigation(result?.payload?.message)
+                } else if (result?.payload?.errors) {
+                    showAlert("Error", "error", result?.payload?.errors)
+                }
+
+                else if (result?.payload?.status === "error") {
+                    showAlert("Error", "error", result?.payload?.message)
+                }
+            })
         }
     };
+
+    const handleSuccessNavigation = (message) => {
+        showAlert("Success", "success", message)
+        setTimeout(() => {
+            resetNavigation(navigation, SCREENS.USER_NAME)
+        }, 3000);
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -208,10 +242,7 @@ const Signup = ({ navigation }) => {
                             marginTop: 40
                         }} />
 
-                    <TouchableOpacity
-                        onPress={() => {
-                            handleLoginNavigation();
-                        }}
+                    <View
                         style={styles.createAccountItem}
                     >
 
@@ -219,28 +250,31 @@ const Signup = ({ navigation }) => {
                             Already have an account?
                         </Text>
 
-                        <Text style={styles.createAccountText2}>
+                        <Text
+                            onPress={() => {
+                                handleLoginNavigation();
+                            }}
+                            style={styles.createAccountText2}>
                             Log In
                         </Text>
 
-                    </TouchableOpacity>
+                    </View>
 
 
 
-                </View>
-
-
-
-                <View style={styles.buttonContainer}>
-                    <Button
-                        onPress={() => {
-                            resetNavigation(navigation, SCREENS.USER_NAME)
-                        }}
-                        title={'Sign Up'}
-                    />
                 </View>
 
             </CustomLayout>
+
+            <View style={styles.buttonContainer}>
+                <Button
+                    loading={loading}
+                    onPress={() => {
+                        handleSignup();
+                    }}
+                    title={'Sign Up'}
+                />
+            </View>
 
         </SafeAreaView>
     );
@@ -293,7 +327,7 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(50)
+        // marginTop: scaleHeight(50)
     },
     createAccountView: {
         flex: 1

@@ -79,6 +79,7 @@ const CustomTextInput = ({
                     selectTextOnFocus={false}
                     onFocus={handleFocus} // Add onFocus handler
                     onBlur={handleBlur} // Add onBlur handler
+                    selectionColor={isFocused ? theme.dark.secondary : theme.dark.text} // Change cursor color when focused
                 />
                 {iconComponent}
             </View>

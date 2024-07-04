@@ -11,10 +11,22 @@ import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
 import DynamicOptionSelector from '../../../components/DynamicOptionSelector';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
+import { setDataPayload } from '../../../redux/appSlice';
+import CategorySelector from '../../../components/CategorySelector';
 
 const BuddyYourInterests = ({ navigation }) => {
-    const gender = ["Date", "Lunch", "Dinner", "Movie Night"]
-    const [selectedGender, setSelectedGender] = useState(null);
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { dataPayload } = useSelector((state) => state.app);
+    const [selectedInterests, setSelectedInterests] = useState([]);
+    const interests = [
+        { id: 1, name: 'Date' },
+        { id: 2, name: 'Lunch' },
+        { id: 3, name: 'Dinner' },
+        { id: 4, name: 'Movie Night' }
+    ];
 
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.SELECT_LANGUAGE)
@@ -22,14 +34,24 @@ const BuddyYourInterests = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
 
     const handleItemSelected = (item) => {
-        console.log(item)
-        setSelectedGender(item);
+        setSelectedInterests(item)
     };
+
+    const handleSelectedInterests = () => {
+        if (selectedInterests?.length == 0) {
+            showAlert("Error", "error", "Please select at least 1 category.")
+            return
+        }
+        let categoryIds = [];
+        selectedInterests?.map((item) => {
+            categoryIds.push(item?.id)
+        })
+        const newPayload = { ...dataPayload, category_ids: categoryIds };
+        dispatch(setDataPayload(newPayload));
+        resetNavigation(navigation, SCREENS.AMOUNT)
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -45,44 +67,12 @@ const BuddyYourInterests = ({ navigation }) => {
                         Select Your Interests and Unlock Your Perfect Matches!
                     </Text>
 
-                    <DynamicOptionSelector
-                        items={gender}
+                    {/* <DynamicOptionSelector
+                        items={interests}
                         onItemSelected={handleItemSelected}
-                    />
+                    /> */}
 
-                    {/* {
-                        gender?.map((item, index) => {
-
-                            return <TouchableOpacity
-                                key={index}
-                                style={{
-
-                                    flexDirection: "row",
-                                    alignItems: "center",
-                                    backgroundColor: theme.dark.inputBg,
-                                    height: 45,
-                                    borderRadius: 30,
-                                    borderWidth: 1,
-                                    borderColor: theme.dark.text,
-                                    marginTop: scaleHeight(30)
-
-                                }}>
-
-                                <Text
-                                    style={{
-                                        fontFamily: fonts.fontsType.medium,
-                                        fontSize: scaleHeight(18),
-                                        color: theme.dark.inputLabel,
-                                        marginHorizontal: scaleWidth(20)
-                                    }}
-                                >{item}</Text>
-
-                            </TouchableOpacity>
-
-                        })
-                    } */}
-
-
+                    <CategorySelector items={interests} onItemSelected={handleItemSelected} />
 
                 </View>
 
@@ -95,8 +85,7 @@ const BuddyYourInterests = ({ navigation }) => {
 
                     <Button
                         onPress={() => {
-                            //handleselectedGender();
-                            resetNavigation(navigation, SCREENS.AMOUNT)
+                            handleSelectedInterests();
                         }}
                         title={'Continue'}
                     />

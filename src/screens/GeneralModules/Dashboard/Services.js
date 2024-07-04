@@ -11,9 +11,11 @@ import CustomHeader from '../../../components/CustomHeader';
 import UserServicesContent from './UserDashboard/UserServicesContent';
 import BuddyServicesContent from './BuddyDashboard/BuddyServicesContent';
 import { useAuth } from '../../../providers/AuthProvider';
+import { useSelector } from 'react-redux';
 
 const Services = ({ navigation }) => {
-    const { isLoggedIn, userRole } = useAuth();
+    //const { isLoggedIn, role } = useAuth();
+    const { role } = useSelector((state) => state.auth);
     const [selectedIndex, setSelectedIndex] = useState(null);
     const handleSearchPress = () => {
         resetNavigation(navigation, SCREENS.SEARCH_SERVICES);
@@ -30,7 +32,7 @@ const Services = ({ navigation }) => {
                 onSearchPress={handleSearchPress}
                 hideFilterButton={hideFilterButton}
             />
-            {userRole === 'Buddy Finder' ? <UserServicesContent
+            {role === 'Buddy Finder' ? <UserServicesContent
                 setCurrentIndex={setSelectedIndex}
             /> : <BuddyServicesContent
                 setCurrentIndex={setSelectedIndex} />}

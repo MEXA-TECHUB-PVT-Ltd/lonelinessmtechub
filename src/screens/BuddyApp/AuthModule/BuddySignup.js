@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Keyboard, ScrollView } from 'react-native';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
 import useBackHandler from '../../../utils/useBackHandler';
@@ -15,12 +15,21 @@ import Icon from 'react-native-vector-icons/MaterialIcons'
 import EmailIcon from 'react-native-vector-icons/Zocial'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
+import { useDispatch, useSelector } from 'react-redux';
+import { signupUser } from '../../../redux/AuthModule/signupSlice';
+import { useAlert } from '../../../providers/AlertContext';
 
 const BuddySignup = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { dataPayload } = useSelector((state) => state.app)
     const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' });
     const [errors, setErrors] = useState({ email: '', password: '', confirmPassword: '' });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPass] = useState(false);
+
+    console.log(dataPayload);
+
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
 
@@ -104,9 +113,30 @@ const BuddySignup = ({ navigation }) => {
         setErrors(newErrors);
 
         if (valid) {
-            // Proceed with Signup logic
+            const credentials = {
+                email: form?.email,
+                password: form?.password,
+                confirm_password: form?.confirmPassword,
+                role: "BUDDY",
+            }
+            dispatch(signupUser(credentials)).then((result) => {
+                if (result?.payload?.status === "success") {
+                    handleSuccessNavigation(result?.payload?.message);
+                    // success message here.... "message": "User registered successfully",
+                } else {
+                    showAlert("Error", "error", result?.payload?.message)
+                    // error message here.... "message": "User registered failed",
+                }
+            })
         }
     };
+
+    const handleSuccessNavigation = (message) => {
+        showAlert("Success", "success", message)
+        setTimeout(() => {
+            resetNavigation(navigation, SCREENS.BUDDY_USER_NAME)
+        }, 3000);
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -208,10 +238,7 @@ const BuddySignup = ({ navigation }) => {
                             marginTop: 40
                         }} />
 
-                    <TouchableOpacity
-                        onPress={() => {
-                            handleLoginNavigation();
-                        }}
+                    <View
                         style={styles.createAccountItem}
                     >
 
@@ -219,28 +246,29 @@ const BuddySignup = ({ navigation }) => {
                             Already have an account?
                         </Text>
 
-                        <Text style={styles.createAccountText2}>
+                        <Text
+                            onPress={() => {
+                                handleLoginNavigation();
+                            }}
+                            style={styles.createAccountText2}>
                             Log In
                         </Text>
 
-                    </TouchableOpacity>
+                    </View>
 
 
 
-                </View>
-
-
-
-                <View style={styles.buttonContainer}>
-                    <Button
-                        onPress={() => {
-                            resetNavigation(navigation, SCREENS.BUDDY_USER_NAME)
-                        }}
-                        title={'Sign Up'}
-                    />
                 </View>
 
             </CustomLayout>
+            <View style={styles.buttonContainer}>
+                <Button
+                    onPress={() => {
+                        resetNavigation(navigation, SCREENS.BUDDY_USER_NAME)
+                    }}
+                    title={'Sign Up'}
+                />
+            </View>
 
         </SafeAreaView>
     );
@@ -293,7 +321,7 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(50)
+        // marginTop: scaleHeight(50)
     },
     createAccountView: {
         flex: 1

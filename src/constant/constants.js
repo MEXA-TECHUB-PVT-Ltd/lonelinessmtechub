@@ -49,4 +49,5 @@ export const SCREENS = {
     BUDDY_SERVICE_DETAIL: "BuddyServiceDetails",
     PAYMENT_CANCELLATION: "PaymentCancellationScreen",
     GENERAL_CHAT: "GeneralChatScreen",
+    STRIPE_ACCOUNT_CREATION: "StripeAccountCreation"
 };

@@ -56,3 +56,4 @@ export { default as ReportBuddy } from './screens/GeneralModules/Dashboard/UserD
 export { default as BuddyServiceDetails } from './screens/GeneralModules/Dashboard/BuddyDashboard/BuddyServiceDetails'
 export { default as PaymentCancellation } from './screens/GeneralModules/PaymentCancellation'
 export { default as GeneralChat } from './screens/GeneralModules/GeneralChat'
+export { default as StripeAccountCreation } from './screens/StripePaymentModule/StripeAccountCreation'

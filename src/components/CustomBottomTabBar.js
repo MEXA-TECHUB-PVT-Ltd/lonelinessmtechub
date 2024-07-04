@@ -4,13 +4,14 @@ import fonts from '../styles/fonts';
 import { theme } from '../assets';
 import { scaleHeight } from '../styles/responsive';
 import { useAuth } from '../providers/AuthProvider';
+import { useSelector } from 'react-redux';
 
 const CustomBottomTabBar = ({ state, descriptors, navigation, icons, chatBadgeCount }) => {
     const { routes } = state;
-    const { isLoggedIn, userRole } = useAuth();
-
+    // const { isLoggedIn, userRole } = useAuth();
+    const { token, role } = useSelector((state) => state.auth);
     return (
-        <View style={[styles.tabContainer, { backgroundColor: userRole === 'Buddy Finder' ? '#4C4615' : theme.dark.primary, }]}>
+        <View style={[styles.tabContainer, { backgroundColor: role === 'Buddy Finder' ? '#4C4615' : theme.dark.primary, }]}>
             {routes.map((route, index) => {
                 const { options } = descriptors[route.key];
                 const label = options.title !== undefined ? options.title : route.name;

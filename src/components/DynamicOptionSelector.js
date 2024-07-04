@@ -1,12 +1,19 @@
 // DynamicSelector.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { scaleHeight, scaleWidth } from '../styles/responsive';
 import { theme } from '../assets';
 import fonts from '../styles/fonts';
 
-const DynamicOptionSelector = ({ items, onItemSelected }) => {
+const DynamicOptionSelector = ({ items, onItemSelected, selectedItem: preSelectedItems }) => {
     const [selectedItem, setSelectedItem] = useState(null);
+
+    useEffect(() => {
+        if (preSelectedItems?.length) {
+            console.log('preSelectedItems', preSelectedItems)
+            setSelectedItem(preSelectedItems);
+        }
+    }, [preSelectedItems,selectedItem]);
 
     const handleItemPress = (item) => {
         setSelectedItem(item);

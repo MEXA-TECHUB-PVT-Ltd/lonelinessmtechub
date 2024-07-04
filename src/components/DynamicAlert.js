@@ -62,7 +62,7 @@ const DynamicAlert = () => {
                 alignItems: 'center',
                 justifyContent: 'flex-start',
             }}>
-                <Image source={getImageSource()} style={styles.icon} />
+                <Image resizeMode='contain' source={getImageSource()} style={styles.icon} />
                 <Text style={[styles.text, {
                     color: alert.type === 'success' ? "#4CAF50" : "#F44336"
                 }]}>{alert.message}</Text>
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     icon: {
         width: width * 0.06,
         height: width * 0.06,
-        top: scaleHeight(10)
+        top: scaleHeight(10),
     },
     success: {
         borderColor: '#4CAF50',

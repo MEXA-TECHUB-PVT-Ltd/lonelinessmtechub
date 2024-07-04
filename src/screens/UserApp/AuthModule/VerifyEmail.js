@@ -15,10 +15,16 @@ import {
     useBlurOnFulfill,
     useClearByFocusCell,
 } from "react-native-confirmation-code-field";
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
+import { verifyEmailCode } from '../../../redux/AuthModule/verifyEmailCodeSlice';
 
 const CELL_COUNT = 4;
 
 const VerifyEmail = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { dataPayload } = useSelector((state) => state.app)
     const [value, setValue] = useState('');
     const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
     const [props, getCellOnLayoutHandler] = useClearByFocusCell({
@@ -33,7 +39,30 @@ const VerifyEmail = ({ navigation }) => {
     useBackHandler(handleBackPress);
 
     const handleResetPassNavigation = () => {
+
+
         resetNavigation(navigation, SCREENS.RESET_PASSWORD)
+
+        return
+
+        const payload = {
+            email: dataPayload?.email,
+            code: value
+        }
+
+        dispatch(verifyEmailCode(payload)).then((result) => {
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message)
+                setTimeout(() => {
+                    resetNavigation(navigation, SCREENS.RESET_PASSWORD)
+                }, 3000);
+
+            } else {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+
+
+        })
     }
 
     return (
@@ -53,7 +82,7 @@ const VerifyEmail = ({ navigation }) => {
                         Verification 🔐
                     </Text>
                     <Text style={styles.subTitle}>
-                        A 4 digit verification code has been sent to youremail@email.com.
+                        {` A 4 digit verification code has been sent to ${dataPayload?.email} .`}
                     </Text>
                     <View style={{ justifyContent: 'center', marginTop: scaleHeight(80) }}>
                         <CodeField
@@ -79,8 +108,9 @@ const VerifyEmail = ({ navigation }) => {
                     </View>
                 </View>
 
+            </CustomLayout>
 
-                <View style={styles.buttonContainer}>
+            <View style={styles.buttonContainer}>
                     <Button
                         onPress={() => {
                             handleResetPassNavigation();
@@ -88,8 +118,6 @@ const VerifyEmail = ({ navigation }) => {
                         title={'Verify'}
                     />
                 </View>
-
-            </CustomLayout>
 
         </SafeAreaView>
     );
@@ -141,7 +169,7 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(170)
+       // marginTop: scaleHeight(170)
     },
     createAccountView: {
         flex: 1

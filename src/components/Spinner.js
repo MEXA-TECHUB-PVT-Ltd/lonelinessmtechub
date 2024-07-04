@@ -7,18 +7,22 @@ import { scaleHeight, scaleWidth } from '../styles/responsive';
 import fonts from '../styles/fonts';
 
 // create a component
-const Spinner = ({ lottieCustomStyle, label }) => {
+const Spinner = ({ lottieCustomStyle, label, isTimer = true }) => {
     const lottieRef = useRef(null);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            if (lottieRef.current) {
-                lottieRef.current.pause();
-            }
-        }, 3000);
+        let timer;
+        if (isTimer) {
+            timer = setTimeout(() => {
+                if (lottieRef.current) {
+                    lottieRef.current.pause();
+                }
+            }, 3000);
+        }
+
 
         return () => clearTimeout(timer);
-    }, []);
+    }, [isTimer]);
 
     return (
         <View style={styles.container}>

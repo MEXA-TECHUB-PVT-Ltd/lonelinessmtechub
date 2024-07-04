@@ -11,25 +11,56 @@ import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
 import DynamicOptionSelector from '../../../components/DynamicOptionSelector';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
+import { setDataPayload } from '../../../redux/appSlice';
+import CategorySelector from '../../../components/CategorySelector';
 
 const YourInteresets = ({ navigation }) => {
-    const gender = ["Date", "Lunch", "Dinner", "Movie Night"]
-    const [selectedGender, setSelectedGender] = useState(null);
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { dataPayload } = useSelector((state) => state.app);
+    const interests = [
+        { id: 1, name: 'Date' },
+        { id: 2, name: 'Lunch' },
+        { id: 3, name: 'Dinner' },
+        { id: 4, name: 'Movie Night' }
+    ];
+    const [selectedInterests, setSelectedInterests] = useState([]);
 
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.GENDER_LOOKING)
         return true;
     };
-    useBackHandler(handleBackPress);
+    useBackHandler(handleBackPress)
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
+    useEffect(() => {
+        if (dataPayload?.category_ids?.length) {
+            const preSelectedInterests = interests.filter(interest => dataPayload.category_ids.includes(interest.id));
+            setSelectedInterests(preSelectedInterests);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dataPayload]);
 
     const handleItemSelected = (item) => {
-        console.log(item)
-        setSelectedGender(item);
+        setSelectedInterests(item)
     };
+
+
+
+    const handleSelectedInterests = () => {
+        if (selectedInterests?.length == 0) {
+            showAlert("Error", "error", "Please select at least 1 category.")
+            return
+        }
+        let categoryIds = [];
+        selectedInterests?.map((item) => {
+            categoryIds.push(item?.id)
+        })
+        const newPayload = { ...dataPayload, category_ids: categoryIds };
+        dispatch(setDataPayload(newPayload));
+        resetNavigation(navigation, SCREENS.ENABLE_LOCATION)
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -45,44 +76,16 @@ const YourInteresets = ({ navigation }) => {
                         Select Your Interests and Unlock Your Perfect Matches!
                     </Text>
 
-                    <DynamicOptionSelector
-                        items={gender}
+                    {/* <DynamicOptionSelector
+                        items={interests}
                         onItemSelected={handleItemSelected}
+                    /> */}
+
+                    <CategorySelector
+                        items={interests}
+                        onItemSelected={handleItemSelected}
+                        selectedItems={selectedInterests}
                     />
-
-                    {/* {
-                        gender?.map((item, index) => {
-
-                            return <TouchableOpacity
-                                key={index}
-                                style={{
-
-                                    flexDirection: "row",
-                                    alignItems: "center",
-                                    backgroundColor: theme.dark.inputBg,
-                                    height: 45,
-                                    borderRadius: 30,
-                                    borderWidth: 1,
-                                    borderColor: theme.dark.text,
-                                    marginTop: scaleHeight(30)
-
-                                }}>
-
-                                <Text
-                                    style={{
-                                        fontFamily: fonts.fontsType.medium,
-                                        fontSize: scaleHeight(18),
-                                        color: theme.dark.inputLabel,
-                                        marginHorizontal: scaleWidth(20)
-                                    }}
-                                >{item}</Text>
-
-                            </TouchableOpacity>
-
-                        })
-                    } */}
-
-
 
                 </View>
 
@@ -95,8 +98,7 @@ const YourInteresets = ({ navigation }) => {
 
                     <Button
                         onPress={() => {
-                            //handleselectedGender();
-                            resetNavigation(navigation, SCREENS.ENABLE_LOCATION)
+                            handleSelectedInterests();
                         }}
                         title={'Continue'}
                     />

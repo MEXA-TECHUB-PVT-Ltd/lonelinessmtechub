@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, Keyboard } from 'react-native';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
 import useBackHandler from '../../../utils/useBackHandler';
@@ -11,8 +11,12 @@ import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
+import { useDispatch, useSelector } from 'react-redux';
+import { setDataPayload } from '../../../redux/appSlice';
 
 const BuddyUserName = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { dataPayload } = useSelector((state) => state.app)
     const [form, setForm] = useState({ userName: '' });
     const [errors, setErrors] = useState({ userName: '' });
 
@@ -34,10 +38,6 @@ const BuddyUserName = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
-
     const handleUserName = () => {
         const { userName } = form;
         let valid = true;
@@ -51,7 +51,9 @@ const BuddyUserName = ({ navigation }) => {
         setErrors(newErrors);
 
         if (valid) {
-            // Proceed with UserName logic
+            const newPayload = { ...dataPayload, userName };
+            dispatch(setDataPayload(newPayload))
+            resetNavigation(navigation, SCREENS.BUDDY_PROFILE_PICTURE)
         }
     };
 
@@ -81,24 +83,22 @@ const BuddyUserName = ({ navigation }) => {
 
                 </View>
 
-
-                <View style={styles.buttonContainer}>
-
-                    <HorizontalDivider
-                        customStyle={{
-                            marginTop: 40
-                        }} />
-
-                    <Button
-                        onPress={() => {
-                            //handleUserName();
-                            resetNavigation(navigation, SCREENS.BUDDY_PROFILE_PICTURE)
-                        }}
-                        title={'Continue'}
-                    />
-                </View>
-
             </CustomLayout>
+
+            <View style={styles.buttonContainer}>
+
+                <HorizontalDivider
+                    customStyle={{
+                        marginTop: 40
+                    }} />
+
+                <Button
+                    onPress={() => {
+                        handleUserName();
+                    }}
+                    title={'Continue'}
+                />
+            </View>
 
         </SafeAreaView>
     );
@@ -151,8 +151,8 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(300),
-        marginBottom: scaleHeight(20)
+        // marginTop: scaleHeight(300),
+        // marginBottom: scaleHeight(20)
     },
     createAccountView: {
         flex: 1

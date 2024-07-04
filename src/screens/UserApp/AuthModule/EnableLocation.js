@@ -16,44 +16,89 @@ import Modal from "react-native-modal";
 import Spinner from '../../../components/Spinner';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../../providers/AuthProvider';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
+import { requestLocationPermission } from '../../../utils/cameraPermission';
+import Geolocation from '@react-native-community/geolocation';
+import { setDataPayload } from '../../../redux/appSlice';
+import { updateProfile } from '../../../redux/AuthModule/updateProfileSlice';
+import { login } from '../../../redux/AuthModule/signInSlice';
 
 const EnableLocation = ({ navigation }) => {
-    const { login } = useAuth();
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { dataPayload } = useSelector((state) => state.app);
+    const { credentials } = useSelector((state) => state.tempCredentials);
     const [modalVisible, setModalVisible] = useState(false);
+    // console.log('dataPayload', dataPayload)
+    // console.log('credentials', credentials)
+
+
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.YOUR_INTERESTS)
         return true;
     };
     useBackHandler(handleBackPress);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
-
-    // Function to store the token and role
-    const storeUserCredentials = async (token) => {
+    const handleWithCurrentLocation = async () => {
         try {
-            await AsyncStorage.setItem('userToken', token);
-        } catch (e) {
-            console.error('Failed to save the user credentials.', e);
+            const granted = await requestLocationPermission();
+            if (granted) {
+                console.log('Permission granted!');
+
+                const getPosition = () => new Promise((resolve, reject) => {
+                    Geolocation.getCurrentPosition(resolve, reject);
+                });
+
+                const { coords: { latitude, longitude } } = await getPosition();
+                const newPayload = { ...dataPayload, latitude, longitude };
+                const imageType = newPayload?.file?.endsWith('.png') ? 'image/png' : 'image/jpeg';
+                const formData = new FormData();
+
+                formData.append('file', {
+                    uri: newPayload?.file,
+                    type: imageType,
+                    name: `image_${Date.now()}.${imageType.split('/')[1]}`,
+                });
+                formData.append('full_name', newPayload?.userName);
+                formData.append('about', newPayload?.about);
+                formData.append('gender', newPayload?.gender);
+                formData.append('looking_for_gender', newPayload?.looking_for_gender);
+                formData.append('category_ids', newPayload?.category_ids);
+                formData.append('latitude', newPayload?.latitude);
+                formData.append('longitude', newPayload?.longitude);
+                formData.append('dob', newPayload?.dob);
+                formData.append('phone_country_code', newPayload?.phone_country_code);
+                formData.append('phone_number', newPayload?.phone_number);
+                // console.log(JSON.stringify(formData))
+                //dispatch(setDataPayload(newPayload));
+                dispatch(updateProfile()).then((result) => {
+                    console.log('result data', result?.payload)
+                    if (result?.payload?.status === "success") {
+                        showHideModal();
+                    } else if (result?.payload?.status === "error") {
+                        showAlert("Error", "error", result?.payload?.message)
+                    }
+                })
+
+
+            } else {
+                console.log('Permission denied!');
+            }
+        } catch (error) {
+            console.error('Error during login:', error);
         }
     };
 
-    const handleLogin = async () => {
-        // Assume loginApi is a function that returns a token and role on successful login
-        await storeUserCredentials('test');
-        const role = await AsyncStorage.getItem('userRole');
-        console.log('rollllllllll', role)
-        login('test', role)
-    };
+    const handleWithManualLocation = () => {
+        resetNavigation(navigation, SCREENS.ADD_LOCATION)
+    }
 
     const showHideModal = () => {
         setModalVisible(true);
-        // Hide the modal after 3 seconds
         setTimeout(() => {
             setModalVisible(false);
-            handleLogin();
-            // resetNavigation(navigation, SCREENS.LOGIN)
+            dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: 'testing-token-remove-later' }));
         }, 3000);
     };
 
@@ -135,8 +180,7 @@ const EnableLocation = ({ navigation }) => {
 
                     <Button
                         onPress={() => {
-                            //handlebirthDate();
-                            showHideModal()
+                            handleWithCurrentLocation();
                         }}
                         title={'Use My Current Location'}
                         customStyle={{
@@ -146,7 +190,7 @@ const EnableLocation = ({ navigation }) => {
 
                     <Button
                         onPress={() => {
-                            resetNavigation(navigation, SCREENS.ADD_LOCATION)
+                            handleWithManualLocation();
                         }}
                         title={'Enter Location Manually'}
                         customStyle={{

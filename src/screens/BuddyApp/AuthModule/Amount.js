@@ -11,8 +11,14 @@ import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
+import { setDataPayload } from '../../../redux/appSlice';
 
 const Amount = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { dataPayload } = useSelector((state) => state.app);
     const [form, setForm] = useState({ amount: '' });
     const [errors, setErrors] = useState({ amount: '' });
 
@@ -34,24 +40,22 @@ const Amount = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
-
-    const handleUserName = () => {
+    const handleHourlyRate = () => {
         const { amount } = form;
         let valid = true;
         let newErrors = { amount: '' };
 
         if (amount === '') {
-            newErrors.userName = 'amount is required';
+            newErrors.amount = 'Amount is required.';
             valid = false;
         }
 
         setErrors(newErrors);
 
         if (valid) {
-            // Proceed with UserName logic
+            const newPayload = { ...dataPayload, hourly_rate: amount };
+            dispatch(setDataPayload(newPayload));
+            resetNavigation(navigation, SCREENS.BUDDY_ENABLE_LOCATION)
         }
     };
 
@@ -81,25 +85,24 @@ const Amount = ({ navigation }) => {
                     {errors.amount ? <Text style={styles.errorText}>{errors.amount}</Text> : null}
 
                 </View>
-
-
-                <View style={styles.buttonContainer}>
-
-                    <HorizontalDivider
-                        customStyle={{
-                            marginTop: 40
-                        }} />
-
-                    <Button
-                        onPress={() => {
-                            //handleUserName();
-                            resetNavigation(navigation, SCREENS.BUDDY_ENABLE_LOCATION)
-                        }}
-                        title={'Continue'}
-                    />
-                </View>
-
             </CustomLayout>
+
+            <View style={styles.buttonContainer}>
+
+                <HorizontalDivider
+                    customStyle={{
+                        marginTop: 40
+                    }} />
+
+                <Button
+                    onPress={() => {
+                        handleHourlyRate();
+
+                    }}
+                    title={'Continue'}
+                />
+            </View>
+
 
         </SafeAreaView>
     );
@@ -152,8 +155,8 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(300),
-        marginBottom: scaleHeight(20)
+        // marginTop: scaleHeight(300),
+        // marginBottom: scaleHeight(20)
     },
     createAccountView: {
         flex: 1

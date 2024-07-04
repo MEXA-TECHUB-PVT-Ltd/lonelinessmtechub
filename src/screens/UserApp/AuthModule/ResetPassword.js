@@ -18,8 +18,13 @@ import { Image } from 'react-native';
 import { alertLogo, resetText } from '../../../assets/images';
 import Spinner from '../../../components/Spinner';
 import Modal from "react-native-modal";
+import { resetPassword } from '../../../redux/AuthModule/resetPasswordSlice';
+import { useDispatch } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
 
 const ResetPassword = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
     const [form, setForm] = useState({ newPassword: '', confirmPassword: '' });
     const [errors, setErrors] = useState({ newPassword: '', confirmPassword: '' });
     const [showPassword, setShowPassword] = useState(false);
@@ -51,11 +56,6 @@ const ResetPassword = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    const handleResetPass = () => {
-
-    }
-
-
     const validatePassword = (password) => {
         return password.length >= 6;
     };
@@ -86,7 +86,24 @@ const ResetPassword = ({ navigation }) => {
         setErrors(newErrors);
 
         if (valid) {
-            // Proceed with login logic
+
+            showHideModal();
+
+            return
+
+            const payload = {
+                new_password: newPassword,
+                confirm_password: confirmPassword
+            }
+
+            dispatch(resetPassword(payload)).then((result) => {
+                if (result?.payload?.status === "success") {
+                    showHideModal();
+                } else {
+                    showAlert("Error", "error", result?.payload?.message)
+                }
+            })
+
         }
     };
 
@@ -96,7 +113,6 @@ const ResetPassword = ({ navigation }) => {
         // Hide the modal after 3 seconds
         setTimeout(() => {
             setModalVisible(false);
-
             resetNavigation(navigation, SCREENS.LOGIN)
         }, 3000);
     };
@@ -142,7 +158,7 @@ const ResetPassword = ({ navigation }) => {
                         marginTop: 10
                     }}
                 />
-                <Text style={styles.subTitle}>
+                <Text style={[styles.subTitle,{textAlign:'center'}]}>
                     {`Please wait...${'\n'}You will be directed to the Sign In Page`}
                 </Text>
                 <Spinner />
@@ -212,20 +228,18 @@ const ResetPassword = ({ navigation }) => {
 
                 </View>
 
-
-                <View style={styles.buttonContainer}>
-                    <Button
-                        onPress={() => {
-                            showHideModal()
-                            //handleResetPassword();
-                        }}
-                        title={'Reset'}
-                    />
-                </View>
-
             </CustomLayout>
 
             {showModalView()}
+
+            <View style={styles.buttonContainer}>
+                <Button
+                    onPress={() => {
+                        handleResetPassword();
+                    }}
+                    title={'Reset'}
+                />
+            </View>
 
         </SafeAreaView>
     );
@@ -251,13 +265,13 @@ const styles = StyleSheet.create({
         fontSize: scaleHeight(14),
         color: theme.dark.white,
         marginTop: 5,
-        textAlign:'center'
+        //textAlign:'center'
     },
 
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(120)
+        //marginTop: scaleHeight(120)
     },
 
     backButton: {

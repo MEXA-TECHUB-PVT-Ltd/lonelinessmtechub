@@ -14,10 +14,16 @@ import ProfileProgressBar from '../../../components/ProfileProgressBar';
 import { BottomSheet } from "@rneui/themed";
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import DynamicOptionSelector from '../../../components/DynamicOptionSelector';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../../providers/AlertContext';
+import { setDataPayload } from '../../../redux/appSlice';
 
 const SelectGender = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { dataPayload } = useSelector((state) => state.app);
     const gender = ["Male", "Female", "Other"]
-    const [selectedGender, setSelectedGender] = useState(null);
+    const [selectedGender, setSelectedGender] = useState(null)
 
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.BIRTH_DATE)
@@ -25,14 +31,19 @@ const SelectGender = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    const handleLoginNavigation = () => {
-        resetNavigation(navigation, SCREENS.SIGNUP)
-    }
-
     const handleItemSelected = (item) => {
-        console.log(item)
         setSelectedGender(item);
     };
+
+    const handleGenderSelection = () => {
+        if (selectedGender == null) {
+            showAlert("Error", "error", "Please select gender.")
+            return
+        }
+        const newPayload = { ...dataPayload, gender: selectedGender };
+        dispatch(setDataPayload(newPayload));
+        resetNavigation(navigation, SCREENS.GENDER_LOOKING)
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -53,39 +64,6 @@ const SelectGender = ({ navigation }) => {
                         onItemSelected={handleItemSelected}
                     />
 
-                    {/* {
-                        gender?.map((item, index) => {
-
-                            return <TouchableOpacity
-                                key={index}
-                                style={{
-
-                                    flexDirection: "row",
-                                    alignItems: "center",
-                                    backgroundColor: theme.dark.inputBg,
-                                    height: 45,
-                                    borderRadius: 30,
-                                    borderWidth: 1,
-                                    borderColor: theme.dark.text,
-                                    marginTop: scaleHeight(30)
-
-                                }}>
-
-                                <Text
-                                    style={{
-                                        fontFamily: fonts.fontsType.medium,
-                                        fontSize: scaleHeight(18),
-                                        color: theme.dark.inputLabel,
-                                        marginHorizontal:scaleWidth(20)
-                                    }}
-                                >{item}</Text>
-
-                            </TouchableOpacity>
-
-                        })
-                    } */}
-
-
                 </View>
 
                 <View style={styles.buttonContainer}>
@@ -97,8 +75,7 @@ const SelectGender = ({ navigation }) => {
 
                     <Button
                         onPress={() => {
-                            //handleselectedGender();
-                            resetNavigation(navigation, SCREENS.GENDER_LOOKING)
+                            handleGenderSelection();
                         }}
                         title={'Continue'}
                     />

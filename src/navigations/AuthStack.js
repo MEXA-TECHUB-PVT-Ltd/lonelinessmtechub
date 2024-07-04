@@ -30,7 +30,8 @@ import {
     BuddyYourInteresets,
     HeightWeight,
     SelectLanguage,
-    Amount
+    Amount,
+    StripeAccountCreation
 } from '..';
 import { SCREENS } from '../constant/constants';
 
@@ -71,6 +72,7 @@ const AuthStack = () => {
             <Stack.Screen name={SCREENS.HEIGHT_WEIGHT} component={HeightWeight} />
             <Stack.Screen name={SCREENS.SELECT_LANGUAGE} component={SelectLanguage} />
             <Stack.Screen name={SCREENS.AMOUNT} component={Amount} />
+            <Stack.Screen name={SCREENS.STRIPE_ACCOUNT_CREATION} component={StripeAccountCreation} />
         </Stack.Navigator>
     );
 }
