@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, View, StyleSheet, Image } from 'react-native';
 import { scaleHeight, scaleWidth } from '../styles/responsive';
 import { theme } from '../assets';
 import fonts from '../styles/fonts';
@@ -41,6 +41,10 @@ const CategorySelector = ({ items, onItemSelected, selectedItems: preSelectedIte
                             }
                         ]}
                     >
+                        <Image
+                            tintColor={isSelected ? theme.dark.secondary : theme.dark.inputLabel}
+                            style={styles.imageStyle}
+                            source={{ uri: item?.image_url }} />
                         <Text
                             style={[
                                 styles.text,
@@ -51,7 +55,7 @@ const CategorySelector = ({ items, onItemSelected, selectedItems: preSelectedIte
                                 }
                             ]}
                         >
-                            {item.name}
+                            {item?.name}
                         </Text>
                     </TouchableOpacity>
                 );
@@ -81,6 +85,11 @@ const styles = StyleSheet.create({
         color: theme.dark.inputLabel,
         flex: 1,
     },
+    imageStyle: {
+        width: scaleWidth(26),
+        height: scaleHeight(25),
+        alignSelf: ''
+    }
 });
 
 export default CategorySelector;

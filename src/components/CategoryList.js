@@ -1,26 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList, Dimensions } from 'react-native';
 import { scaleHeight } from '../styles/responsive';
 import { theme } from '../assets';
 import fonts from '../styles/fonts';
 
-const CategoryList = ({ categories, onPress }) => {
+const CategoryList = ({ categories, onPress, isPress = true }) => {
     const [selectedCategory, setSelectedCategory] = useState(null);
 
     const handlePress = (item) => {
         setSelectedCategory(item.id);
-        onPress(item);
+        if (isPress) {
+            onPress(item);
+        }
+
     };
 
     const renderItem = ({ item }) => {
         const isSelected = item.id === selectedCategory;
         return (
-            <TouchableOpacity
+            item.name && <TouchableOpacity
                 style={[styles.container, isSelected && styles.selectedContainer]}
-                onPress={() => handlePress(item)}
+                onPress={() => isPress && handlePress(item)}
             >
-                <Image source={item.image} style={styles.image} />
-                <Text style={styles.text}>{item.text}</Text>
+                <Image source={{ uri: item.image_url }} style={styles.image} />
+                <Text style={[styles.text, isSelected && styles.selectedText]}>{item.name}</Text>
             </TouchableOpacity>
         );
     };
@@ -50,6 +53,7 @@ const styles = StyleSheet.create({
     },
     selectedContainer: {
         borderColor: theme.dark.secondary,
+        backgroundColor: theme.dark.transparentBg,
     },
     image: {
         width: 15,
@@ -60,6 +64,9 @@ const styles = StyleSheet.create({
         fontFamily: fonts.fontsType.medium,
         fontSize: scaleHeight(15),
         color: theme.dark.inputLabel,
+    },
+    selectedText: {
+        color: theme.dark.secondary,
     },
     list: {
         justifyContent: 'center',

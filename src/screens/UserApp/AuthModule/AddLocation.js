@@ -143,8 +143,7 @@ const AddLocation = ({ navigation }) => {
         setModalVisible(true);
         setTimeout(() => {
             setModalVisible(false);
-            resetNavigation(navigation, SCREENS.STRIPE_ACCOUNT_CREATION)
-            //dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: 'testing-token-remove-later' }));
+            dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: 'testing-token-remove-later' }));
         }, 3000);
     };
 

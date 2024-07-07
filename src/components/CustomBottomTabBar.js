@@ -11,7 +11,7 @@ const CustomBottomTabBar = ({ state, descriptors, navigation, icons, chatBadgeCo
     // const { isLoggedIn, userRole } = useAuth();
     const { token, role } = useSelector((state) => state.auth);
     return (
-        <View style={[styles.tabContainer, { backgroundColor: role === 'Buddy Finder' ? '#4C4615' : theme.dark.primary, }]}>
+        <View style={[styles.tabContainer, { backgroundColor: role === 'USER' ? '#4C4615' : theme.dark.primary, }]}>
             {routes.map((route, index) => {
                 const { options } = descriptors[route.key];
                 const label = options.title !== undefined ? options.title : route.name;

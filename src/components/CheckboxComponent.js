@@ -5,19 +5,32 @@ import { scaleHeight, scaleWidth } from '../styles/responsive';
 import fonts from '../styles/fonts';
 import { theme } from '../assets';
 
-const CheckBox = ({ label, labelStyle, checkBoxStyle }) => {
+const CheckBox = ({ label, labelStyle, checkBoxStyle,
+    onStatusChange, mode = 'multiple',
+    selectedOption, setSelectedOption, formField }) => {
     const [checked, setChecked] = useState(false);
 
+    // const handleToggle = () => {
+    //     setChecked(!checked);
+    //     onStatusChange && onStatusChange(label, !checked);
+    // };
+
     const handleToggle = () => {
-        setChecked(!checked);
+        if (mode === 'single') {
+            setSelectedOption(label);
+            onStatusChange && onStatusChange(formField, label, true);
+        } else {
+            setChecked(!checked);
+            onStatusChange && onStatusChange(formField, label, !checked);
+        }
     };
 
     return (
         <TouchableOpacity
             style={styles.mainContainer}
             onPress={handleToggle}>
-            <View style={[styles.checkbox, checked && styles.checked, checkBoxStyle]}>
-                {checked && <Icon style={{ alignSelf: 'center' }} name="check" size={15} color={theme.dark.black} />}
+            <View style={[styles.checkbox, (mode === 'single' ? selectedOption === label : checked) && styles.checked, checkBoxStyle]}>
+                {(mode === 'single' ? selectedOption === label : checked) && <Icon style={{ alignSelf: 'center' }} name="check" size={15} color={theme.dark.black} />}
             </View>
             <Text style={[styles.label, labelStyle]}>{label}</Text>
         </TouchableOpacity>

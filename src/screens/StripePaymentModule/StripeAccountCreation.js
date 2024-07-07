@@ -16,10 +16,12 @@ import FullScreenLoader from '../../components/FullScreenLoader';
 
 const StripeAccountCreation = ({ navigation }) => {
     const dispatch = useDispatch();
+    const { loading } = useSelector((state) => state.connectedAccount)
+    const onboardingLoader = useSelector((state) => state.accountOnboarding.loading)
     const { showAlert } = useAlert();
     const webviewRef = useRef(null);
     const [canGoBack, setCanGoBack] = useState(false);
-    const [webUrl, setWebUrl] = useState(false);
+    const [webUrl, setWebUrl] = useState('');
 
     const handleBackPress = () => {
         if (canGoBack) {
@@ -32,31 +34,50 @@ const StripeAccountCreation = ({ navigation }) => {
 
     useBackHandler(handleBackPress);
 
-    // useEffect(() => {
-    //     const createAccountUrl = async () => {
-    //         try {
-    //             const createResult = await dispatch(createConnectedAccount());
-    //             if (createResult?.payload?.status === "success") {
-    //                 showAlert("Success", "success", createResult?.payload?.message);
+    useEffect(() => {
+        const createAccountUrl = async () => {
+            try {
+                const createResult = await dispatch(createConnectedAccount());
+                if (createResult?.payload?.status === "success") {
+                    console.log(createResult?.payload)
+                    showAlert("Success", "success", createResult?.payload?.message);
 
-    //                 const onboardResult = await dispatch(accountOnboarding());
-    //                 if (onboardResult?.payload?.status === "success") {
-    //                     setWebUrl(onboardResult?.payload?.result?.url);
-    //                 } else {
-    //                     showAlert("Error", "error", onboardResult?.payload?.message);
-    //                 }
-    //             } else {
-    //                 showAlert("Error", "error", createResult?.payload?.message);
-    //             }
-    //         } catch (error) {
-    //             showAlert("Error", "error", "An unexpected error occurred");
-    //         }
-    //     };
+                    const onboardResult = await dispatch(accountOnboarding());
+                    if (onboardResult?.payload?.status === "success") {
+                        setWebUrl(onboardResult?.payload?.result?.url);
+                    } else {
+                        showAlert("Error", "error", onboardResult?.payload?.message);
+                    }
+                } else {
+                    showAlert("Error", "error", createResult?.payload?.message);
+                }
+            } catch (error) {
+                showAlert("Error", "error", "An unexpected error occurred");
+            }
+        };
 
-    //     createAccountUrl();
+        createAccountUrl();
 
-    //     // eslint-disable-next-line react-hooks/exhaustive-deps
-    // }, [dispatch]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dispatch]);
+
+    const renderWebView = () => {
+        if (!webUrl && (loading || onboardingLoader)) {
+            return <FullScreenLoader
+                loading={(loading || onboardingLoader)} />;
+        }
+
+        return (
+            <WebView
+                ref={webviewRef}
+                source={{ uri: webUrl }}
+                style={{ flex: 1 }}
+                onNavigationStateChange={(navState) => {
+                    setCanGoBack(navState.canGoBack);
+                }}
+            />
+        );
+    };
 
     return (
         <View style={styles.container}>
@@ -70,25 +91,28 @@ const StripeAccountCreation = ({ navigation }) => {
                 }}
                 onPress={handleBackPress}
             />
+            {renderWebView()}
             {/* {
-                true ? <FullScreenLoader loading={true} /> : <WebView
-                    ref={webviewRef}
-                    source={{ uri: 'https://connect.stripe.com/setup/s/acct_1POa2eQapF7UYlPO/8DrtMDRufxhl' }}
-                    style={{ flex: 1 }}
-                    onNavigationStateChange={(navState) => {
-                        setCanGoBack(navState.canGoBack);
-                    }}
-                />
+                (loading || onboardingLoader) ? <FullScreenLoader
+                    loading={(loading || onboardingLoader)} /> :
+                    <WebView
+                        ref={webviewRef}
+                        source={{ uri: webUrl }}
+                        style={{ flex: 1 }}
+                        onNavigationStateChange={(navState) => {
+                            setCanGoBack(navState.canGoBack);
+                        }}
+                    />
             } */}
 
-            <WebView
+            {/* <WebView
                 ref={webviewRef}
                 source={{ uri: 'https://connect.stripe.com/setup/s/acct_1POa2eQapF7UYlPO/8DrtMDRufxhl' }}
                 style={{ flex: 1 }}
                 onNavigationStateChange={(navState) => {
                     setCanGoBack(navState.canGoBack);
                 }}
-            />
+            /> */}
 
         </View>
     );

@@ -71,9 +71,6 @@ const ForgetPassword = ({ navigation }) => {
             const payload = {
                 email: email
             }
-            resetNavigation(navigation, SCREENS.VERIFY_EMAIL)
-            dispatch(setDataPayload(payload))
-            return
             dispatch(verifyEmail(payload)).then((result) => {
                 if (result?.payload?.status === "success") {
                     showAlert("Success", "success", result?.payload?.message)

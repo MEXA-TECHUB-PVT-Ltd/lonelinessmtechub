@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
@@ -33,6 +33,12 @@ const BuddyProfilePicture = ({ navigation }) => {
         return true;
     };
     useBackHandler(handleBackPress);
+
+    useEffect(() => {
+        if (dataPayload?.profile_pics) {
+            setSelectedImages(dataPayload?.profile_pics)
+        }
+    }, [dataPayload])
 
     const openImagePicker = () => {
         setModalVisible(false);

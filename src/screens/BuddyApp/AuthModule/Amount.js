@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
@@ -39,6 +39,15 @@ const Amount = ({ navigation }) => {
         return true;
     };
     useBackHandler(handleBackPress);
+
+    useEffect(() => {
+        if (dataPayload?.hourly_rate) {
+            setForm({
+                amount: dataPayload.hourly_rate
+            })
+        }
+
+    }, [dataPayload]);
 
     const handleHourlyRate = () => {
         const { amount } = form;

@@ -56,6 +56,16 @@ const BuddyBirthDate = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
+    useEffect(() => {
+        if (dataPayload?.birthDate) {
+            const [year, month, day] = dataPayload?.birthDate.split("-");
+            setForm({
+                day: day, month: month, year: year
+            })
+        }
+
+    }, [dataPayload]);
+
     const handlebirthDate = () => {
         const { day, month, year } = form;
         let valid = true;

@@ -24,6 +24,7 @@ import { updateProfile } from '../../../redux/AuthModule/updateProfileSlice';
 const BuddyEnableLocation = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
+    const { credentials } = useSelector((state) => state.tempCredentials);
     const { dataPayload } = useSelector((state) => state.app);
     const [modalVisible, setModalVisible] = useState(false);
 
@@ -38,40 +39,42 @@ const BuddyEnableLocation = ({ navigation }) => {
             const granted = await requestLocationPermission();
             if (granted) {
                 console.log('Permission granted!');
-                Geolocation.getCurrentPosition(info => {
-                    const { latitude, longitude } = info.coords;
-                    const newPayload = { ...dataPayload, latitude, longitude };
-                    const imageType = newPayload?.profile_pics[0]?.endsWith('.png') ? 'image/png' : 'image/jpeg';
-                    const formData = new FormData();
-        
-                    formData.append('file', {
-                        uri: newPayload?.profile_pic,
-                        type: imageType,
-                        name: `image_${Date.now()}.${imageType.split('/')[1]}`,
-                    });
-                    formData.append('full_name', newPayload?.userName);
-                    formData.append('about', newPayload?.about);
-                    formData.append('gender', newPayload?.gender);
-                    formData.append('category_ids', JSON.stringify(newPayload?.category_ids));
-                    formData.append('latitude', newPayload?.latitude);
-                    formData.append('longitude', newPayload?.longitude);
-                    formData.append('height_ft', newPayload?.height_ft);
-                    formData.append('height_in', newPayload?.height_in);
-                    formData.append('weight', newPayload?.weight);
-                    formData.append('weight_unit', newPayload?.weight_unit);
-                    formData.append('hourly_rate', newPayload?.hourly_rate);
-                    formData.append('languages', JSON.stringify(newPayload?.languages));
-                    formData.append('dob', newPayload?.languages);
-                    dispatch(setDataPayload(newPayload));
-                    dispatch(updateProfile()).then((result) => {
-                        if (result?.payload?.status === "success") {
-                            showHideModal();
-                        } else {
-                            showAlert("Error", "error", result?.payload?.message)
-                        }
-                    })
-                });
 
+                const getPosition = () => new Promise((resolve, reject) => {
+                    Geolocation.getCurrentPosition(resolve, reject);
+                });
+                const { coords: { latitude, longitude } } = await getPosition();
+                const newPayload = { ...dataPayload, latitude, longitude };
+                const imageType = newPayload?.profile_pics[0]?.endsWith('.png') ? 'image/png' : 'image/jpeg';
+                const formData = new FormData();
+
+                formData.append('file', {
+                    uri: newPayload?.profile_pic,
+                    type: imageType,
+                    name: `image_${Date.now()}.${imageType.split('/')[1]}`,
+                });
+                formData.append('full_name', newPayload?.userName);
+                formData.append('about', newPayload?.about);
+                formData.append('gender', newPayload?.gender);
+                formData.append('category_ids', JSON.stringify(newPayload?.category_ids));
+                formData.append('latitude', newPayload?.latitude);
+                formData.append('longitude', newPayload?.longitude);
+                formData.append('height_ft', newPayload?.height_ft);
+                formData.append('height_in', newPayload?.height_in);
+                formData.append('weight', newPayload?.weight);
+                formData.append('weight_unit', newPayload?.weight_unit);
+                formData.append('hourly_rate', newPayload?.hourly_rate);
+                formData.append('languages', JSON.stringify(newPayload?.languages));
+                formData.append('dob', newPayload?.birthDate);
+                // dispatch(setDataPayload(newPayload));
+                dispatch(updateProfile()).then((result) => {
+                    if (result?.payload?.status === "success") {
+                        resetNavigation(navigation, SCREENS.STRIPE_ACCOUNT_CREATION)
+                        //showHideModal();
+                    } else if (result?.payload?.status === "error") {
+                        showAlert("Error", "error", result?.payload?.message)
+                    }
+                })
             } else {
                 console.log('Permission denied!');
             }
@@ -88,7 +91,7 @@ const BuddyEnableLocation = ({ navigation }) => {
         setModalVisible(true);
         setTimeout(() => {
             setModalVisible(false);
-            dispatch(login({ email: 'test123@gmail.com', password: '12345' }));
+            dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: 'testing-token-remove-later' }));
         }, 3000);
     };
 

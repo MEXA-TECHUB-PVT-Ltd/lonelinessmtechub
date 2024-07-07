@@ -40,6 +40,15 @@ const BuddyAbout = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
+    useEffect(() => {
+        if (dataPayload?.about) {
+            setForm({
+                about: dataPayload.about
+            })
+        }
+
+    }, [dataPayload]);
+
 
     const handleAbout = () => {
         const { about } = form;

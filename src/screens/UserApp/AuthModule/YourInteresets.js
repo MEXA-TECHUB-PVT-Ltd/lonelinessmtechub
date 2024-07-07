@@ -15,17 +15,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useAlert } from '../../../providers/AlertContext';
 import { setDataPayload } from '../../../redux/appSlice';
 import CategorySelector from '../../../components/CategorySelector';
+import { getAllCategories } from '../../../redux/getAllCategoriesSlice';
 
 const YourInteresets = ({ navigation }) => {
     const dispatch = useDispatch();
+    const { categories } = useSelector((state) => state.getCategories)
     const { showAlert } = useAlert();
     const { dataPayload } = useSelector((state) => state.app);
-    const interests = [
-        { id: 1, name: 'Date' },
-        { id: 2, name: 'Lunch' },
-        { id: 3, name: 'Dinner' },
-        { id: 4, name: 'Movie Night' }
-    ];
     const [selectedInterests, setSelectedInterests] = useState([]);
 
     const handleBackPress = () => {
@@ -35,8 +31,12 @@ const YourInteresets = ({ navigation }) => {
     useBackHandler(handleBackPress)
 
     useEffect(() => {
+        dispatch(getAllCategories())
+    }, [dispatch])
+
+    useEffect(() => {
         if (dataPayload?.category_ids?.length) {
-            const preSelectedInterests = interests.filter(interest => dataPayload.category_ids.includes(interest.id));
+            const preSelectedInterests = categories?.filter(interest => dataPayload.category_ids.includes(interest.id));
             setSelectedInterests(preSelectedInterests);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -82,7 +82,7 @@ const YourInteresets = ({ navigation }) => {
                     /> */}
 
                     <CategorySelector
-                        items={interests}
+                        items={categories}
                         onItemSelected={handleItemSelected}
                         selectedItems={selectedInterests}
                     />

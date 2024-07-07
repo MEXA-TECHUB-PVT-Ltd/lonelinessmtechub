@@ -18,6 +18,7 @@ import ProfileProgressBar from '../../../components/ProfileProgressBar';
 import { useDispatch, useSelector } from 'react-redux';
 import { signupUser } from '../../../redux/AuthModule/signupSlice';
 import { useAlert } from '../../../providers/AlertContext';
+import { setTempCred } from '../../../redux/setTempCredentialsSlice';
 
 const BuddySignup = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -98,7 +99,7 @@ const BuddySignup = ({ navigation }) => {
             newErrors.password = 'Password is required';
             valid = false;
         } else if (!validatePassword(password)) {
-            newErrors.password = 'Password must be at least 6 characters long';
+            newErrors.password = 'Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number and one special character';
             valid = false;
         }
 
@@ -121,11 +122,14 @@ const BuddySignup = ({ navigation }) => {
             }
             dispatch(signupUser(credentials)).then((result) => {
                 if (result?.payload?.status === "success") {
-                    handleSuccessNavigation(result?.payload?.message);
-                    // success message here.... "message": "User registered successfully",
-                } else {
+                    dispatch(setTempCred({ email, password }));
+                    handleSuccessNavigation(result?.payload?.message)
+                } else if (result?.payload?.errors) {
+                    showAlert("Error", "error", result?.payload?.errors)
+                }
+
+                else if (result?.payload?.status === "error") {
                     showAlert("Error", "error", result?.payload?.message)
-                    // error message here.... "message": "User registered failed",
                 }
             })
         }
@@ -264,7 +268,7 @@ const BuddySignup = ({ navigation }) => {
             <View style={styles.buttonContainer}>
                 <Button
                     onPress={() => {
-                        resetNavigation(navigation, SCREENS.BUDDY_USER_NAME)
+                        handleSignup();
                     }}
                     title={'Sign Up'}
                 />
