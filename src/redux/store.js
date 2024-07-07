@@ -22,11 +22,12 @@ import sendRequestReducer from './UserDashboard/sendRequestSlice';
 import likeDislikeBuddyReducer from './UserDashboard/likeDislikeBuddySlice';
 import userBuddyActionReducer from './userBuddyActionSlice';
 import applyFilterTogetBuddiesReducer from './UserDashboard/applyFilterTogetBuddiesSlice';
+import accountSubscriptionReducer from './accountSubscriptionSlice';
 
 const persistConfig = {
     key: 'root',
     storage: AsyncStorage,
-    whitelist: ['auth', 'signup']  // Persist 'auth' and 'signup' slices
+    whitelist: ['auth', 'signup', 'accountSubscription']  // Persist 'auth' and 'signup' slices
 };
 
 const rootReducer = combineReducers({
@@ -49,6 +50,7 @@ const rootReducer = combineReducers({
     likeDislikeBuddy: likeDislikeBuddyReducer,
     userBuddyAction: userBuddyActionReducer,
     applyFilter: applyFilterTogetBuddiesReducer,
+    accountSubscription: accountSubscriptionReducer,
     app: appReducer,
 
 });

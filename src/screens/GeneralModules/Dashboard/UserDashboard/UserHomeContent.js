@@ -51,6 +51,8 @@ import { useAlert } from '../../../../providers/AlertContext';
 import Geolocation from '@react-native-community/geolocation';
 import { applyFilterTogetBuddies } from '../../../../redux/UserDashboard/applyFilterTogetBuddiesSlice';
 import Spinner from '../../../../components/Spinner';
+import { setIsPremium } from '../../../../redux/accountSubscriptionSlice';
+import { likeDislikeBuddy } from '../../../../redux/UserDashboard/likeDislikeBuddySlice';
 
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -63,6 +65,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
     const { userLoginInfo } = useSelector((state) => state.auth)
     const { address } = useSelector((state) => state.getAddress)
     const { isAppOpened } = useSelector((state) => state.appOpened)
+    const { isPremiumPlan } = useSelector((state) => state.accountSubscription)
     const { showAlert } = useAlert();
     const lottieRef = useRef(null);
     const navigation = useNavigation();
@@ -90,7 +93,6 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
     const scaleY = useRef(new Animated.Value(1)).current;
     const rotateZ = useRef(new Animated.Value(0)).current;
     const { is_subscribed } = userLoginInfo?.user;
-    const [checkBoxStatus, setCheckBoxStatus] = useState({});
     const [selectedOption, setSelectedOption] = useState('');
     const [form, setForm] = useState({
         category: '',
@@ -114,13 +116,6 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
 
     });
 
-    // const handleCheckBoxStatusChange = (label, status) => {
-    //     setCheckBoxStatus(prevStatus => ({
-    //         ...prevStatus,
-    //         [label]: status,
-    //     }));
-    // };
-
     const getAllNearByBuddies = async () => {
         const getPosition = () => new Promise((resolve, reject) => {
             Geolocation.getCurrentPosition(resolve, reject);
@@ -136,7 +131,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
     useEffect(() => {
         getAllNearByBuddies();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dispatch, isfilterApplied])
+    }, [dispatch])
 
     useEffect(() => {
         if (currentUser)
@@ -983,6 +978,25 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
         })
     }
 
+    const handleLikeDislike = (likeDislikeStatus) => {
+
+        const likeDislikePayload = {
+            buddy_id: currentUser?.id,
+            like_status: likeDislikeStatus
+        }
+        dispatch(likeDislikeBuddy(likeDislikePayload)).then((result) => {
+            console.log(result?.payload)
+            if (result?.payload?.status === "success") {
+
+                let updatedUser = { ...currentUser, is_liked: likeDislikeStatus };
+                setCurrentUser(updatedUser);
+            }
+        })
+
+
+
+    }
+
     return (
         <LinearGradient
             colors={[theme.dark.primary, '#4C4615', '#4C4615']}
@@ -1086,9 +1100,13 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                                 <TouchableOpacity
                                     onPress={() => {
                                         if (currentUser?.block_status !== "BLOCK") {
-                                            if (!is_subscribed && userCurrentIndex > 2) {
+                                            if (userCurrentIndex === 2) {
+                                                dispatch(setIsPremium(false))
+                                            }
+                                            if (!is_subscribed && !isPremiumPlan) {
                                                 handleOpenModal1();
                                             } else {
+                                                handleLikeDislike(false)
                                                 handleDislike(activeIndex)
                                             }
                                         } else {
@@ -1110,10 +1128,16 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     onPress={() => {
+                                        console.log('isPremiumPlan', isPremiumPlan)
+
                                         if (currentUser?.block_status !== "BLOCK") {
-                                            if (!is_subscribed && userCurrentIndex > 2) {
+                                            if (userCurrentIndex === 2) {
+                                                dispatch(setIsPremium(false))
+                                            }
+                                            if (!is_subscribed && !isPremiumPlan) {
                                                 handleOpenModal1();
                                             } else {
+                                                handleLikeDislike(true)
                                                 like(activeIndex);
                                             }
                                         } else {
