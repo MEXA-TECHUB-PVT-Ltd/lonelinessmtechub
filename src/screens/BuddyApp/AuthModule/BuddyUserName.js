@@ -38,6 +38,15 @@ const BuddyUserName = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
+    useEffect(() => {
+        if (dataPayload?.userName) {
+            setForm({
+                userName: dataPayload?.userName
+            })
+        }
+
+    }, [dataPayload]);
+
     const handleUserName = () => {
         const { userName } = form;
         let valid = true;

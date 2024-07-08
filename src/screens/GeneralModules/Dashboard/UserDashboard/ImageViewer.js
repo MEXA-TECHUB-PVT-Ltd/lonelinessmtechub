@@ -9,15 +9,16 @@ import { dummy1, dummy2, dummyImg } from '../../../../assets/images';
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import { theme } from '../../../../assets';
 import { scaleHeight } from '../../../../styles/responsive';
+import { useSelector } from 'react-redux';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 
 
 const ImageViewer = ({ navigation }) => {
+    const { currentRoute } = useSelector((state) => state.app)
     const [activeIndex, setActiveIndex] = useState(0);
     const scrollViewRef = useRef(null);
-    const images = [dummyImg, dummy1, dummy2]
 
     const handleScroll = (event) => {
         const contentOffsetX = event.nativeEvent.contentOffset.x;
@@ -33,21 +34,13 @@ const ImageViewer = ({ navigation }) => {
             });
         }
     };
-    const carouselRef = useRef(null);
+
 
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
         return true;
     };
     useBackHandler(handleBackPress);
-
-    const renderItem = ({ item }) => {
-        return (
-            <View style={styles.imageContainer}>
-                <Image source={item} style={styles.image} />
-            </View>
-        );
-    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -68,14 +61,14 @@ const ImageViewer = ({ navigation }) => {
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
             >
-                {images.map((image, index) => (
+                {currentRoute?.buddy_images?.map((image, index) => (
                     <View key={index} style={styles.imageContainer}>
-                        <Image source={image} style={styles.image} />
+                        <Image source={{ uri: image }} style={styles.image} />
                     </View>
                 ))}
             </ScrollView>
             <View style={styles.indicatorContainer}>
-                {images.map((_, index) => (
+                {currentRoute?.buddy_images?.map((_, index) => (
                     <TouchableOpacity
                         key={index}
                         style={[
@@ -109,7 +102,7 @@ const styles = StyleSheet.create({
         width: '100%',
         height: screenHeight,
         resizeMode: 'cover',
-        marginTop:scaleHeight(20)
+        marginTop: scaleHeight(20),
     },
     indicatorContainer: {
         flexDirection: 'row',
@@ -122,8 +115,8 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         backgroundColor: theme.dark.transparentBg,
         marginHorizontal: 5,
-        borderWidth:1,
-        borderColor:theme.dark.secondary
+        borderWidth: 1,
+        borderColor: theme.dark.secondary
     },
     activeIndicator: {
         width: 24,

@@ -9,18 +9,45 @@ import fonts from '../../../../styles/fonts';
 import useBackHandler from '../../../../utils/useBackHandler';
 import { curveBg } from '../../../../assets/images';
 import { useAlert } from '../../../../providers/AlertContext';
+import { userBuddyAction } from '../../../../redux/userBuddyActionSlice';
+import { useDispatch, useSelector } from 'react-redux';
 
 const reportReasons = ["Report for no reason", "Commercial profile", "Scam", "Fake Profile", "Inappropriate picture", "Bad behaviour", "Other"];
 
 const ReportBuddy = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { loading } = useSelector((state) => state.userBuddyAction)
+    const { currentRoute } = useSelector((state) => state.app)
     const { showAlert } = useAlert();
     const [selectedReason, setSelectedReason] = useState(null);
 
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.USER_SERVICE_DETAIL)
+        if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
+            resetNavigation(navigation, currentRoute?.route, { screen: SCREENS.HOME })
+        } else {
+            resetNavigation(navigation, currentRoute?.route)
+        }
+
         return true;
     };
     useBackHandler(handleBackPress);
+
+    const handleReportBuddy = () => {
+        dispatch(userBuddyAction({
+            buddy_id: currentRoute?.buddy_id,
+            reason: selectedReason,
+            type: "REPORT" // BLOCK OR REPORT -- 
+        })).then((result) => {
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message);
+                setTimeout(() => {
+                    handleBackPress();
+                }, 3000);
+            } else if (result?.payload?.status === "error") {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
 
     const renderItem = ({ item }) => {
         const isSelected = selectedReason === item;
@@ -66,7 +93,7 @@ const ReportBuddy = ({ navigation }) => {
                         handleBackPress();
                     }}
                 />
-                <Text style={styles.headerText}>Tell us the reason why are you reporting Alex?</Text>
+                <Text style={styles.headerText}>{`Tell us the reason why are you reporting ${currentRoute?.buddy_name}?`}</Text>
                 <Text style={styles.subHeaderText}>You will no longer see this person or receive any message from them. Let us know what happened.</Text>
                 <View style={styles.listContainer}>
                     <FlatList
@@ -76,8 +103,9 @@ const ReportBuddy = ({ navigation }) => {
                         keyExtractor={(item, index) => item + index}
                     />
                     <Button
+                        loading={loading}
                         onPress={() => {
-                            handleButtonClick()
+                            handleReportBuddy();
                         }}
                         title={'Report'}
                         customStyle={{ marginBottom: 0 }}

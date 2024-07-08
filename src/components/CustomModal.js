@@ -25,7 +25,8 @@ const CustomModal = ({
     parallelButtonText1,
     parallelButtonText2,
     parallelButtonPress1,
-    parallelButtonPress2
+    parallelButtonPress2,
+    loading
 }) => {
     return (
         <Modal
@@ -54,7 +55,8 @@ const CustomModal = ({
                         onPress={buttonAction}
                         customStyle={{
                             width: '80%',
-                            marginTop: scaleHeight(40)
+                            marginTop: scaleHeight(40),
+                            marginBottom: scaleHeight(0)
                         }}
                     />
 
@@ -71,7 +73,7 @@ const CustomModal = ({
                                 backgroundColor: theme.dark.transparentBg,
                                 borderWidth: 1,
                                 borderColor: theme.dark.secondary,
-                                marginBottom:scaleHeight(0)
+                                marginBottom: scaleHeight(0)
                             }}
                             textCustomStyle={{
                                 color: theme.dark.secondary
@@ -79,11 +81,12 @@ const CustomModal = ({
                         />
 
                         <Button
+                            loading={loading === true && loading}
                             title={parallelButtonText2}
                             onPress={parallelButtonPress2}
                             customStyle={{
                                 width: '48%',
-                                marginBottom:scaleHeight(0)
+                                marginBottom: scaleHeight(0)
                             }}
                         />
                     </View>
@@ -108,7 +111,7 @@ const styles = StyleSheet.create({
     image: {
         width: 120,
         height: 120,
-        marginTop: scaleHeight(-30)
+        marginTop: scaleHeight(-10)
     },
     text: {
         color: theme.dark.inputLabel,

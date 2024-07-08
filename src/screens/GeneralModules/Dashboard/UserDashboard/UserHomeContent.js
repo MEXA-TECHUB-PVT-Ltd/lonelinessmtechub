@@ -1,5 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Image, SafeAreaView, StyleSheet, Dimensions, View, FlatList, Text, TouchableOpacity, ScrollView, TextInput, Animated } from 'react-native';
+import {
+    Image, SafeAreaView, StyleSheet, Dimensions,
+    View, FlatList, Text, TouchableOpacity,
+    ScrollView, TextInput, Animated, findNodeHandle, UIManager
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import LottieView from 'lottie-react-native';
 import Icon from 'react-native-vector-icons/AntDesign'
@@ -7,15 +11,13 @@ import { scaleHeight, scaleWidth } from '../../../../styles/responsive';
 import { theme } from '../../../../assets';
 import {
     bellHome,
+    blockUser,
     chatHome,
     disLikeHome,
     disLikeLabel,
-    dummy1,
-    dummy2,
     dummyImg,
     filterHome,
     homeLogo,
-    labelHome,
     likeHome,
     likeLabel,
     locationPin,
@@ -39,30 +41,50 @@ import CheckBox from '../../../../components/CheckboxComponent';
 import CustomTextInput from '../../../../components/TextInputComponent';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllNearbyBuddy } from '../../../../redux/UserDashboard/getAllNearbyBuddySlice';
+import { getAddressByLatLong } from '../../../../redux/getAddressByLatLongSlice';
+import { setIsAppOpened } from '../../../../redux/appOpenedSlice';
+import { setRoute } from '../../../../redux/appSlice';
+import { userBuddyAction } from '../../../../redux/userBuddyActionSlice';
+import { useAlert } from '../../../../providers/AlertContext';
+import Geolocation from '@react-native-community/geolocation';
+import { applyFilterTogetBuddies } from '../../../../redux/UserDashboard/applyFilterTogetBuddiesSlice';
+import Spinner from '../../../../components/Spinner';
+import { setIsPremium } from '../../../../redux/accountSubscriptionSlice';
+import { likeDislikeBuddy } from '../../../../redux/UserDashboard/likeDislikeBuddySlice';
+
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-const categories = [
-    { id: '1', text: 'Date', image: bellHome },
-    { id: '2', text: 'Lunch', image: filterHome },
-    { id: '3', text: 'Dinner', image: homeLogo },
-    { id: '4', text: 'Movie Night', image: likeHome },
-];
-
-const UserHomeContent = () => {
+const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
+    const dispatch = useDispatch();
+    const { response, loading } = useSelector((state) => state.nearByBuddy)
+    const { filteredData, filterLoader } = useSelector((state) => state.applyFilter)
+    const blockUserLoader = useSelector((state) => state.userBuddyAction)
+    const { userLoginInfo } = useSelector((state) => state.auth)
+    const { address } = useSelector((state) => state.getAddress)
+    const { isAppOpened } = useSelector((state) => state.appOpened)
+    const { isPremiumPlan } = useSelector((state) => state.accountSubscription)
+    const { showAlert } = useAlert();
     const lottieRef = useRef(null);
     const navigation = useNavigation();
     const [showCarousel, setShowCarousel] = useState(false);
+    const [isfilterApplied, setFilterApplied] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
     const [min, setMin] = useState(20);
     const [max, setMax] = useState(80);
-    const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' });
+    const [hieghtFtSelected, setHeightFtSelected] = useState(true);
+    const [hieghtInSelected, setHeightInSelected] = useState(false);
+    const [weightKgSelected, setWeightKgSelected] = useState(true);
+    const [weightLbSelected, setWeightLbSelected] = useState(false);
 
     const [modalVisible1, setModalVisible1] = useState(false);
     const [modalVisible2, setModalVisible2] = useState(false);
     const [modalVisible3, setModalVisible3] = useState(false);
-    const [showFilterModal, setFilterModal] = useState(false);
-
+    const [modalVisible, setModalVisible] = useState(false);
+    const [userCurrentIndex, setUserCurrentIndex] = useState(0);
+    const [currentUser, setCurrentUser] = useState(response?.data[0]);
     const scrollOffsetY = useRef(0);
     const [scrollDirection, setScrollDirection] = useState(null);
     const [action, setAction] = useState({ index: null, type: null });
@@ -70,6 +92,79 @@ const UserHomeContent = () => {
     const translateY = useRef(new Animated.Value(0)).current;
     const scaleY = useRef(new Animated.Value(1)).current;
     const rotateZ = useRef(new Animated.Value(0)).current;
+    const { is_subscribed } = userLoginInfo?.user;
+    const [selectedOption, setSelectedOption] = useState('');
+    const [form, setForm] = useState({
+        category: '',
+        city: '',
+        language: '',
+        height_ft: '',
+        height_in: '',
+        weight_kg: '',
+        weight_lb: '',
+        weight_unit: '',
+        top_rated_profile: false,
+        top_liked_profile: false,
+        gender: '',
+        latitude: 0,
+        longitude: 0,
+        distance: 500000000,
+        page: 1,
+        limit: 10,
+        min_age: 0,
+        max_age: 0
+
+    });
+
+    const getAllNearByBuddies = async () => {
+        const getPosition = () => new Promise((resolve, reject) => {
+            Geolocation.getCurrentPosition(resolve, reject);
+        });
+        const { coords: { latitude, longitude } } = await getPosition();
+        const payload = {
+            latitude,
+            longitude
+        }
+        dispatch(getAllNearbyBuddy(payload));
+    }
+
+    useEffect(() => {
+        getAllNearByBuddies();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dispatch])
+
+    useEffect(() => {
+        if (currentUser)
+            dispatch(getAddressByLatLong({
+                lat: currentUser?.location?.latitude,
+                long: currentUser?.location?.longitude
+            }));
+    }, [dispatch, currentUser])
+
+    useEffect(() => {
+        if (isfilterApplied) {
+            setCurrentUser(filteredData?.data[userCurrentIndex]);
+        } else {
+            setCurrentUser(response?.data[userCurrentIndex]);
+        }
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userCurrentIndex, response, isfilterApplied]);
+
+
+    function updateCurrentUser(updatedUser) {
+        setCurrentUser(updatedUser);
+    }
+
+    const handleToggleKg = () => {
+        setWeightKgSelected(true);
+        setWeightLbSelected(false);
+    };
+
+    const handleToggleLb = () => {
+        setWeightKgSelected(false);
+        setWeightLbSelected(true);
+    };
 
     const like = (index) => {
         setAction({ index, type: 'like' });
@@ -86,38 +181,21 @@ const UserHomeContent = () => {
                     useNativeDriver: true,
                 }),
             ]).start(() => {
-                // After the animation, remove the image from the list
-                images.splice(index, 1);
-                setActiveIndex((prev) => (prev > 0 ? prev - 1 : 0)); // Adjust the active index
-                translateX.setValue(0); // Reset the animation value for the next use
-                translateY.setValue(0); // Reset the animation value for the next use
-                setAction({ index: null, type: null }); // Reset the action
+                let newImageUrls = [...currentUser.image_urls];
+                newImageUrls.splice(index, 1);
+                updateCurrentUser({ ...currentUser, image_urls: newImageUrls });
+                //currentUser?.image_urls?.splice(index, 1);
+                setActiveIndex((prev) => (prev > 0 ? prev - 1 : 0));
+                translateX.setValue(0);
+                translateY.setValue(0);
+                setAction({ index: null, type: null });
+                if (isfilterApplied) {
+                    setUserCurrentIndex((prevIndex) => (prevIndex + 1) % filteredData?.data?.length);
+                } else {
+                    setUserCurrentIndex((prevIndex) => (prevIndex + 1) % response?.data?.length);
+                }
+
             });
-        }, 500);
-    };
-
-    const dislike = (index) => {
-        setAction({ index, type: 'dislike' });
-        setTimeout(() => {
-
-            Animated.timing(rotateZ, {
-                toValue: 45,
-                duration: 1000,
-                useNativeDriver: true,
-            }),
-
-                Animated.timing(translateX, {
-                    toValue: -screenWidth, // Slide out to the left
-                    duration: 1000,
-                    useNativeDriver: true,
-                }).start(() => {
-                    // After the animation, remove the image from the list
-                    images.splice(index, 1);
-                    setActiveIndex((prev) => (prev > 0 ? prev - 1 : 0)); // Adjust the active index
-                    translateX.setValue(0); // Reset the animation value for the next use
-                    rotateZ.setValue(0);
-                    setAction({ index: null, type: null }); // Reset the action
-                });
         }, 500);
     };
 
@@ -138,18 +216,23 @@ const UserHomeContent = () => {
                     useNativeDriver: true,
                 }),
             ]).start(() => {
+                let newImageUrls = [...currentUser.image_urls];
+                newImageUrls.splice(index, 1);
+                updateCurrentUser({ ...currentUser, image_urls: newImageUrls });
                 // After the animation, remove the image from the list
-                images.splice(index, 1);
+                // currentUser?.image_urls?.splice(index, 1);
                 setActiveIndex((prev) => (prev > 0 ? prev - 1 : 0)); // Adjust the active index
                 rotateZ.setValue(0); // Reset the rotation value for the next use
                 translateX.setValue(0); // Reset the translation value for the next use
                 setAction({ index: null, type: null }); // Reset the action
+                if (isfilterApplied) {
+                    setUserCurrentIndex((prevIndex) => (prevIndex + 1) % filteredData?.data?.length);
+                } else {
+                    setUserCurrentIndex((prevIndex) => (prevIndex + 1) % response?.data?.length);
+                }
             });
         }, 500); // Wait for 3 seconds before sliding out
     };
-
-
-
 
     const handleScroll = (event) => {
         const currentOffsetY = event.nativeEvent.contentOffset.y;
@@ -159,9 +242,16 @@ const UserHomeContent = () => {
     };
 
     useEffect(() => {
-        // This will run once when the component mounts and set the initial scroll position to 0
         scrollOffsetY.current = 0;
     }, []);
+
+    const handleOpenModal = () => {
+        setModalVisible(true);
+    };
+
+    const handleCloseModal = () => {
+        setModalVisible(false);
+    };
 
     const handleOpenModal1 = () => {
         setModalVisible1(true);
@@ -187,46 +277,39 @@ const UserHomeContent = () => {
         setModalVisible3(false);
     };
 
-    const images = [
-        dummyImg, // Replace with actual image sources
-        dummy1,
-        dummy2
-    ];
-
     useEffect(() => {
         const timer = setTimeout(() => {
             if (lottieRef.current) {
                 lottieRef.current.pause();
                 setShowCarousel(true);
+                dispatch(setIsAppOpened(true))
             }
         }, 4000);
 
         return () => clearTimeout(timer);
-    }, []);
-
-    const handleCategoryPress = (item) => {
-        console.log('Category pressed:', item);
-    };
-
-    // const renderItem = ({ item }) => (
-
-    //     <View style={styles.carouselItem}>
-    //         <Image source={item} style={[styles.carouselImage]} resizeMode="cover" />
-    //     </View>
-    // );
+    }, [dispatch]);
 
     const renderItem = ({ item, index }) => (
-        <Animated.View style={[styles.carouselItem, {
-            transform: [{ translateX }, { translateY }, { scaleY },
-            {
-                rotateZ: action.index === index && action.type === 'dislike' ? rotateZ.interpolate({
-                    inputRange: [0, 45],
-                    outputRange: ['0deg', '45deg'],
-                }) : '0deg'
-            }, // Apply rotation if it's a dislike action
-            ]
-        }]}>
-            <Image source={item} style={styles.carouselImage} resizeMode="cover" />
+        <Animated.View
+            style={[styles.carouselItem, {
+                transform: [{ translateX }, { translateY }, { scaleY },
+                {
+                    rotateZ: action.index === index && action.type === 'dislike' ? rotateZ.interpolate({
+                        inputRange: [0, 45],
+                        outputRange: ['0deg', '45deg'],
+                    }) : '0deg'
+                }, // Apply rotation if it's a dislike action
+                ]
+            }]}>
+            <Image
+                source={{ uri: item }}
+                style={styles.carouselImage}
+                resizeMode="cover"
+            />
+            <LinearGradient
+                colors={['transparent', theme.dark.primary]}
+                style={styles.gradientOverlay}
+            />
             {action.index === index && (
                 <View style={styles.labelContainer}>
                     <Image source={action.type === 'like' ? likeLabel : disLikeLabel} style={{
@@ -239,14 +322,40 @@ const UserHomeContent = () => {
         </Animated.View>
     );
 
-    const onChange = (min, max) => {
-        console.log('Max: ', max);
-        console.log('Min: ', min);
-    };
 
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
     };
+
+    const onChange = (min, max) => {
+        setMin(Math.round(min))
+        setMax(Math.round(max))
+    };
+
+    const handleCheckBoxStatusChange = (formField, label, isChecked) => {
+        //console.log(`${label} is ${isChecked ? 'checked' : 'unchecked'}`);
+        if (formField === "top_rated_profile" || formField === "top_liked_profile") {
+            handleChange(formField, isChecked);
+        } else {
+            handleChange(formField, label);
+        }
+
+    };
+
+    const applyFilter = () => {
+        setFilterModal(false)
+        setFilter(true)
+        setFilterApplied(true)
+        const filterPayload = { ...form, min_age: min, max_age: max };
+        dispatch(applyFilterTogetBuddies(filterPayload));
+    }
+
+    const resetFilter = () => {
+        getAllNearByBuddies();
+        setFilterModal(false)
+        setFilter(false)
+        setFilterApplied(false)
+    }
 
     const renderFilterModal = () => {
         return <Modal
@@ -297,10 +406,13 @@ const UserHomeContent = () => {
                     marginTop: 15
                 }} />
 
-                <ScrollView style={{
-                    flex: 1,
-                    marginBottom: scaleHeight(40)
-                }}>
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps={'always'}
+                    style={{
+                        flex: 1,
+                        marginBottom: scaleHeight(40)
+                    }}>
 
                     <View style={{
                         flexDirection: 'row',
@@ -353,21 +465,42 @@ const UserHomeContent = () => {
                             marginTop: 10,
                             justifyContent: 'space-between'
                         }}>
-                            <CheckBox label={"Men"} labelStyle={{
-                                color: theme.dark.inputBackground,
-                                fontFamily: fonts.fontsType.semiBold,
-                                fontSize: scaleHeight(15),
-                            }} />
-                            <CheckBox label={"Women"} labelStyle={{
-                                color: theme.dark.inputBackground,
-                                fontFamily: fonts.fontsType.semiBold,
-                                fontSize: scaleHeight(15),
-                            }} />
-                            <CheckBox label={"Other"} labelStyle={{
-                                color: theme.dark.inputBackground,
-                                fontFamily: fonts.fontsType.semiBold,
-                                fontSize: scaleHeight(15),
-                            }} />
+                            <CheckBox
+                                onStatusChange={handleCheckBoxStatusChange}
+                                label={"Men"}
+                                mode="single"
+                                formField={"gender"}
+                                selectedOption={selectedOption}
+                                setSelectedOption={setSelectedOption}
+                                labelStyle={{
+                                    color: theme.dark.inputBackground,
+                                    fontFamily: fonts.fontsType.semiBold,
+                                    fontSize: scaleHeight(15),
+                                }} />
+                            <CheckBox
+                                onStatusChange={handleCheckBoxStatusChange}
+                                label={"Women"}
+                                mode="single"
+                                formField={"gender"}
+                                selectedOption={selectedOption}
+                                setSelectedOption={setSelectedOption}
+                                labelStyle={{
+                                    color: theme.dark.inputBackground,
+                                    fontFamily: fonts.fontsType.semiBold,
+                                    fontSize: scaleHeight(15),
+                                }} />
+                            <CheckBox
+                                onStatusChange={handleCheckBoxStatusChange}
+                                label={"Other"}
+                                mode="single"
+                                formField={"gender"}
+                                selectedOption={selectedOption}
+                                setSelectedOption={setSelectedOption}
+                                labelStyle={{
+                                    color: theme.dark.inputBackground,
+                                    fontFamily: fonts.fontsType.semiBold,
+                                    fontSize: scaleHeight(15),
+                                }} />
                         </View>
                     </View>
 
@@ -379,11 +512,15 @@ const UserHomeContent = () => {
                         marginHorizontal: 15,
                         marginTop: 10
                     }}>
-                        <CheckBox label={"Top liked Profiles"} labelStyle={{
-                            color: theme.dark.white,
-                            fontFamily: fonts.fontsType.semiBold,
-                            fontSize: scaleHeight(15),
-                        }}
+                        <CheckBox
+                            onStatusChange={handleCheckBoxStatusChange}
+                            label={"Top liked Profiles"}
+                            formField={"top_liked_profile"}
+                            labelStyle={{
+                                color: theme.dark.white,
+                                fontFamily: fonts.fontsType.semiBold,
+                                fontSize: scaleHeight(15),
+                            }}
                             checkBoxStyle={{
                                 backgroundColor: theme.dark.white
                             }}
@@ -398,11 +535,15 @@ const UserHomeContent = () => {
                         marginHorizontal: 15,
                         marginTop: 10
                     }}>
-                        <CheckBox label={"Top Rated Profiles"} labelStyle={{
-                            color: theme.dark.white,
-                            fontFamily: fonts.fontsType.semiBold,
-                            fontSize: scaleHeight(15),
-                        }}
+                        <CheckBox
+                            onStatusChange={handleCheckBoxStatusChange}
+                            label={"Top Rated Profiles"}
+                            formField={"top_rated_profile"}
+                            labelStyle={{
+                                color: theme.dark.white,
+                                fontFamily: fonts.fontsType.semiBold,
+                                fontSize: scaleHeight(15),
+                            }}
                             checkBoxStyle={{
                                 backgroundColor: theme.dark.white
                             }}
@@ -416,9 +557,9 @@ const UserHomeContent = () => {
                     <CustomTextInput
                         label={'Category'}
                         placeholder={"Select Category"}
-                        identifier={'password'}
-                        value={form.password}
-                        onValueChange={(value) => handleChange('password', value)}
+                        identifier={'category'}
+                        value={form.category}
+                        onValueChange={(value) => handleChange('category', value)}
                         mainContainer={{ marginTop: 15 }}
                         iconComponent={
                             <MaterialIcons
@@ -468,6 +609,8 @@ const UserHomeContent = () => {
                                     placeholder='00'
                                     keyboardType='number-pad'
                                     placeholderTextColor={theme.dark.text}
+                                    value={form.height_ft}
+                                    onChangeText={(value) => handleChange('height_ft', value)}
                                 />
 
                                 <View style={styles.verticleLine}></View>
@@ -482,6 +625,8 @@ const UserHomeContent = () => {
                                     placeholder='00'
                                     keyboardType='number-pad'
                                     placeholderTextColor={theme.dark.text}
+                                    value={form.height_in}
+                                    onChangeText={(value) => handleChange('height_in', value)}
                                 />
 
                             </View>
@@ -574,6 +719,8 @@ const UserHomeContent = () => {
                                     keyboardType='number-pad'
                                     placeholder='00'
                                     placeholderTextColor={theme.dark.text}
+                                    value={form.weight_kg}
+                                    onChangeText={(value) => handleChange('weight_kg', value)}
                                 />
 
                                 <View style={styles.verticleLine}></View>
@@ -588,6 +735,8 @@ const UserHomeContent = () => {
                                     keyboardType='number-pad'
                                     placeholder='00'
                                     placeholderTextColor={theme.dark.text}
+                                    value={form.weight_lb}
+                                    onChangeText={(value) => handleChange('weight_lb', value)}
                                 />
 
                             </View>
@@ -604,8 +753,11 @@ const UserHomeContent = () => {
                             }}>
 
                                 <TouchableOpacity
+                                    onPress={() => {
+                                        handleToggleKg();
+                                    }}
                                     style={{
-                                        backgroundColor: theme.dark.secondary,
+                                        backgroundColor: weightKgSelected ? theme.dark.secondary : '#333333',
                                         width: scaleWidth(35),
                                         height: '100%',
                                         alignSelf: 'center',
@@ -618,15 +770,18 @@ const UserHomeContent = () => {
                                     <Text style={{
                                         fontFamily: fonts.fontsType.medium,
                                         fontSize: scaleHeight(12),
-                                        color: theme.dark.black,
+                                        color: weightKgSelected ? theme.dark.black : theme.dark.white,
                                         alignSelf: 'center'
 
                                     }}>Kg</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
+                                    onPress={() => {
+                                        handleToggleLb();
+                                    }}
                                     style={{
-                                        backgroundColor: '#333333',
+                                        backgroundColor: weightLbSelected ? theme.dark.secondary : '#333333',
                                         width: scaleWidth(35),
                                         height: '100%',
                                         alignSelf: 'center',
@@ -639,7 +794,7 @@ const UserHomeContent = () => {
                                     <Text style={{
                                         fontFamily: fonts.fontsType.medium,
                                         fontSize: scaleHeight(12),
-                                        color: theme.dark.white,
+                                        color: weightLbSelected ? theme.dark.black : theme.dark.white,
                                         alignSelf: 'center'
 
                                     }}>Lb</Text>
@@ -659,18 +814,18 @@ const UserHomeContent = () => {
                     <CustomTextInput
                         label={'City'}
                         placeholder={"Select City"}
-                        identifier={'password'}
-                        value={form.password}
-                        onValueChange={(value) => handleChange('password', value)}
+                        identifier={'city'}
+                        value={form.city}
+                        onValueChange={(value) => handleChange('city', value)}
                         mainContainer={{ marginTop: 10 }}
-                        iconComponent={
-                            <MaterialIcons
-                                style={{
-                                    marginEnd: 8
+                    // iconComponent={
+                    //     <MaterialIcons
+                    //         style={{
+                    //             marginEnd: 8
 
-                                }} name={"keyboard-arrow-down"} size={24}
-                                color={theme.dark.text} />
-                        }
+                    //         }} name={"keyboard-arrow-down"} size={24}
+                    //         color={theme.dark.text} />
+                    // }
                     />
 
                     <HorizontalDivider customStyle={{
@@ -680,9 +835,9 @@ const UserHomeContent = () => {
                     <CustomTextInput
                         label={'Language'}
                         placeholder={"Select Language"}
-                        identifier={'password'}
-                        value={form.password}
-                        onValueChange={(value) => handleChange('password', value)}
+                        identifier={'language'}
+                        value={form.language}
+                        onValueChange={(value) => handleChange('language', value)}
                         mainContainer={{ marginTop: 10 }}
                         iconComponent={
                             <MaterialIcons
@@ -700,7 +855,11 @@ const UserHomeContent = () => {
                         marginTop: 20
                     }}>
 
-                        <Button title={"Reset"}
+                        <Button
+                            onPress={() => {
+                                resetFilter();
+                            }}
+                            title={"Reset"}
                             customStyle={{
                                 width: '48%',
                                 marginHorizontal: '2%',
@@ -714,9 +873,14 @@ const UserHomeContent = () => {
 
                         />
 
-                        <Button title={"Apply"} customStyle={{
-                            width: '48%',
-                        }} />
+                        <Button
+                            onPress={() => {
+                                applyFilter();
+                            }}
+                            title={"Apply"}
+                            customStyle={{
+                                width: '48%',
+                            }} />
 
                     </View>
 
@@ -728,8 +892,6 @@ const UserHomeContent = () => {
         </Modal>
     }
 
-    // console.log('scrollDirection',scrollDirection)
-
     const getBackgroundColor = () => {
         if (scrollDirection === 'up') {
             return theme.dark.primary;  // Color when scrolling up
@@ -740,63 +902,117 @@ const UserHomeContent = () => {
         }
     };
 
+    function calculateAge(birthdate) {
+        const today = new Date();
+        const birthDate = new Date(birthdate);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDifference = today.getMonth() - birthDate.getMonth();
+        if (
+            monthDifference < 0 ||
+            (monthDifference === 0 && today.getDate() < birthDate.getDate())
+        ) {
+            age--;
+        }
+
+        return age;
+    }
+
+    const convertMetersToKm = (meters) => {
+        return (meters / 1000).toFixed(1);
+    };
+
+    const images = currentUser?.image_urls || [];
+
+    const handlePress = () => {
+        dispatch(setRoute({
+            route: SCREENS.MAIN_DASHBOARD,
+            buddy_images: currentUser?.image_urls
+        }))
+        resetNavigation(navigation, SCREENS.IMAGE_VIEWER);
+    };
+
+    const handleRequestBuddy = () => {
+
+        if (currentUser?.block_status !== "BLOCK") {
+            if (is_subscribed) {
+                dispatch(setRoute({
+                    route: SCREENS.MAIN_DASHBOARD,
+                    buddy_id: currentUser?.id
+                }))
+                resetNavigation(navigation, SCREENS.SEND_REQUEST)
+            } else {
+                handleOpenModal1();
+            }
+        } else {
+            showAlert("Error", "error", "You have blocked this Buddy.")
+        }
+    }
+
+    const handleReportBuddy = () => {
+
+        dispatch(setRoute({
+            route: SCREENS.MAIN_DASHBOARD,
+            buddy_id: currentUser?.id,
+            buddy_name: currentUser?.full_name
+        }))
+        resetNavigation(navigation, SCREENS.REPORT_BUDDY)
+    }
+    const handlePremium = () => {
+        handleCloseModal1()
+        resetNavigation(navigation, SCREENS.PREMIUM);
+    }
+    const handleBlockUser = () => {
+        dispatch(userBuddyAction({
+            buddy_id: currentUser?.id,
+            //reason: "Other",
+            type: "BLOCK" // BLOCK OR REPORT -- 
+        })).then((result) => {
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message);
+                handleCloseModal();
+                let updatedUser = { ...currentUser, block_status: "BLOCK" };
+                setCurrentUser(updatedUser);
+            } else if (result?.payload?.status === "error") {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const handleLikeDislike = (likeDislikeStatus) => {
+
+        const likeDislikePayload = {
+            buddy_id: currentUser?.id,
+            like_status: likeDislikeStatus
+        }
+        dispatch(likeDislikeBuddy(likeDislikePayload)).then((result) => {
+            console.log(result?.payload)
+            if (result?.payload?.status === "success") {
+
+                let updatedUser = { ...currentUser, is_liked: likeDislikeStatus };
+                setCurrentUser(updatedUser);
+            }
+        })
+
+
+
+    }
+
     return (
         <LinearGradient
             colors={[theme.dark.primary, '#4C4615', '#4C4615']}
             locations={[0.19, 0.7, 0.7]}
             style={styles.gradient}
         >
-            <SafeAreaView style={styles.container}>
-                {/* <View style={{
-                    marginTop: scaleHeight(10),
-                    flexDirection: 'row',
-                    justifyContent: 'space-evenly'
-                }}>
-                    <Image source={homeLogo} style={{
-                        width: scaleWidth(35),
-                        height: scaleHeight(42),
-                        alignSelf: 'center',
+            {filterLoader ? <Spinner
+                isTimer={false}
+                label={`Please wait... ${'\n'}We are applying filtering the list.`}
+                lottieCustomStyle={{
+                    width: scaleWidth(150),
+                    height: scaleHeight(150),
+                }}
+            /> : <SafeAreaView style={styles.container}>
 
-                    }} />
-
-                    <Image source={labelHome} style={{
-                        width: scaleWidth(130),
-                        height: scaleHeight(27),
-                        alignSelf: 'center',
-
-                    }} />
-
-                    <TouchableOpacity style={{
-                        justifyContent: 'center'
-                    }} onPress={() => {
-                        resetNavigation(navigation, SCREENS.NOTIFICATION)
-                    }}>
-                        <Image source={bellHome} style={{
-                            width: scaleWidth(27),
-                            height: scaleHeight(27),
-                            alignSelf: 'center',
-                            right: scaleWidth(-20),
-
-                        }} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={{
-                        justifyContent: 'center'
-                    }} onPress={() => {
-                        setFilterModal(true)
-                    }}>
-                        <Image source={filterHome} style={{
-                            width: scaleWidth(27),
-                            height: scaleHeight(27),
-                            alignSelf: 'center',
-
-                        }} />
-                    </TouchableOpacity>
-
-
-
-                </View> */}
-                {!showCarousel ? (
+                {!isAppOpened ? (
                     <>
                         <LottieView
                             ref={lottieRef}
@@ -806,12 +1022,26 @@ const UserHomeContent = () => {
                             loop
                             speed={0.5}
                         />
+
                         <View style={styles.imageCircle}>
                             <Image
                                 style={styles.imageStyle}
                                 resizeMode='cover'
                                 source={dummyImg}
                             />
+                        </View>
+
+                        <View style={{
+                            flex: 1,
+                            bottom: scaleHeight(180),
+                            position: 'absolute',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            alignSelf: 'center'
+                        }}>
+                            <Text style={styles.lottieText}>
+                                Finding people near you...
+                            </Text>
                         </View>
                     </>
                 ) : (
@@ -820,7 +1050,7 @@ const UserHomeContent = () => {
                         scrollEventThrottle={1}
                         style={[styles.carouselContainer, { backgroundColor: getBackgroundColor() }]}>
                         <FlatList
-                            data={images}
+                            data={currentUser?.image_urls}
                             horizontal
                             pagingEnabled
                             showsHorizontalScrollIndicator={false}
@@ -833,8 +1063,8 @@ const UserHomeContent = () => {
                         />
 
 
-                        <View style={styles.dotContainer}>
-                            {images.map((_, index) => (
+                        {currentUser?.image_urls?.length > 0 && <View style={styles.dotContainer}>
+                            {currentUser?.image_urls?.map((_, index) => (
                                 <View
                                     key={index}
                                     style={[
@@ -843,11 +1073,13 @@ const UserHomeContent = () => {
                                     ]}
                                 />
                             ))}
-                        </View>
+                        </View>}
 
                         <View style={styles.overlay}>
                             <View style={{ flexDirection: 'row' }}>
-                                <Text style={styles.nameText}>Olivia (24)</Text>
+                                <Text style={styles.nameText}>
+                                    {`${currentUser?.full_name} (${calculateAge(currentUser?.dob)})`}
+                                </Text>
                                 <TouchableOpacity onPress={() => {
                                     handleOpenModal2();
                                 }}>
@@ -861,10 +1093,27 @@ const UserHomeContent = () => {
                                     }} />
                                 </TouchableOpacity>
                             </View>
-                            <Text style={styles.distanceText}>5 km away</Text>
+                            <Text style={styles.distanceText}>
+                                {`${convertMetersToKm(currentUser?.distance)} km away`}
+                            </Text>
                             <View style={styles.actionButtons}>
                                 <TouchableOpacity
-                                    onPress={() => handleDislike(activeIndex)}
+                                    onPress={() => {
+                                        if (currentUser?.block_status !== "BLOCK") {
+                                            if (userCurrentIndex === 2) {
+                                                dispatch(setIsPremium(false))
+                                            }
+                                            if (!is_subscribed && !isPremiumPlan) {
+                                                handleOpenModal1();
+                                            } else {
+                                                handleLikeDislike(false)
+                                                handleDislike(activeIndex)
+                                            }
+                                        } else {
+                                            showAlert("Error", "error", "You have blocked this Buddy.")
+                                        }
+
+                                    }}
                                     style={styles.iconButton}>
                                     {/* <Icon name="close" type="material" color="#ff4d4d" /> */}
                                     <Image source={disLikeHome}
@@ -878,7 +1127,24 @@ const UserHomeContent = () => {
                                         }} />
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    onPress={() => like(activeIndex)}
+                                    onPress={() => {
+                                        console.log('isPremiumPlan', isPremiumPlan)
+
+                                        if (currentUser?.block_status !== "BLOCK") {
+                                            if (userCurrentIndex === 2) {
+                                                dispatch(setIsPremium(false))
+                                            }
+                                            if (!is_subscribed && !isPremiumPlan) {
+                                                handleOpenModal1();
+                                            } else {
+                                                handleLikeDislike(true)
+                                                like(activeIndex);
+                                            }
+                                        } else {
+                                            showAlert("Error", "error", "You have blocked this Buddy.")
+                                        }
+
+                                    }}
                                     style={styles.iconButton2}>
                                     {/* <Icon name="favorite" type="material" color={theme.dark.secondary} /> */}
                                     <Image source={likeHome}
@@ -893,7 +1159,7 @@ const UserHomeContent = () => {
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     onPress={() => {
-                                        resetNavigation(navigation, SCREENS.SEND_REQUEST)
+                                        handleRequestBuddy()
                                     }}
                                     style={styles.iconButton3}>
                                     {/* <Icon name="send" type="material" color="#4da6ff" /> */}
@@ -948,7 +1214,7 @@ const UserHomeContent = () => {
                                         fontSize: scaleHeight(15),
                                         fontFamily: fonts.fontsType.medium
                                     }}>
-                                        4.5
+                                        {currentUser?.avg_rating}
                                     </Text>
 
                                 </TouchableOpacity>
@@ -962,16 +1228,15 @@ const UserHomeContent = () => {
                                 lineHeight: scaleHeight(28),
                                 marginBottom: scaleHeight(20)
                             }}>
-                                Hi there! I’m Olivia, a 24-year-old graphic designer in NYC.I love all things creative, from my work to cooking and exploring the city’s art scene.
+                                {currentUser?.about}
                             </Text>
 
-                            <DetailItem label="Gender" value="Female" />
-                            <DetailItem label="Height" value="5'4" />
-                            <DetailItem label="Weight" value="50 kg" />
-                            <DetailItem label="Hourly Rate" value="$45" />
-                            <DetailItem label="Languages" value="English, French, German" />
-                            <DetailItem label="Location" value="California, USA" />
-
+                            <DetailItem label="Gender" value={currentUser?.gender} />
+                            <DetailItem label="Height" value={`${currentUser?.height_ft}'${currentUser?.height_in}`} />
+                            <DetailItem label="Weight" value={`${currentUser?.weight} ${currentUser?.weight_unit}`} />
+                            <DetailItem label="Hourly Rate" value={`$${currentUser?.hourly_rate}`} />
+                            <DetailItem label="Languages" value={`${currentUser?.languages !== null ? currentUser?.languages : ''}`} />
+                            {/* <DetailItem label="Location" value={`${currentUser?.location?.city && currentUser?.location?.city}, ${currentUser?.location?.city && currentUser?.location?.city}`} /> */}
 
                             <View style={{
                                 flexDirection: 'row',
@@ -995,7 +1260,13 @@ const UserHomeContent = () => {
                                     fontFamily: fonts.fontsType.medium,
                                     marginHorizontal: 5
                                 }}>
-                                    California, USA
+
+                                    {currentUser?.location?.country && currentUser?.location?.city ?
+                                        `${currentUser.location.country}, ${currentUser.location.city}` :
+                                        (address?.city || address?.town) && address?.country ?
+                                            `${address.city || address.town}, ${address.country}` :
+                                            'Location not available'
+                                    }
                                 </Text>
 
                             </View>
@@ -1015,57 +1286,49 @@ const UserHomeContent = () => {
                                 marginTop: scaleHeight(5)
                             }}>
                                 <CategoryList
-                                    categories={categories}
-                                    onPress={handleCategoryPress} />
+                                    categories={currentUser?.categories}
+                                    isPress={false}
+                                />
 
                             </View>
 
-                            <TouchableOpacity onPress={() => {
-                                resetNavigation(navigation, SCREENS.IMAGE_VIEWER)
-                            }}>
-                                <Image style={{
-                                    width: '100%',
-                                    height: scaleHeight(300),
-                                    marginTop: scaleHeight(10),
-                                    borderRadius: 10
-                                }} source={dummyImg} />
-                            </TouchableOpacity>
+                            <View>
+                                {images?.length > 0 && (
+                                    <TouchableOpacity onPress={handlePress}>
+                                        <Image
+                                            style={{
+                                                width: '100%',
+                                                height: scaleHeight(300),
+                                                marginTop: scaleHeight(10),
+                                                borderRadius: 10
+                                            }}
+                                            source={{ uri: images[0] }}
+                                        />
+                                    </TouchableOpacity>
+                                )}
 
-                            <View style={{
-                                flexDirection: 'row',
-                                justifyContent: 'space-between'
-                            }}>
-
-                                <TouchableOpacity onPress={() => {
-                                    resetNavigation(navigation, SCREENS.IMAGE_VIEWER)
-                                }}>
-
-                                    <Image style={{
-                                        width: scaleWidth(150),
-                                        height: scaleHeight(230),
-                                        marginTop: scaleHeight(10),
-                                        borderRadius: 10
-                                    }} source={dummy1} />
-
-                                </TouchableOpacity>
-
-                                <TouchableOpacity onPress={() => {
-                                    resetNavigation(navigation, SCREENS.IMAGE_VIEWER)
-                                }}>
-                                    <Image style={{
-                                        width: scaleWidth(150),
-                                        height: scaleHeight(230),
-                                        marginTop: scaleHeight(10),
-                                        borderRadius: 10
-                                    }} source={dummy2} />
-
-                                </TouchableOpacity>
-
+                                {images?.length > 1 && (
+                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                                        {images?.slice(1, 3).map((image, index) => (
+                                            image && <TouchableOpacity key={index} onPress={handlePress}>
+                                                <Image
+                                                    style={{
+                                                        width: scaleWidth(150),
+                                                        height: scaleHeight(230),
+                                                        marginTop: scaleHeight(10),
+                                                        borderRadius: 10
+                                                    }}
+                                                    source={{ uri: image }}
+                                                />
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                )}
                             </View>
 
                             <Button
                                 onPress={() => {
-                                    resetNavigation(navigation, SCREENS.SEND_REQUEST)
+                                    handleRequestBuddy();
                                 }}
                                 title={"Send Request"}
                                 customStyle={{
@@ -1082,7 +1345,11 @@ const UserHomeContent = () => {
                                 marginBottom: scaleHeight(-160)
                             }}>
 
-                                <Button title={"Report"}
+                                <Button
+                                    onPress={() => {
+                                        handleReportBuddy();
+                                    }}
+                                    title={"Report"}
                                     customStyle={{
                                         width: '48%',
                                         borderWidth: 1,
@@ -1096,6 +1363,9 @@ const UserHomeContent = () => {
                                 />
 
                                 <Button title={"Block"}
+                                    onPress={() => {
+                                        handleOpenModal();
+                                    }}
                                     customStyle={{
                                         width: '48%',
                                         borderWidth: 1,
@@ -1123,7 +1393,7 @@ const UserHomeContent = () => {
                     buttonText="Go Premium"
                     isParallelButton={false}
                     buttonAction={() => {
-                        alert('Hello')
+                        handlePremium();
                     }}
                 />
 
@@ -1162,9 +1432,27 @@ const UserHomeContent = () => {
                     }}
                 />
 
+                <CustomModal
+                    isVisible={modalVisible}
+                    //loading={blockUserLoader}
+                    onClose={handleCloseModal}
+                    headerTitle={"Block User?"}
+                    imageSource={blockUser}
+                    isParallelButton={true}
+                    text={`Are you sure you want to Block ${currentUser?.full_name}?`}
+                    parallelButtonText1={"Cancel"}
+                    parallelButtonText2={"Yes, Block"}
+                    parallelButtonPress1={() => {
+                        handleCloseModal()
+                    }}
+                    parallelButtonPress2={() => {
+                        handleBlockUser();
+                    }}
+                />
+
                 {renderFilterModal()}
 
-            </SafeAreaView>
+            </SafeAreaView>}
         </LinearGradient>
     );
 };
@@ -1198,15 +1486,21 @@ const styles = StyleSheet.create({
         height: scaleHeight(264),
         alignSelf: 'center'
     },
+    lottieText: {
+        alignSelf: 'center',
+        fontFamily: fonts.fontsType.medium,
+        fontSize: scaleHeight(18),
+        color: theme.dark.white,
+    },
     imageCircle: {
-        width: scaleWidth(118), // Ensure this matches the height scaling for a perfect circle
-        height: scaleWidth(118), // Use scaleWidth to keep the dimensions consistent
-        borderRadius: scaleWidth(118) / 2, // Half of the width/height to make it a circle
+        width: scaleWidth(118),
+        height: scaleWidth(118),
+        borderRadius: scaleWidth(118) / 2,
         borderWidth: 4,
         borderColor: theme.dark.secondary,
         alignSelf: 'center',
         position: 'absolute',
-        top: scaleHeight(280),
+        top: scaleHeight(285),
         justifyContent: 'center'
     },
     imageStyle: {
@@ -1241,12 +1535,13 @@ const styles = StyleSheet.create({
         //alignItems: 'center',
     },
     nameText: {
-        fontSize: scaleHeight(24),
+        fontSize: scaleHeight(20),
         color: '#fff',
         fontFamily: fonts.fontsType.bold,
         left: 30,
         flex: 1,
-        top: 10
+        top: 10,
+        alignSelf: 'center'
     },
     distanceText: {
         fontSize: scaleHeight(14),
@@ -1254,7 +1549,7 @@ const styles = StyleSheet.create({
         fontFamily: fonts.fontsType.medium,
         left: 30,
         marginBottom: 10,
-        top: -10
+        //top: -10,
     },
     actionButtons: {
         flexDirection: 'row',
@@ -1345,7 +1640,13 @@ const styles = StyleSheet.create({
         left: '40%',
         transform: [{ translateX: -50 }, { translateY: -50 }],
     },
-
+    gradientOverlay: {
+        position: 'absolute',
+        bottom: scaleHeight(120),
+        left: 0,
+        right: 0,
+        height: '30%', // Adjust this value as needed
+    },
 });
 
 export default UserHomeContent;

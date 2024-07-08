@@ -18,6 +18,7 @@ export const dummyImg = require('../images/dummy.png');
 export const homeLogo = require('../images/home_logo.png');
 export const labelHome = require('../images/label_home.png');
 export const filterHome = require('../images/filter.png');
+export const filterHomeOff = require('../images/filter_off.png');
 export const bellHome = require('../images/bell_home.png');
 export const chatHome = require('../images/chat_icon_home.png');
 export const disLikeHome = require('../images/dislike_icon.png');

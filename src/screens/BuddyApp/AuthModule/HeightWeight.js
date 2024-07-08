@@ -39,6 +39,37 @@ const HeightWeight = ({ navigation }) => {
   };
   useBackHandler(handleBackPress);
 
+  useEffect(() => {
+    const { height_ft, height_in, weight_kg, weight_lb, weight_unit, weight } = dataPayload || {};
+
+    // Set input values
+    if (height_ft || height_in || weight_kg || weight_lb || weight_unit) {
+      setInputValues({
+        height_ft: height_ft || '',
+        height_in: height_in || ''
+      });
+    }
+
+    // Set weight unit selection
+    if (weight_unit === 'LB') {
+      setWeightKgSelected(false);
+      setWeightLbSelected(true);
+      setInputValues(prevValues => ({
+        ...prevValues,
+        weight_lb: weight,
+        weight_unit: weight_unit
+      }));
+    } else {
+      setWeightKgSelected(true);
+      setWeightLbSelected(false);
+      setInputValues(prevValues => ({
+        ...prevValues,
+        weight_kg: weight,
+        weight_unit: weight_unit
+      }));
+    }
+  }, [dataPayload]);
+
 
   const handleToggleFt = () => {
     setHeightFtSelected(true);
@@ -160,11 +191,12 @@ const HeightWeight = ({ navigation }) => {
                 height: '70%',
                 marginEnd: scaleWidth(10),
                 justifyContent: 'space-evenly',
+                backgroundColor: theme.dark.transparentBg
               }}>
 
                 <TouchableOpacity
                   onPress={() => {
-                    handleToggleFt();
+                    //handleToggleFt();
                   }}
                   style={{
                     backgroundColor: hieghtFtSelected ? theme.dark.secondary : '#333333',
@@ -178,7 +210,7 @@ const HeightWeight = ({ navigation }) => {
                   }}
                 >
                   <Text style={{
-                    fontFamily: fonts.fontsType.medium,
+                    fontFamily: fonts.fontsType.semiBold,
                     fontSize: scaleHeight(12),
                     color: hieghtFtSelected ? theme.dark.black : theme.dark.white,
                     alignSelf: 'center'
@@ -188,23 +220,26 @@ const HeightWeight = ({ navigation }) => {
 
                 <TouchableOpacity
                   onPress={() => {
-                    handleToggleInches();
+                    //handleToggleInches();
                   }}
                   style={{
-                    backgroundColor: hieghtInSelected ? theme.dark.secondary : '#333333',
+                    // backgroundColor: hieghtInSelected ? theme.dark.secondary : '#333333',
+                    backgroundColor: theme.dark.secondary,
                     width: scaleWidth(35),
                     height: '100%',
                     alignSelf: 'center',
                     borderBottomEndRadius: 30,
                     borderTopEndRadius: 30,
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    left: 1
                   }}
                 >
                   <Text style={{
-                    fontFamily: fonts.fontsType.medium,
+                    fontFamily: fonts.fontsType.semiBold,
                     fontSize: scaleHeight(12),
-                    color: hieghtInSelected ? theme.dark.black : theme.dark.white,
+                    // color: hieghtInSelected ? theme.dark.black : theme.dark.white,
+                    color: theme.dark.black,
                     alignSelf: 'center'
 
                   }}>In</Text>
@@ -298,7 +333,7 @@ const HeightWeight = ({ navigation }) => {
                   }}
                 >
                   <Text style={{
-                    fontFamily: fonts.fontsType.medium,
+                    fontFamily: fonts.fontsType.semiBold,
                     fontSize: scaleHeight(12),
                     color: weightKgSelected ? theme.dark.black : theme.dark.white,
                     alignSelf: 'center'
@@ -322,7 +357,7 @@ const HeightWeight = ({ navigation }) => {
                   }}
                 >
                   <Text style={{
-                    fontFamily: fonts.fontsType.medium,
+                    fontFamily: fonts.fontsType.semiBold,
                     fontSize: scaleHeight(12),
                     color: weightLbSelected ? theme.dark.black : theme.dark.white,
                     alignSelf: 'center'

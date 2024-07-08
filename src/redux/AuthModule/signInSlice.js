@@ -7,6 +7,7 @@ const initialState = {
     role: null,
     user_id: null,
     response: null,
+    userLoginInfo: null,
     loading: false,
     error: null,
 };
@@ -32,7 +33,8 @@ const signInSlice = createSlice({
             state.response = null;
             state.role = null;
             state.role = null;
-            state.user_id = null
+            state.user_id = null,
+                state.userLoginInfo = null
         },
     },
     extraReducers: (builder) => {
@@ -46,6 +48,7 @@ const signInSlice = createSlice({
                 state.token = action.payload?.result?.token;
                 state.role = action.payload?.result?.role;
                 state.response = action.payload?.result;
+                state.userLoginInfo = action.payload?.result;
             })
             .addCase(login.rejected, (state, action) => {
                 state.loading = false;

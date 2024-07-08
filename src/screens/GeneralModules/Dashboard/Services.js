@@ -32,7 +32,7 @@ const Services = ({ navigation }) => {
                 onSearchPress={handleSearchPress}
                 hideFilterButton={hideFilterButton}
             />
-            {role === 'Buddy Finder' ? <UserServicesContent
+            {role === 'USER' ? <UserServicesContent
                 setCurrentIndex={setSelectedIndex}
             /> : <BuddyServicesContent
                 setCurrentIndex={setSelectedIndex} />}

@@ -15,24 +15,34 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useAlert } from '../../../providers/AlertContext';
 import { setDataPayload } from '../../../redux/appSlice';
 import CategorySelector from '../../../components/CategorySelector';
+import { getAllCategories } from '../../../redux/getAllCategoriesSlice';
 
 const BuddyYourInterests = ({ navigation }) => {
     const dispatch = useDispatch();
+    const { categories } = useSelector((state) => state.getCategories)
     const { showAlert } = useAlert();
     const { dataPayload } = useSelector((state) => state.app);
     const [selectedInterests, setSelectedInterests] = useState([]);
-    const interests = [
-        { id: 1, name: 'Date' },
-        { id: 2, name: 'Lunch' },
-        { id: 3, name: 'Dinner' },
-        { id: 4, name: 'Movie Night' }
-    ];
 
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.SELECT_LANGUAGE)
         return true;
     };
     useBackHandler(handleBackPress);
+
+
+    useEffect(() => {
+        dispatch(getAllCategories())
+    }, [dispatch])
+
+
+    useEffect(() => {
+        if (dataPayload?.category_ids?.length) {
+            const preSelectedInterests = categories?.filter(interest => dataPayload.category_ids.includes(interest.id));
+            setSelectedInterests(preSelectedInterests);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dataPayload]);
 
 
     const handleItemSelected = (item) => {
@@ -72,26 +82,30 @@ const BuddyYourInterests = ({ navigation }) => {
                         onItemSelected={handleItemSelected}
                     /> */}
 
-                    <CategorySelector items={interests} onItemSelected={handleItemSelected} />
-
-                </View>
-
-                <View style={styles.buttonContainer}>
-
-                    <HorizontalDivider
-                        customStyle={{
-                            marginTop: 40
-                        }} />
-
-                    <Button
-                        onPress={() => {
-                            handleSelectedInterests();
-                        }}
-                        title={'Continue'}
+                    <CategorySelector
+                        items={categories}
+                        onItemSelected={handleItemSelected}
+                        selectedItems={selectedInterests}
                     />
+
                 </View>
 
             </CustomLayout>
+
+            <View style={styles.buttonContainer}>
+
+                <HorizontalDivider
+                    customStyle={{
+                        marginTop: 40
+                    }} />
+
+                <Button
+                    onPress={() => {
+                        handleSelectedInterests();
+                    }}
+                    title={'Continue'}
+                />
+            </View>
 
         </SafeAreaView>
     );
@@ -121,8 +135,8 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(130),
-        marginBottom: scaleHeight(20)
+        // marginTop: scaleHeight(130),
+        // marginBottom: scaleHeight(20)
     }
 });
 

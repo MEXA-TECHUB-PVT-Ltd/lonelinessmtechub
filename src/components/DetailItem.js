@@ -7,7 +7,9 @@ import { theme } from '../assets';
 const DetailItem = ({ label, value }) => (
     <View style={styles.detailItem}>
         <Text style={styles.detailLabel}>{label}</Text>
-        <Text style={styles.detailValue}>{value}</Text>
+        {value !== undefined && value !== null && (
+            <Text style={styles.detailValue}>{value}</Text>
+        )}
     </View>
 );
 
@@ -22,7 +24,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginVertical: 4,
-        marginHorizontal:10
+        marginHorizontal: 10
     },
     detailLabel: {
         fontSize: scaleHeight(16),

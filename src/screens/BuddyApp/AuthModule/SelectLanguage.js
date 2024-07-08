@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, FlatList } from 'react-native';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
@@ -15,28 +15,18 @@ import CheckBox from '../../../components/CheckboxComponent';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAlert } from '../../../providers/AlertContext';
 import { setDataPayload } from '../../../redux/appSlice';
+import { getLanguages } from '../../../redux/getLanguagesSlice';
 
 const SelectLanguage = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
+    const { languages } = useSelector((state) => state.getLanguages);
     const { dataPayload } = useSelector((state) => state.app);
     const [selectedLanguages, setSelectedLanguages] = useState([]);
     const [searchText, setSearchText] = useState('');
-    const languages = [
-        { name: "English" },
-        { name: "Spanish" },
-        { name: "Chinese" },
-        { name: "French" },
-        { name: "German" },
-        { name: "Japanese" },
-        { name: "Korean" },
-        { name: "Italian" },
-        { name: "Portuguese" },
-        { name: "Russian" }
-    ];
 
-    const filteredLanguages = languages.filter(language =>
-        language.name.toLowerCase().includes(searchText.toLowerCase())
+    const filteredLanguages = languages?.filter(language =>
+        language?.name.toLowerCase().includes(searchText.toLowerCase())
     );
 
     const handleLanguageSelect = (language) => {
@@ -55,6 +45,17 @@ const SelectLanguage = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
+    useEffect(() => {
+        dispatch(getLanguages())
+    }, [dispatch])
+
+    useEffect(() => {
+        if (dataPayload?.languages) {
+            setSelectedLanguages(dataPayload?.languages)
+        }
+
+    }, [dataPayload]);
+
     const handleSelectLanguages = () => {
         const newPayload = { ...dataPayload, languages: selectedLanguages };
         dispatch(setDataPayload(newPayload));
@@ -65,7 +66,7 @@ const SelectLanguage = ({ navigation }) => {
         return (
             <TouchableOpacity
                 key={index}
-                onPress={() => { handleLanguageSelect(item.name); }}
+                onPress={() => { handleLanguageSelect(item?.name); }}
                 style={styles.languageContainer}
             >
                 <View style={styles.languageRow}>
@@ -74,7 +75,7 @@ const SelectLanguage = ({ navigation }) => {
                     </Text>
                     <View style={[
                         styles.radioButtonOuter,
-                        selectedLanguages.includes(item.name) && styles.radioButtonSelected
+                        selectedLanguages.includes(item?.name) && styles.radioButtonSelected
                     ]}>
                         {selectedLanguages.includes(item.name) && <View style={styles.radioButtonInner} />}
                     </View>
@@ -113,6 +114,7 @@ const SelectLanguage = ({ navigation }) => {
                         data={filteredLanguages}
                         renderItem={renderLanguages}
                         extraData={(index) => index}
+                        keyboardShouldPersistTaps='always'
                     />
                 </View>
                 <View style={styles.buttonContainer}>

@@ -115,7 +115,7 @@ const BuddyAddLocation = ({ navigation }) => {
             formData.append('full_name', newPayload?.userName);
             formData.append('about', newPayload?.about);
             formData.append('gender', newPayload?.gender);
-            formData.append('category_ids', JSON.stringify(newPayload?.category_ids));
+            formData.append('category_ids', newPayload?.category_ids);
             formData.append('latitude', newPayload?.latitude);
             formData.append('longitude', newPayload?.longitude);
             formData.append('address', newPayload?.address);
@@ -128,13 +128,14 @@ const BuddyAddLocation = ({ navigation }) => {
             formData.append('weight', newPayload?.weight);
             formData.append('weight_unit', newPayload?.weight_unit);
             formData.append('hourly_rate', newPayload?.hourly_rate);
-            formData.append('languages', JSON.stringify(newPayload?.languages));
-            formData.append('dob', newPayload?.languages);
-            dispatch(setDataPayload(newPayload));
+            formData.append('languages', newPayload?.languages);
+            formData.append('dob', newPayload?.birthDate);
+            //dispatch(setDataPayload(newPayload));
             dispatch(updateProfile()).then((result) => {
                 if (result?.payload?.status === "success") {
-                    showHideModal();
-                } else {
+                    resetNavigation(navigation, SCREENS.STRIPE_ACCOUNT_CREATION)
+                    //showHideModal();
+                } else if (result?.payload?.status === "error") {
                     showAlert("Error", "error", result?.payload?.message)
                 }
             })
