@@ -155,6 +155,7 @@ const SendRequest = ({ navigation }) => {
             const { day, month, year, hours, minutes, period, location, number_of_hours } = form
             const booking_time = `${hours}:${minutes}:00 ${period}`
             const booking_date = `${year}-${month}-${day}`
+            let booking_price = parseInt(number_of_hours * currentRoute?.hourly_rate)
 
             const payload = {
                 buddy_id: currentRoute?.buddy_id,
@@ -163,7 +164,7 @@ const SendRequest = ({ navigation }) => {
                 booking_time: booking_time,
                 hours: number_of_hours,
                 location: location,
-                booking_price: 50
+                booking_price: booking_price
             }
 
             dispatch(sendRequest(payload)).then((result) => {

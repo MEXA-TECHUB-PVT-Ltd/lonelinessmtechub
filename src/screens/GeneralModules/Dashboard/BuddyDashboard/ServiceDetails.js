@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { bellHome, dummy2 } from '../../../../assets/images';
@@ -12,20 +12,164 @@ import Header from '../../../../components/Header';
 import HorizontalDivider from '../../../../components/HorizontalDivider';
 import { SCREENS } from '../../../../constant/constants';
 import useBackHandler from '../../../../utils/useBackHandler';
+import { useDispatch, useSelector } from 'react-redux';
+import { getRequestById } from '../../../../redux/BuddyDashboard/getRequestByIdSlice';
+import FullScreenLoader from '../../../../components/FullScreenLoader';
+import { getAddressByLatLong } from '../../../../redux/getAddressByLatLongSlice';
+import moment from 'moment';
+import { acceptRejectUserRequest } from '../../../../redux/BuddyDashboard/acceptRejectUserRequestSlice';
+import { useAlert } from '../../../../providers/AlertContext';
+import { color } from '@rneui/base';
+import { setRoute } from '../../../../redux/appSlice';
 
 const ServiceDetails = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const { requestDetail, loading } = useSelector((state) => state.getRequestById)
+    const { address } = useSelector((state) => state.getAddress)
+    const { currentRoute } = useSelector((state) => state.app)
+    const [requestLoader, setRequestLoader] = useState(false);
 
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
+        resetNavigation(navigation, currentRoute?.route, { screen: SCREENS.HOME })
         return true;
     };
     useBackHandler(handleBackPress);
+
+    useEffect(() => {
+        dispatch(getRequestById(currentRoute?.request_id))
+    }, [dispatch, currentRoute])
+
+    useEffect(() => {
+        if (requestDetail) {
+            const { longitude, latitude } = requestDetail?.result?.user?.location
+            dispatch(getAddressByLatLong({
+                lat: latitude,
+                long: longitude
+            }));
+        }
+
+    }, [dispatch, requestDetail])
+
+    function calculateAge(birthdate) {
+        const today = new Date();
+        const birthDate = new Date(birthdate);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDifference = today.getMonth() - birthDate.getMonth();
+        if (
+            monthDifference < 0 ||
+            (monthDifference === 0 && today.getDate() < birthDate.getDate())
+        ) {
+            age--;
+        }
+
+        return age;
+    }
+
+    const getNameByStatus = (status) => {
+        switch (status) {
+            case "ACCEPTED":
+                return 'Accepted';
+
+            case "REJECTED":
+                return 'Rejected';
+
+            case "REQUEST_BACK":
+                return 'Requested by me';
+
+            case "REQUESTED":
+                return 'Pending';
+
+            default:
+                return ''; // Default color if status doesn't match
+        }
+    }
+
+    const getColorByStatus = (status) => {
+        switch (status) {
+            case "ACCEPTED":
+                return '#00E200';
+
+            case "REJECTED":
+                return '#FF2A04';
+
+            case "REQUEST_BACK":
+                return '#4285F4';
+
+            case "REQUESTED":
+                return theme.dark.secondary;
+
+            default:
+                return '#00000000'; // Default color if status doesn't match
+        }
+    }
+
+    const user = requestDetail?.result?.user;
+    const location = user?.location;
+    const booking = requestDetail?.result;
+
+    const country = location?.country || '';
+    const city = location?.city || '';
+    const category = booking?.category || {};
+    const full_name = user?.full_name || '';
+    const gender = user?.gender || '';
+    const hourly_rate = user?.hourly_rate || '';
+    const dob = user?.dob || '';
+    const images = user?.images || [];
+    const bookingDate = booking?.booking_date || '';
+    const bookingTime = booking?.booking_time || '';
+    const hours = booking?.hours || '';
+    const status = booking?.status || '';
+
+    const date = bookingDate ? moment(bookingDate.split('T')[0]).format('DD/MM/YYYY') : '';
+    const time = bookingTime ? moment(bookingTime, 'HH:mm').format('hh:mm A') : '';
+
+    const requestedByMeDate = requestDetail?.result?.buddy_request_back?.booking_date ? moment(requestDetail?.result?.buddy_request_back?.booking_date.split('T')[0]).format('DD/MM/YYYY') : '';
+    const requestedByMeTime = requestDetail?.result?.buddy_request_back?.booking_time ? moment(requestDetail?.result?.buddy_request_back?.booking_time, 'HH:mm').format('hh:mm A') : '';
+    const requestedByMeLocation = requestDetail?.result?.buddy_request_back?.buddy_location ? requestDetail?.result?.buddy_request_back?.buddy_location : '';
+
+    if (loading) {
+        return <FullScreenLoader
+            title={"Please wait fetching detail..."}
+            loading={loading} />
+    }
+
+    const handleAcceptRejectRequest = (status) => {
+        setRequestLoader(true);
+        const acceptRejectPayload = {
+            request_id: currentRoute?.request_id,
+            status: status
+        }
+
+        dispatch(acceptRejectUserRequest(acceptRejectPayload)).then((result) => {
+            setRequestLoader(false);
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message)
+
+                setTimeout(() => {
+                    handleBackPress();
+                }, 3000);
+
+            } else {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const handleRequestBack = () => {
+        const payload = {
+            request_id: currentRoute?.request_id,
+            route: SCREENS.SERVICE_DETAILS
+        }
+        dispatch(setRoute(payload))
+        resetNavigation(navigation, SCREENS.BUDDY_SEND_REQUEST)
+    }
 
     return (
         <SafeAreaView style={styles.mianContainer}>
             <Header
                 onPress={() => {
-                    resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
+                    handleBackPress();
                 }}
                 title={"Service Details"}
             />
@@ -38,20 +182,29 @@ const ServiceDetails = ({ navigation }) => {
                     <View style={styles.profileView}>
                         <Image
                             style={styles.profileImage}
-                            source={dummy2} // Replace with actual image URL
+                            source={{ uri: images[0]?.image_url }}
                         />
                     </View>
                     <View style={styles.profileInfo}>
-                        <Text style={styles.profileName}>Olivia Williams (24)</Text>
-                        <Text style={styles.profileGender}>Female</Text>
+                        <Text style={styles.profileName}>{`${full_name} (${calculateAge(dob)})`}</Text>
+                        <Text style={styles.profileGender}>{gender}</Text>
                     </View>
                 </View>
 
                 <HorizontalDivider />
 
                 <View style={styles.locationSection}>
-                    <Icon name="location-on" type="material" color="#ffd700" />
-                    <Text style={styles.locationText}>Randall Peterson 1234 Maple, Street, Spr</Text>
+                    <Icon style={{
+                        top: 8,
+                        marginBottom: 8,
+                        alignSelf: 'center'
+                    }} name="location-on" type="material" color="#ffd700" />
+                    <Text style={styles.locationText}>{country && city ?
+                        `${country}, ${city}` :
+                        (address?.city || address?.town) && address?.country ?
+                            `${address.city || address.town}, ${address.country}` :
+                            'Location not available'
+                    }</Text>
                 </View>
                 <HorizontalDivider customStyle={{
                     marginTop: scaleHeight(18)
@@ -69,24 +222,74 @@ const ServiceDetails = ({ navigation }) => {
                     <TouchableOpacity
                         style={[styles.containerItem]}
                     >
-                        <Image source={bellHome} style={styles.image} />
-                        <Text style={styles.text}>{'Movie Night'}</Text>
+                        <Image source={{
+                            uri: category?.image_url
+                        }} style={styles.image} />
+                        <Text style={styles.text}>{category?.name}</Text>
                     </TouchableOpacity>
                 </View>
                 <HorizontalDivider customStyle={{
                     marginTop: scaleHeight(10)
                 }} />
                 <View style={styles.detailsSection}>
-                    <DetailItem label="Date" value="24/05/2024" />
-                    <DetailItem label="Time" value="03:00 PM" />
-                    <DetailItem label="Hours For Booking" value="2 HOURS" />
-                    <DetailItem label="Total Price" value="$ 45" />
-                    <DetailItem label="Status" value="Accepted" />
+                    <DetailItem label="Date" value={date} />
+                    <DetailItem label="Time" value={time} />
+                    <DetailItem label="Hours For Booking" value={`${hours} HOURS`} />
+                    <DetailItem label="Total Price" value={`$${hourly_rate}`} />
+                    <DetailItem label="Status" value={getNameByStatus(status)} customTextStyle={{
+                        color: getColorByStatus(status)
+                    }} />
                 </View>
+
+                <HorizontalDivider customStyle={{
+                    marginTop: scaleHeight(18)
+                }} />
+
+                {requestDetail?.result?.buddy_request_back?.buddy_status != null && <View>
+
+                    <View style={styles.statusSection}>
+                        <Text style={{
+                            color: theme.dark.secondary,
+                            fontSize: scaleHeight(18),
+                            fontFamily: fonts.fontsType.medium,
+                            marginHorizontal: 10,
+                            flex: 1
+
+                        }}>
+                            Request by me
+                        </Text>
+                        <TouchableOpacity
+                            style={[styles.statusContainer, {
+                                backgroundColor: getColorByStatus(requestDetail?.result?.buddy_request_back?.buddy_status)
+                            }]}
+                        >
+                            <Text style={[styles.text, { fontSize: 12, fontFamily: fonts.fontsType.semiBold }]}>{getNameByStatus(requestDetail?.result?.buddy_request_back?.buddy_status)}</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.detailsSection}>
+                        <DetailItem label="Date" value={requestedByMeDate} />
+                        <DetailItem label="Time" value={requestedByMeTime} />
+                        <DetailItem label="Location" />
+                    </View>
+
+                    <View style={[styles.locationSection, { top: -20 }]}>
+                        <Icon style={{
+                            top: 8,
+                            marginBottom: 8,
+                            alignSelf: 'center'
+                        }} name="location-on" type="material" color={theme.dark.secondary} />
+                        <Text style={[styles.locationText, { fontSize: 14 }]}>{requestedByMeLocation}</Text>
+                    </View>
+
+                </View>}
+
+
+
                 <View style={styles.buttonSection}>
-                    <Button
+                    {requestDetail?.result?.buddy_request_back?.buddy_status === null || status != "ACCEPTED" || status != "REJECTED" && <Button
                         onPress={() => {
-                            resetNavigation(navigation, SCREENS.BUDDY_SEND_REQUEST)
+                            handleRequestBack();
                         }}
                         title={"Request Back"}
                         customStyle={{
@@ -95,15 +298,20 @@ const ServiceDetails = ({ navigation }) => {
                         }}
                         textCustomStyle={{
                         }}
-                    />
+                    />}
 
-                    <View style={{
+                    {status === "PENDING" || status === "REQUESTED" && <View style={{
                         flexDirection: 'row',
                         justifyContent: 'space-between',
                         marginBottom: scaleHeight(-160)
                     }}>
 
-                        <Button title={"Reject"}
+                        <Button
+                            onPress={() => {
+                                handleAcceptRejectRequest("REJECTED");
+                            }}
+                            title={"Reject"}
+                            loading={status === "REJECTED" && requestLoader}
                             customStyle={{
                                 width: '48%',
                                 borderWidth: 1,
@@ -115,15 +323,21 @@ const ServiceDetails = ({ navigation }) => {
                                 color: theme.dark.secondary,
 
                             }}
+                            isBgTransparent={true}
                         />
 
-                        <Button title={"Accept"}
+                        <Button
+                            onPress={() => {
+                                handleAcceptRejectRequest("ACCEPTED");
+                            }}
+                            loading={status === "ACCEPTED" && requestLoader}
+                            title={"Accept"}
                             customStyle={{
                                 width: '48%',
                             }}
                         />
 
-                    </View>
+                    </View>}
                 </View>
             </View>
         </SafeAreaView>
@@ -192,10 +406,15 @@ const styles = StyleSheet.create({
         fontSize: scaleHeight(17),
         width: '90%',
         alignSelf: 'center',
-        top: 8
+        top: 8,
+        marginBottom: 8,
 
     },
     categorySection: {
+        marginBottom: 10,
+    },
+    statusSection: {
+        flexDirection: 'row',
         marginBottom: 10,
     },
     categoryTitle: {
@@ -250,12 +469,22 @@ const styles = StyleSheet.create({
     text: {
         fontFamily: fonts.fontsType.medium,
         fontSize: scaleHeight(15),
-        color: theme.dark.inputLabel,
+        color: theme.dark.black,
     },
     image: {
         width: 15,
         height: 15,
         marginRight: 10,
+    },
+
+    statusContainer: {
+        width: '20%',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: theme.dark.inputBg,
+        borderRadius: 30,
+        borderWidth: 1,
     },
 });
 

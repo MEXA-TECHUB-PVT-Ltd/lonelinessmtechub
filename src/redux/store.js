@@ -23,6 +23,10 @@ import likeDislikeBuddyReducer from './UserDashboard/likeDislikeBuddySlice';
 import userBuddyActionReducer from './userBuddyActionSlice';
 import applyFilterTogetBuddiesReducer from './UserDashboard/applyFilterTogetBuddiesSlice';
 import accountSubscriptionReducer from './accountSubscriptionSlice';
+import getAllBuddyRequestRequest from './BuddyDashboard/getAllBuddyRequestSlice';
+import acceptRejectUserRequestReducer from './BuddyDashboard/acceptRejectUserRequestSlice';
+import getRequestByIdReducer from './BuddyDashboard/getRequestByIdSlice';
+import requestBackBuddyReducer from './BuddyDashboard/requestBackBuddySlice';
 
 const persistConfig = {
     key: 'root',
@@ -51,6 +55,10 @@ const rootReducer = combineReducers({
     userBuddyAction: userBuddyActionReducer,
     applyFilter: applyFilterTogetBuddiesReducer,
     accountSubscription: accountSubscriptionReducer,
+    getAllBuddyRequest: getAllBuddyRequestRequest,
+    acceptRejectUserRequest: acceptRejectUserRequestReducer,
+    getRequestById: getRequestByIdReducer,
+    requestBackBuddy: requestBackBuddyReducer,
     app: appReducer,
 
 });
