@@ -1,5 +1,5 @@
 // ImageCarousel.js
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Image, StyleSheet, Dimensions, StatusBar, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 import { resetNavigation } from '../../../../utils/resetNavigation';
@@ -35,6 +35,10 @@ const ImageViewer = ({ navigation }) => {
         }
     };
 
+    useEffect(() => {
+        scrollToIndex(currentRoute?.selectedIndex);
+    }, [currentRoute]);
+
 
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
@@ -63,7 +67,7 @@ const ImageViewer = ({ navigation }) => {
             >
                 {currentRoute?.buddy_images?.map((image, index) => (
                     <View key={index} style={styles.imageContainer}>
-                        <Image source={{ uri: image }} style={styles.image} />
+                        <Image resizeMode='contain' source={{ uri: image }} style={styles.image} />
                     </View>
                 ))}
             </ScrollView>

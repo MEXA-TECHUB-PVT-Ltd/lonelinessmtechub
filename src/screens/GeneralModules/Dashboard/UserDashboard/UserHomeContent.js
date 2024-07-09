@@ -53,6 +53,7 @@ import { applyFilterTogetBuddies } from '../../../../redux/UserDashboard/applyFi
 import Spinner from '../../../../components/Spinner';
 import { setIsPremium } from '../../../../redux/accountSubscriptionSlice';
 import { likeDislikeBuddy } from '../../../../redux/UserDashboard/likeDislikeBuddySlice';
+import EmptyListComponent from '../../../../components/EmptyListComponent';
 
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -287,7 +288,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
         }, 4000);
 
         return () => clearTimeout(timer);
-    }, [dispatch]);
+    }, [dispatch, isAppOpened]);
 
     const renderItem = ({ item, index }) => (
         <Animated.View
@@ -304,7 +305,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
             <Image
                 source={{ uri: item }}
                 style={styles.carouselImage}
-                resizeMode="cover"
+                resizeMode="contain"
             />
             <LinearGradient
                 colors={['transparent', theme.dark.primary]}
@@ -923,29 +924,26 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
 
     const images = currentUser?.image_urls || [];
 
-    const handlePress = () => {
+    const handlePress = (index) => {
         dispatch(setRoute({
             route: SCREENS.MAIN_DASHBOARD,
-            buddy_images: currentUser?.image_urls
+            buddy_images: currentUser?.image_urls,
+            selectedIndex: index
         }))
         resetNavigation(navigation, SCREENS.IMAGE_VIEWER);
     };
 
     const handleRequestBuddy = () => {
 
-        if (currentUser?.block_status !== "BLOCK") {
-            if (is_subscribed) {
-                dispatch(setRoute({
-                    route: SCREENS.MAIN_DASHBOARD,
-                    buddy_id: currentUser?.id,
-                    hourly_rate: currentUser?.hourly_rate
-                }))
-                resetNavigation(navigation, SCREENS.SEND_REQUEST)
-            } else {
-                handleOpenModal1();
-            }
+        if (is_subscribed) {
+            dispatch(setRoute({
+                route: SCREENS.MAIN_DASHBOARD,
+                buddy_id: currentUser?.id,
+                hourly_rate: currentUser?.hourly_rate
+            }))
+            resetNavigation(navigation, SCREENS.SEND_REQUEST)
         } else {
-            showAlert("Error", "error", "You have blocked this Buddy.")
+            handleOpenModal1();
         }
     }
 
@@ -969,10 +967,12 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
             type: "BLOCK" // BLOCK OR REPORT -- 
         })).then((result) => {
             if (result?.payload?.status === "success") {
+                dispatch(setIsAppOpened(false))
                 showAlert("Success", "success", result?.payload?.message);
                 handleCloseModal();
-                let updatedUser = { ...currentUser, block_status: "BLOCK" };
-                setCurrentUser(updatedUser);
+                // let updatedUser = { ...currentUser, block_status: "BLOCK" };
+                // setCurrentUser(updatedUser);
+                getAllNearByBuddies();
             } else if (result?.payload?.status === "error") {
                 showAlert("Error", "error", result?.payload?.message)
             }
@@ -994,8 +994,6 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
             }
         })
 
-
-
     }
 
     return (
@@ -1011,7 +1009,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                     width: scaleWidth(150),
                     height: scaleHeight(150),
                 }}
-            /> : <SafeAreaView style={styles.container}>
+            /> : (response?.data?.length > 0 || filteredData?.data?.length > 0) ? <SafeAreaView style={styles.container}>
 
                 {!isAppOpened ? (
                     <>
@@ -1100,20 +1098,15 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                             <View style={styles.actionButtons}>
                                 <TouchableOpacity
                                     onPress={() => {
-                                        if (currentUser?.block_status !== "BLOCK") {
-                                            if (userCurrentIndex === 2) {
-                                                dispatch(setIsPremium(false))
-                                            }
-                                            if (!is_subscribed && !isPremiumPlan) {
-                                                handleOpenModal1();
-                                            } else {
-                                                handleLikeDislike(false)
-                                                handleDislike(activeIndex)
-                                            }
-                                        } else {
-                                            showAlert("Error", "error", "You have blocked this Buddy.")
+                                        if (userCurrentIndex === 2) {
+                                            dispatch(setIsPremium(false))
                                         }
-
+                                        if (!is_subscribed && !isPremiumPlan) {
+                                            handleOpenModal1();
+                                        } else {
+                                            handleLikeDislike(false)
+                                            handleDislike(activeIndex)
+                                        }
                                     }}
                                     style={styles.iconButton}>
                                     {/* <Icon name="close" type="material" color="#ff4d4d" /> */}
@@ -1129,22 +1122,16 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     onPress={() => {
-                                        console.log('isPremiumPlan', isPremiumPlan)
 
-                                        if (currentUser?.block_status !== "BLOCK") {
-                                            if (userCurrentIndex === 2) {
-                                                dispatch(setIsPremium(false))
-                                            }
-                                            if (!is_subscribed && !isPremiumPlan) {
-                                                handleOpenModal1();
-                                            } else {
-                                                handleLikeDislike(true)
-                                                like(activeIndex);
-                                            }
-                                        } else {
-                                            showAlert("Error", "error", "You have blocked this Buddy.")
+                                        if (userCurrentIndex === 2) {
+                                            dispatch(setIsPremium(false))
                                         }
-
+                                        if (!is_subscribed && !isPremiumPlan) {
+                                            handleOpenModal1();
+                                        } else {
+                                            handleLikeDislike(true)
+                                            like(activeIndex);
+                                        }
                                     }}
                                     style={styles.iconButton2}>
                                     {/* <Icon name="favorite" type="material" color={theme.dark.secondary} /> */}
@@ -1295,7 +1282,9 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
 
                             <View>
                                 {images?.length > 0 && (
-                                    <TouchableOpacity onPress={handlePress}>
+                                    <TouchableOpacity onPress={() => {
+                                        handlePress(0)
+                                    }}>
                                         <Image
                                             style={{
                                                 width: '100%',
@@ -1311,7 +1300,9 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                                 {images?.length > 1 && (
                                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                                         {images?.slice(1, 3).map((image, index) => (
-                                            image && <TouchableOpacity key={index} onPress={handlePress}>
+                                            image && <TouchableOpacity key={index} onPress={() => {
+                                                handlePress(index+1)
+                                            }}>
                                                 <Image
                                                     style={{
                                                         width: scaleWidth(150),
@@ -1451,9 +1442,12 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                     }}
                 />
 
-                {renderFilterModal()}
 
-            </SafeAreaView>}
+
+            </SafeAreaView> : <EmptyListComponent title={"Buddies not found."} />
+
+            }
+            {renderFilterModal()}
         </LinearGradient>
     );
 };

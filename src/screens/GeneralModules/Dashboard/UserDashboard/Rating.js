@@ -11,7 +11,12 @@ import RatingListItem from '../../../../components/RatingListItem'
 import ProfileProgressBar from '../../../../components/ProfileProgressBar';
 import Header from '../../../../components/Header';
 import { scaleHeight, scaleWidth } from '../../../../styles/responsive';
-import { ratingStar, stars } from '../../../../assets/images';
+import { StarRatingDisplay } from 'react-native-star-rating-widget';
+import CustomStarIcon from '../../../../components/CustomStarIcon';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllRating } from '../../../../redux/UserDashboard/getRatingSlice';
+import FullScreenLoader from '../../../../components/FullScreenLoader';
+import EmptyListComponent from '../../../../components/EmptyListComponent';
 
 
 const data = Array(10).fill({
@@ -23,7 +28,8 @@ const data = Array(10).fill({
 });
 
 const MyReviewScreen = ({ navigation }) => {
-
+    const dispatch = useDispatch();
+    const { ratings, loading } = useSelector((state) => state.getRating);
 
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
@@ -31,7 +37,13 @@ const MyReviewScreen = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
+    useEffect(() => {
+        dispatch(getAllRating())
+    }, [dispatch])
 
+    if (loading) {
+        return <FullScreenLoader loading={loading} title={"Please wait..."} />
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -41,50 +53,27 @@ const MyReviewScreen = ({ navigation }) => {
                     handleBackPress()
                 }}
                 title={"Ratings"}
-                customTextStyle={{
-                    fontFamily: fonts.fontsType.semiBold,
-                    marginStart: scaleWidth(95)
-                }} />
+                customTextStyle={styles.headerText} />
 
-            <ScrollView>
+            {ratings?.ratings?.data?.length > 0 ? <ScrollView style={styles.scrollView}>
 
-                <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
-                    <Text style={{
-                        fontFamily: fonts.fontsType.bold,
-                        fontSize: 41,
-                        color: theme.dark.white
-                    }}>
-                        {"4.5"}
+                <View style={styles.ratingContainer}>
+                    <Text style={styles.avgRating}>
+                        {ratings?.avg_rating}
                     </Text>
 
-                    <View style={{
-                        flex: 1,
-                        marginTop:10
-                    }}>
-                        <Image style={{
-                            height: 26,
-                            width: scaleWidth(160)
-                        }} source={stars}
-                            resizeMode='contain'
+                    <View style={styles.starRating}>
+                        <StarRatingDisplay
+                            disabled={true}
+                            rating={3}
+                            maxStars={5}
+                            color={theme.dark.secondary}
+                            starSize={28}
+                            StarIconComponent={(props) => <CustomStarIcon {...props} />}
                         />
                     </View>
 
-                    {/* <Rating
-                        type='star'
-                        readonly={true}
-                        startingValue={4.5}
-                        imageSize={25}
-                        minValue={0}
-                        ratingCount={5}
-                        style={{ alignSelf: 'center', marginTop: 10 }}
-                    /> */}
-
-                    <Text style={{
-                        fontFamily: fonts.fontsType.medium,
-                        fontSize: 16,
-                        color: theme.dark.inputLabel,
-                        marginTop: 15
-                    }}>
+                    <Text style={styles.overallRatings}>
                         {"Overall Ratings"}
                     </Text>
 
@@ -92,20 +81,25 @@ const MyReviewScreen = ({ navigation }) => {
                 <View style={styles.listContainer}>
                     <FlatList
                         showsVerticalScrollIndicator={false}
-                        data={data}
+                        data={ratings?.ratings?.data}
                         renderItem={({ item }) => (
                             <RatingListItem
-                                profilePic={item.profilePic}
-                                name={item.name}
-                                rating={item.rating}
-                                comment={item.comment}
+                                profilePic={item?.image_url}
+                                name={item?.full_name}
+                                rating={item?.stars}
+                                comment={item?.comment}
 
                             />
                         )}
                         keyExtractor={(item, index) => item + index}
                     />
                 </View>
-            </ScrollView>
+
+
+
+
+            </ScrollView> :
+                <EmptyListComponent title={"Rating not found."} />}
         </SafeAreaView>
     );
 };
@@ -115,10 +109,40 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: theme.dark.primary,
     },
+    headerText: {
+        fontFamily: fonts.fontsType.semiBold,
+        marginStart: scaleWidth(95),
+    },
+    scrollView: {
+        flex: 1,
+    },
+    ratingContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    avgRating: {
+        fontFamily: fonts.fontsType.bold,
+        fontSize: 41,
+        color: theme.dark.white,
+    },
+    starRating: {
+        flex: 1,
+        marginTop: 10,
+    },
+    overallRatings: {
+        fontFamily: fonts.fontsType.medium,
+        fontSize: 16,
+        color: theme.dark.inputLabel,
+        marginTop: 15,
+    },
     listContainer: {
         flex: 1,
         paddingHorizontal: 20,
         paddingTop: 20,
+    },
+    emptyList: {
+        flex: 1,
     }
 });
 

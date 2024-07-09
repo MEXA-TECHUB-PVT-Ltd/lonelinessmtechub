@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
         fontFamily: fonts.fontsType.regular,
         color: theme.dark.white,
         position: 'absolute',
-        bottom: scaleHeight(270)
+        bottom: '40%'
     },
 });
 
