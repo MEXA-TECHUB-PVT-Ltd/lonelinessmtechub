@@ -1,7 +1,6 @@
 // authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import makeRequest from '../../configs/makeRequest';
-const baseEndpoint = "/users/buddy/get-near-by";
 
 const initialState = {
     response: null,
@@ -9,13 +8,13 @@ const initialState = {
     error: null,
 };
 
-export const getAllNearbyBuddy = createAsyncThunk(
-    'nearByBuddy/getAllNearbyBuddy',
-    async (payload, { getState, rejectWithValue }) => {
+export const requestBackBuddy = createAsyncThunk(
+    'requestBackBuddy/requestBackBuddy',
+    async (requestBackPayload, { getState, rejectWithValue }) => {
         try {
             const { token } = getState().auth
             const bearerToken = `Bearer ${token}`
-            const data = await makeRequest('GET', `${baseEndpoint}?latitude=${payload?.latitude}&longitude=${payload?.longitude}&distance=500000000&page=1&limit=10`, null, null, bearerToken);
+            const data = await makeRequest('POST', '/requests/request-back/buddy', requestBackPayload, null, bearerToken);
             return data;
         } catch (error) {
             return error
@@ -23,25 +22,25 @@ export const getAllNearbyBuddy = createAsyncThunk(
     }
 );
 
-const getAllNearbyBuddySlice = createSlice({
-    name: 'nearByBuddy',
+const requestBackBuddySlice = createSlice({
+    name: 'requestBackBuddy',
     initialState,
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(getAllNearbyBuddy.pending, (state) => {
+            .addCase(requestBackBuddy.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(getAllNearbyBuddy.fulfilled, (state, action) => {
+            .addCase(requestBackBuddy.fulfilled, (state, action) => {
                 state.loading = false;
                 state.response = action.payload?.result;
             })
-            .addCase(getAllNearbyBuddy.rejected, (state, action) => {
+            .addCase(requestBackBuddy.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
     },
 });
 
-export default getAllNearbyBuddySlice.reducer;
+export default requestBackBuddySlice.reducer;

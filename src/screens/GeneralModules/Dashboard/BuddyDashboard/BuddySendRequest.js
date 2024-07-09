@@ -15,8 +15,15 @@ import useBackHandler from '../../../../utils/useBackHandler';
 import CustomTextInput from '../../../../components/TextInputComponent';
 import { TextInput } from 'react-native-gesture-handler';
 import { useAlert } from '../../../../providers/AlertContext';
+import CustomLayout from '../../../../components/CustomLayout';
+import { useDispatch, useSelector } from 'react-redux';
+import { requestBackBuddy } from '../../../../redux/BuddyDashboard/requestBackBuddySlice';
+import { setRoute } from '../../../../redux/appSlice';
 
 const BuddySendRequest = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { currentRoute } = useSelector((state) => state.app)
+    const { loading } = useSelector((state) => state.requestBackBuddy)
     const { showAlert } = useAlert();
     const [form, setForm] = useState({
         day: '',
@@ -24,7 +31,8 @@ const BuddySendRequest = ({ navigation }) => {
         year: '',
         hours: '',
         minutes: '',
-        format: ''
+        format: '',
+        location: ''
     });
 
     const dayRef = useRef(null);
@@ -53,16 +61,55 @@ const BuddySendRequest = ({ navigation }) => {
     };
 
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.SERVICE_DETAILS)
+        const payload = {
+            request_id: currentRoute?.request_id,
+            route: SCREENS.MAIN_DASHBOARD
+        }
+        dispatch(setRoute(payload))
+        resetNavigation(navigation, currentRoute?.route)
         return true;
     };
     useBackHandler(handleBackPress);
 
-    const handleButtonClick = (description) => {
-        showAlert("Success", "success", "Request send successfully")
-        setTimeout(() => {
-            resetNavigation(navigation, SCREENS.SERVICE_DETAILS)
-        }, 3000);
+    const handleSendRequest = () => {
+
+        if (form?.location === '') {
+            showAlert("Error", "error", "Location is required.")
+            return
+        }
+
+        if (form?.day === '' && form?.month === '' && form?.year === '') {
+            showAlert("Error", "error", "Date of service is required.")
+            return
+        }
+
+        if (form.hours === '' && form.minutes === '' && form.format === '') {
+            showAlert("Error", "error", "Time of service is required.")
+            return
+        }
+
+        const dateOfService = `${form.year}-${form.month}-${form.day}`;
+        const timeOfService = `${form.hours}:${form.minutes}: ${form.format}`;
+
+        const requestBackPayload = {
+            request_id: currentRoute?.request_id,
+            booking_date: dateOfService,
+            booking_time: timeOfService,
+            location: form.location
+        }
+
+        dispatch(requestBackBuddy(requestBackPayload)).then((result) => {
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message)
+                setTimeout(() => {
+                    handleBackPress();
+                }, 3000);
+            } else {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+
+
 
     }
 
@@ -86,118 +133,123 @@ const BuddySendRequest = ({ navigation }) => {
         <SafeAreaView style={styles.mianContainer}>
             <Header
                 onPress={() => {
-                    resetNavigation(navigation, SCREENS.SERVICE_DETAILS)
+                    handleBackPress();
                 }}
                 title={"Send Request"}
             />
 
             <View style={styles.container}>
 
-                <CustomTextInput
-                    label={'Location'}
-                    identifier={'password'}
-                    value={form.password}
-                    onValueChange={(value) => handleChange('password', value)}
-                    mainContainer={{ marginTop: 10 }}
-                />
-                <Text style={styles.label}>{'Date of Service'}</Text>
-                <View style={styles.inputContainerStyle}>
+                <CustomLayout>
 
-                    <TextInput
-                        ref={dayRef}
-                        placeholder='DD'
-                        placeholderTextColor={theme.dark.inputLabel}
-                        maxLength={2}
-                        keyboardType='number-pad'
-                        style={styles.inputStyle}
-                        value={form.day}
-                        onChangeText={(value) => handleChange('day', value)}
-                        onKeyPress={({ nativeEvent }) => handleKeyPress('day', nativeEvent.key)}
+                    <CustomTextInput
+                        label={'Location'}
+                        identifier={'location'}
+                        value={form.location}
+                        onValueChange={(value) => handleChange('location', value)}
+                        mainContainer={{ marginTop: 10 }}
                     />
+                    <Text style={styles.label}>{'Date of Service'}</Text>
+                    <View style={styles.inputContainerStyle}>
 
-                    <View style={styles.verticleLine}></View>
+                        <TextInput
+                            ref={dayRef}
+                            placeholder='DD'
+                            placeholderTextColor={theme.dark.text}
+                            maxLength={2}
+                            keyboardType='number-pad'
+                            style={styles.inputStyle}
+                            value={form.day}
+                            onChangeText={(value) => handleChange('day', value)}
+                            onKeyPress={({ nativeEvent }) => handleKeyPress('day', nativeEvent.key)}
+                        />
 
-                    <TextInput
-                        ref={monthRef}
-                        placeholder='MM'
-                        placeholderTextColor={theme.dark.inputLabel}
-                        maxLength={2}
-                        keyboardType='number-pad'
-                        style={styles.inputStyle}
-                        value={form.month}
-                        onChangeText={(value) => handleChange('month', value)}
-                        onKeyPress={({ nativeEvent }) => handleKeyPress('month', nativeEvent.key)}
-                    />
+                        <View style={styles.verticleLine}></View>
 
-                    <View style={styles.verticleLine}></View>
+                        <TextInput
+                            ref={monthRef}
+                            placeholder='MM'
+                            placeholderTextColor={theme.dark.text}
+                            maxLength={2}
+                            keyboardType='number-pad'
+                            style={styles.inputStyle}
+                            value={form.month}
+                            onChangeText={(value) => handleChange('month', value)}
+                            onKeyPress={({ nativeEvent }) => handleKeyPress('month', nativeEvent.key)}
+                        />
 
-                    <TextInput
-                        ref={yearRef}
-                        placeholder='YYYY'
-                        placeholderTextColor={theme.dark.inputLabel}
-                        maxLength={4}
-                        keyboardType='number-pad'
-                        style={styles.inputStyle}
-                        value={form.year}
-                        onChangeText={(value) => handleChange('year', value)}
-                        onKeyPress={({ nativeEvent }) => handleKeyPress('year', nativeEvent.key)}
-                    />
+                        <View style={styles.verticleLine}></View>
 
-                </View>
+                        <TextInput
+                            ref={yearRef}
+                            placeholder='YYYY'
+                            placeholderTextColor={theme.dark.text}
+                            maxLength={4}
+                            keyboardType='number-pad'
+                            style={styles.inputStyle}
+                            value={form.year}
+                            onChangeText={(value) => handleChange('year', value)}
+                            onKeyPress={({ nativeEvent }) => handleKeyPress('year', nativeEvent.key)}
+                        />
 
-                <Text style={styles.label}>{"Time of Services"}</Text>
-                <View style={styles.inputContainerStyle}>
+                    </View>
 
-                    <TextInput
-                        ref={hoursRef}
-                        placeholder='12'
-                        placeholderTextColor={theme.dark.inputLabel}
-                        maxLength={2}
-                        keyboardType='number-pad'
-                        style={styles.inputStyle}
-                        value={form.hours}
-                        onChangeText={(value) => handleChange('hours', value)}
-                        onKeyPress={({ nativeEvent }) => handleKeyPress('hours', nativeEvent.key)}
-                    />
+                    <Text style={styles.label}>{"Time of Services"}</Text>
+                    <View style={styles.inputContainerStyle}>
 
-                    <Text style={[styles.label, { top: 0 }]}>{":"}</Text>
+                        <TextInput
+                            ref={hoursRef}
+                            placeholder='12'
+                            placeholderTextColor={theme.dark.text}
+                            maxLength={2}
+                            keyboardType='number-pad'
+                            style={styles.inputStyle}
+                            value={form.hours}
+                            onChangeText={(value) => handleChange('hours', value)}
+                            onKeyPress={({ nativeEvent }) => handleKeyPress('hours', nativeEvent.key)}
+                        />
 
-                    <TextInput
-                        ref={minutesRef}
-                        placeholder='00'
-                        placeholderTextColor={theme.dark.inputLabel}
-                        maxLength={2}
-                        keyboardType='number-pad'
-                        style={styles.inputStyle}
-                        value={form.minutes}
-                        onChangeText={(value) => handleChange('minutes', value)}
-                        onKeyPress={({ nativeEvent }) => handleKeyPress('minutes', nativeEvent.key)}
-                    />
+                        <Text style={[styles.label, { top: 0 }]}>{":"}</Text>
 
-                    <Text style={[styles.label, { top: 0 }]}>{":"}</Text>
+                        <TextInput
+                            ref={minutesRef}
+                            placeholder='00'
+                            placeholderTextColor={theme.dark.text}
+                            maxLength={2}
+                            keyboardType='number-pad'
+                            style={styles.inputStyle}
+                            value={form.minutes}
+                            onChangeText={(value) => handleChange('minutes', value)}
+                            onKeyPress={({ nativeEvent }) => handleKeyPress('minutes', nativeEvent.key)}
+                        />
 
-                    <TextInput
-                        ref={formatRef}
-                        placeholder='PM'
-                        placeholderTextColor={theme.dark.inputLabel}
-                        maxLength={2}
-                        keyboardType='ascii-capable'
-                        autoCapitalize='none'
-                        style={styles.inputStyle}
-                        value={form.format}
-                        onChangeText={(value) => handleChange('format', value)}
-                        onKeyPress={({ nativeEvent }) => handleKeyPress('format', nativeEvent.key)}
-                    />
+                        <Text style={[styles.label, { top: 0 }]}>{":"}</Text>
 
-                </View>
+                        <TextInput
+                            ref={formatRef}
+                            placeholder='PM'
+                            placeholderTextColor={theme.dark.text}
+                            maxLength={2}
+                            keyboardType='ascii-capable'
+                            autoCapitalize='none'
+                            style={styles.inputStyle}
+                            value={form.format}
+                            onChangeText={(value) => handleChange('format', value)}
+                            onKeyPress={({ nativeEvent }) => handleKeyPress('format', nativeEvent.key)}
+                        />
+
+                    </View>
+                </CustomLayout>
             </View>
-            <Button
-                onPress={() => {
 
-                    handleButtonClick()
+            <Button
+                loading={loading}
+                onPress={() => {
+                    handleSendRequest()
                 }}
                 customStyle={{
-                    marginBottom: scaleHeight(70)
+                    width: '80%',
+                    marginBottom: scaleHeight(60)
                 }}
                 title={"Send Request"} />
         </SafeAreaView>

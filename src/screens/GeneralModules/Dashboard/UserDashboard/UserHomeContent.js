@@ -937,7 +937,8 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
             if (is_subscribed) {
                 dispatch(setRoute({
                     route: SCREENS.MAIN_DASHBOARD,
-                    buddy_id: currentUser?.id
+                    buddy_id: currentUser?.id,
+                    hourly_rate: currentUser?.hourly_rate
                 }))
                 resetNavigation(navigation, SCREENS.SEND_REQUEST)
             } else {

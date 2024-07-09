@@ -1,5 +1,5 @@
 //import liraries
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { theme } from '../assets';
 import { dummyImg } from '../assets/images';
@@ -9,47 +9,107 @@ import Button from './ButtonComponent';
 import { resetNavigation } from '../utils/resetNavigation';
 import { SCREENS } from '../constant/constants';
 import { useAlert } from '../providers/AlertContext';
+import moment from 'moment';
+import { useDispatch, useSelector } from 'react-redux';
+import { acceptRejectUserRequest } from '../redux/BuddyDashboard/acceptRejectUserRequestSlice';
+import { setRoute } from '../redux/appSlice';
 
-// create a component
-const RequestListItem = ({ item, navigation }) => {
+
+const RequestListItem = ({ item, navigation, onRequestStatusChange }) => {
+    const dispatch = useDispatch();
     const { showAlert } = useAlert();
+    const dateTime = moment(`${item?.booking_date?.split('T')[0]}T${item?.booking_time}Z`);
+    const [requestStatus, setRequestStatus] = useState('');
+    const [loading, setLoading] = useState(false);
+
 
     const getColorByStatus = (status) => {
         switch (status) {
-            case "Accepted":
+            case "ACCEPTED":
                 return '#00E200';
 
-            case "Rejected":
+            case "REJECTED":
                 return '#FF2A04';
 
-            case "Requested":
+            case "REQUEST_BACK":
                 return '#4285F4';
 
             default:
                 return '#00000000'; // Default color if status doesn't match
         }
     }
+
+    const getNameByStatus = (status) => {
+        switch (status) {
+            case "ACCEPTED":
+                return 'Accepted';
+
+            case "REJECTED":
+                return 'Rejected';
+
+            case "REQUEST_BACK":
+                return 'Requested by me';
+
+            default:
+                return ''; // Default color if status doesn't match
+        }
+    }
+
+    const handleAcceptRejectRequest = (status) => {
+        setLoading(true);
+        setRequestStatus(status)
+        const acceptRejectPayload = {
+            request_id: item?.id,
+            status: status
+        }
+
+        dispatch(acceptRejectUserRequest(acceptRejectPayload)).then((result) => {
+            setLoading(false);
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message)
+                onRequestStatusChange(item?.id, status);
+
+            } else {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const handleRequestDetail = (request_id) => {
+        const route = {
+            request_id: request_id,
+            route: SCREENS.MAIN_DASHBOARD
+        }
+        dispatch(setRoute(route));
+        resetNavigation(navigation, SCREENS.SERVICE_DETAILS);
+    }
+
     return (
         <TouchableOpacity
             onPress={() => {
-                resetNavigation(navigation, SCREENS.SERVICE_DETAILS)
+                handleRequestDetail(item?.id)
             }}
             style={styles.container}>
             <View style={styles.row}>
                 <Image
                     style={styles.image}
-                    source={dummyImg}
+                    source={{ uri: item?.user?.images[0]?.image_url }}
                     resizeMode='cover'
                 />
 
                 <View style={styles.flex1}>
                     <View style={styles.headerRow}>
                         <Text style={styles.userName}>
-                            {item?.name}
+                            {item?.user?.full_name}
                         </Text>
                         <View style={[styles.statusContainer, { backgroundColor: getColorByStatus(item?.status) },]}>
                             <Text style={styles.statusText}>
-                                {item?.status !== "Pending" && item?.status}
+                                {/* {item?.status !== "PENDING" || item?.status !== "REQUESTED" && item?.status} */}
+                                {
+                                    item?.status !== "PENDING" && item?.status !== "REQUESTED"
+                                        ? getNameByStatus(item?.status)
+                                        : ''
+                                }
                             </Text>
                         </View>
                     </View>
@@ -59,7 +119,7 @@ const RequestListItem = ({ item, navigation }) => {
                             Category
                         </Text>
                         <Text style={styles.infoText}>
-                            {item?.category}
+                            {item?.category?.name}
                         </Text>
                     </View>
 
@@ -68,22 +128,31 @@ const RequestListItem = ({ item, navigation }) => {
                             Date/Time
                         </Text>
                         <Text style={styles.infoText}>
-                            {item?.dateTime}
+                            {dateTime?.format('DD/MM/YYYY/hh:mma')}
                         </Text>
                     </View>
                 </View>
             </View>
 
-            {item?.status === 'Pending' && <View style={styles.buttonRow}>
+            {item?.status === 'PENDING' || item?.status === 'REQUESTED' && <View style={styles.buttonRow}>
                 <Button
                     onPress={() => {
+                        setRequestStatus("REJECTED");
+                        handleAcceptRejectRequest("REJECTED");
                     }}
+                    loading={requestStatus === "REJECTED" && loading}
                     title={"Reject Request"}
                     customStyle={styles.rejectButton}
                     textCustomStyle={styles.rejectButtonText}
+                    isBgTransparent={true}
                 />
 
                 <Button
+                    onPress={() => {
+                        setRequestStatus("ACCEPTED");
+                        handleAcceptRejectRequest("ACCEPTED");
+                    }}
+                    loading={requestStatus === "ACCEPTED" && loading}
                     title={"Accept Request"}
                     customStyle={styles.acceptButton}
                     textCustomStyle={styles.acceptButtonText}
@@ -110,7 +179,8 @@ const styles = StyleSheet.create({
     image: {
         width: scaleWidth(60),
         height: scaleHeight(70),
-        borderRadius: 12
+        borderRadius: 12,
+        alignSelf:'center'
     },
     flex1: {
         flex: 1

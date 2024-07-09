@@ -4,7 +4,7 @@ import fonts from '../styles/fonts';
 import { theme } from '../assets';
 import { scaleHeight, scaleWidth } from '../styles/responsive';
 
-const Button = ({ title, onPress, loading, disabled, customStyle, textCustomStyle, icon }) => {
+const Button = ({ title, onPress, loading, disabled, customStyle, textCustomStyle, icon, isBgTransparent = false }) => {
     return (
         <>
             <TouchableOpacity
@@ -13,7 +13,7 @@ const Button = ({ title, onPress, loading, disabled, customStyle, textCustomStyl
                 disabled={disabled}
             >
                 {loading ? (
-                    <ActivityIndicator size="small" color={theme.dark.black} />
+                    <ActivityIndicator size="small" color={!isBgTransparent ? theme.dark.black : theme.dark.secondary} />
                 ) : (
                     <View style={styles.content}>
                         {icon && <View style={styles.icon}>{icon}</View>}
