@@ -36,6 +36,17 @@ const signInSlice = createSlice({
             state.user_id = null,
                 state.userLoginInfo = null
         },
+        updateUserLoginInfo(state, action) {
+            if (state.userLoginInfo) {
+                state.userLoginInfo = {
+                    ...state.userLoginInfo,
+                    user: {
+                        ...state.userLoginInfo.user,
+                        ...action.payload
+                    }
+                };
+            }
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -57,5 +68,5 @@ const signInSlice = createSlice({
     },
 });
 
-export const { logout } = signInSlice.actions;
+export const { logout, updateUserLoginInfo } = signInSlice.actions;
 export default signInSlice.reducer;

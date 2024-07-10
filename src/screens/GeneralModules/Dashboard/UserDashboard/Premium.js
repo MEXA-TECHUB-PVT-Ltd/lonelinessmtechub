@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, SafeAreaView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, SafeAreaView, ScrollView, Keyboard } from 'react-native';
 import Button from '../../../../components/ButtonComponent';
 import PremiumItem from '../../../../components/PremiumItem';
 import { premiumGift } from '../../../../assets/images';
@@ -10,185 +10,329 @@ import { resetNavigation } from '../../../../utils/resetNavigation';
 import { SCREENS } from '../../../../constant/constants';
 import useBackHandler from '../../../../utils/useBackHandler';
 import Header from '../../../../components/Header';
-
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllSubscription } from '../../../../redux/getAllSubscriptionSlice';
+import FullScreenLoader from '../../../../components/FullScreenLoader';
+import Icon from 'react-native-vector-icons/AntDesign'
+import { useStripe, CardField } from '@stripe/stripe-react-native';
+import { color } from '@rneui/base';
+import { createCustomer } from '../../../../redux/PaymentSlices/createCustomerSlice';
+import { useAlert } from '../../../../providers/AlertContext';
+import { attachPaymentMethod } from '../../../../redux/PaymentSlices/attachPaymentMethodSlice';
+import { payToSubscribe } from '../../../../redux/PaymentSlices/payToSubscribeSlice';
+import { updateUserLoginInfo } from '../../../../redux/AuthModule/signInSlice';
 
 const Premium = ({ navigation }) => {
-    const [selectedPlan, setSelectedPlan] = useState('1 Month');
+    const dispatch = useDispatch();
+    const { createPaymentMethod } = useStripe();
+    const { showAlert } = useAlert();
+    const { subscription, loading } = useSelector((state) => state.getSubscription)
+    const { userLoginInfo } = useSelector((state) => state.auth)
+    const [selectedPlan, setSelectedPlan] = useState('1 Months');
+    const [planDetail, setPlanDetail] = useState(null);
+    const [isOverlayOpened, setOverlayOpened] = useState(false);
+    const [paymentLoader, setPaymentLoader] = useState(false);
+    const [keyboardStatus, setKeyboardStatus] = useState(false);
+    const [cardDetails, setCradDetails] = useState({});
+    const { customer_id } = userLoginInfo?.user
+
+    const renderPlanFeatures = () => {
+        const featuresByPlan = {
+            '1 Months': [
+                { text: "Unlock premium features for 1 month.", color: theme.dark.secondary },
+                { text: "Access advanced matching capabilities.", color: theme.dark.secondary },
+                { text: "Send unlimited likes to increase your connections.", color: theme.dark.inputLabel },
+                { text: "Flexible monthly pricing for your convenience.", color: theme.dark.inputLabel },
+                { text: "Easily upgrade, downgrade, or cancel anytime.", color: theme.dark.inputLabel }
+            ],
+            '6 Months': [
+                { text: "Unlock premium features for 6 months.", color: theme.dark.secondary },
+                { text: "Access advanced matching capabilities.", color: theme.dark.secondary },
+                { text: "Send unlimited likes to increase your connections.", color: theme.dark.secondary },
+                { text: "Flexible monthly pricing for your convenience.", color: theme.dark.secondary },
+                { text: "Easily upgrade, downgrade, or cancel anytime.", color: theme.dark.inputLabel }
+            ],
+            '12 Months': [
+                { text: "Unlock premium features for 12 months.", color: theme.dark.secondary },
+                { text: "Access advanced matching capabilities.", color: theme.dark.secondary },
+                { text: "Send unlimited likes to increase your connections.", color: theme.dark.secondary },
+                { text: "Flexible monthly pricing for your convenience.", color: theme.dark.secondary },
+                { text: "Easily upgrade, downgrade, or cancel anytime.", color: theme.dark.secondary }
+            ],
+        };
+
+        return featuresByPlan[selectedPlan].map((feature, index) => (
+            <PremiumItem
+                key={index}
+                iconName="checkcircle"
+                iconColor={feature.color}
+                text={feature.text}
+            />
+        ));
+    };
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
+        resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME });
         return true;
     };
     useBackHandler(handleBackPress);
 
+
+    useEffect(() => {
+        dispatch(getAllSubscription())
+    }, [dispatch])
+
+    useEffect(() => {
+        setPlanDetail(subscription[0])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [subscription])
+
+    useEffect(() => {
+        const keyboardDidShowListener = Keyboard.addListener(
+            'keyboardDidShow',
+            () => {
+                setKeyboardStatus(true);
+            }
+        );
+        const keyboardDidHideListener = Keyboard.addListener(
+            'keyboardDidHide',
+            () => {
+                setKeyboardStatus(false);
+            }
+        );
+
+        // Cleanup listeners on unmount
+        return () => {
+            keyboardDidShowListener.remove();
+            keyboardDidHideListener.remove();
+        };
+    }, []);
+
+
+    const handleUserUpdate = () => {
+        const updatedInfo = {
+            is_subscribed: true
+        };
+        dispatch(updateUserLoginInfo(updatedInfo));
+    };
+
+    const handleAttachPaymentMethod = (paymentMethodId) => {
+        const payload = {
+            payment_method_id: paymentMethodId
+        }
+        dispatch(attachPaymentMethod(payload)).then((result) => {
+            if (result?.payload?.status === "success") {
+                //console.log("attachPayment--->", result?.payload)
+                const paymentPayload = {
+                    stripe_price_id: planDetail?.stripe_price_id,
+                    payment_method_id: paymentMethodId
+                }
+                dispatch(payToSubscribe(paymentPayload)).then((result) => {
+                    if (result?.payload?.status === "success") {
+                        setPaymentLoader(false)
+                        handleUserUpdate();
+                       // console.log("Payment sent--->", result?.payload)
+                        showAlert("Success", "success", result?.payload?.message)
+                        setTimeout(() => {
+                            resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
+                        }, 3000);
+                    }
+                    else if (result?.payload?.errors) {
+                        setPaymentLoader(false)
+                        showAlert("Error", "error", result?.payload?.errors)
+                    }
+                    else if (result?.payload?.status === "error") {
+                        setPaymentLoader(false)
+                        showAlert("Error", "error", result?.payload?.message)
+                    }
+                })
+            } else {
+                setPaymentLoader(false)
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const handleCreateCustomer = (paymentMethodId) => {
+        setPaymentLoader(true)
+        dispatch(createCustomer()).then((result) => {
+            if (result?.payload?.status === "success") {
+                handleAttachPaymentMethod(paymentMethodId)
+            } else {
+                setPaymentLoader(false)
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const handleCreatePaymentMethod = async () => {
+        console.log('cardDetails', cardDetails)
+        try {
+            const { paymentMethod, error } = await createPaymentMethod({
+                type: 'card',
+                card: cardDetails.card,
+                paymentMethodType: 'Card',
+            },);
+
+            if (error) {
+                showAlert("Error", "error", error?.message)
+                console.error('Error creating payment method:', error);
+            } else {
+                console.log('Created payment method:', paymentMethod?.id);
+                //call create customer api here..
+                if (customer_id === null) {
+                    console.log("customer not created")
+                    handleCreateCustomer(paymentMethod?.id)
+                } else {
+                    console.log("customer already created")
+                    handleAttachPaymentMethod(paymentMethod?.id)
+                }
+            }
+        } catch (error) {
+            console.error('Error creating payment method:', error);
+        }
+    }
+
+    if (loading) {
+        return <FullScreenLoader loading={loading} title={"Please wait fetching plan..."} />
+    }
+
+    const Overlay = () => {
+        return (
+            <View style={styles.overlay}>
+
+                <View style={{
+                    backgroundColor: 'white',
+                    width: '80%',
+                    height: keyboardStatus ? '40%' : '25%',
+                    borderRadius: 16,
+                    margin: 30
+                }}>
+
+                    <Icon
+                        onPress={() => {
+                            setOverlayOpened(false)
+                        }}
+                        style={{
+                            alignSelf: 'flex-end',
+                            left: 4,
+                            bottom: 4
+                        }}
+                        size={26}
+                        name='closecircle'
+                        color={theme.dark.secondary} />
+
+                    <Text style={styles.cardHeading}>
+                        Enter Card Detail
+                    </Text>
+
+                    <CardField
+                        postalCodeEnabled={false}
+                        // autofocus={true}
+                        placeholder={{
+                            number: '4242 4242 4242 4242',
+                        }}
+                        cardStyle={{
+                            backgroundColor: '#FFFFFF',
+                            textColor: '#000000',
+                        }}
+                        style={{
+                            width: '80%',
+                            height: '20%',
+                        }}
+                        onCardChange={(cardDetails) => {
+                            setCradDetails({ type: 'card', card: cardDetails });
+                        }}
+                    />
+
+                    <Button
+                        loading={paymentLoader}
+                        isBgTransparent={true}
+                        onPress={() => {
+                            handleCreatePaymentMethod();
+                        }}
+                        title={"Pay"}
+                        customStyle={{
+                            backgroundColor: theme.dark.primary,
+                            width: '80%',
+                            marginBottom: 0,
+                            marginTop: 40
+                        }}
+                        textCustomStyle={{
+                            color: theme.dark.secondary
+                        }}
+                    />
+
+                </View>
+            </View>
+        );
+    };
+
+
     return (
         <SafeAreaView style={styles.mainContainer}>
             <Header
-                onPress={() => {
-                    handleBackPress()
-                }}
-                title={"Go Premium"} />
+                onPress={() => handleBackPress()}
+                title={"Go Premium"}
+            />
             <View style={styles.container}>
-
-
-                {/* <Text style={styles.title}>Go Premium</Text> */}
                 <View style={styles.giftBox}>
                     <Image
+                        resizeMode='contain'
                         style={{
                             width: scaleWidth(250),
                             height: scaleHeight(150),
-                            alignSelf: 'center'
+                            alignSelf: 'center',
                         }}
-                        source={premiumGift} />
+                        source={premiumGift}
+                    />
                 </View>
                 <View style={styles.buttonGroup}>
-                    <TouchableOpacity
-                        style={[styles.button, selectedPlan === '1 Month' && styles.selectedButton]}
-                        onPress={() => setSelectedPlan('1 Month')}
-                    >
-                        <Text style={[styles.buttonText, selectedPlan === '1 Month' && styles.selectedText]}>$500</Text>
-                        <Text style={[styles.buttonSubText, selectedPlan === '1 Month' && styles.selectedSubText]}>1 Month</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.button, selectedPlan === '6 Months' && styles.selectedButton]}
-                        onPress={() => setSelectedPlan('6 Months')}
-                    >
-                        <Text style={[styles.buttonText, selectedPlan === '6 Months' && styles.selectedText]}>$900</Text>
-                        <Text style={[styles.buttonSubText, selectedPlan === '6 Months' && styles.selectedSubText]}>6 Months</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.button, selectedPlan === '12 Months' && styles.selectedButton]}
-                        onPress={() => setSelectedPlan('12 Months')}
-                    >
-                        <Text style={[styles.buttonText, selectedPlan === '12 Months' && styles.selectedText]}>$1,000</Text>
-                        <Text style={[styles.buttonSubText, selectedPlan === '12 Months' && styles.selectedSubText]}>12 Months</Text>
-                    </TouchableOpacity>
+                    {subscription?.map(plan => (
+                        <TouchableOpacity
+                            key={Math.round(plan.amount)}
+                            style={[styles.button, selectedPlan === plan.name && styles.selectedButton]}
+                            onPress={() => {
+                                setSelectedPlan(plan.name)
+                                setPlanDetail(plan)
+                            }}
+                        >
+                            <Text style={[styles.buttonText, selectedPlan === plan.name && styles.selectedText]}>
+                                {`${Math.floor(plan.amount)}`}
+                            </Text>
+                            <Text style={[styles.buttonSubText, selectedPlan === plan.name && styles.selectedSubText]}>
+                                {plan.name}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
 
-                {/* // 1 Month Plan */}
+                <View style={styles.featuresList}>
+                    {renderPlanFeatures()}
+                </View>
 
-                {
-                    selectedPlan === '1 Month' && <View style={styles.featuresList}>
-                        <PremiumItem
-                            iconName="checkcircle"
+                <Button
+                    onPress={() => {
+                        setOverlayOpened(true);
+                    }}
+                    title={"Pay Now!"}
+                />
 
-                            iconColor={theme.dark.secondary}
-                            text={"Unlock premium features for 03 months."}
-                        />
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.secondary}
-                            text={"Access advanced matching capabilities."}
-                        />
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.inputLabel}
-                            text={"Send unlimited likes to increase your connections."}
-                        />
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.inputLabel}
-                            text={"Flexible monthly pricing for your convenience."}
-                        />
-
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.inputLabel}
-                            text={"Easily upgrade, downgrade, or cancel anytime."}
-                        />
-
-                    </View>
-                }
-
-
-                {/* // 6 Month Plan */}
-
-                {
-                    selectedPlan === '6 Months' && <View style={styles.featuresList}>
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.secondary}
-                            text={"Unlock premium features for 03 months."}
-                        />
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.secondary}
-                            text={"Access advanced matching capabilities."}
-                        />
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.secondary}
-                            text={"Send unlimited likes to increase your connections."}
-                        />
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.secondary}
-                            text={"Flexible monthly pricing for your convenience."}
-                        />
-
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.inputLabel}
-                            text={"Easily upgrade, downgrade, or cancel anytime."}
-                        />
-
-                    </View>
-                }
-
-
-                {/* // 12 Month Plan */}
-
-                {
-                    selectedPlan === '12 Months' && <View style={styles.featuresList}>
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.secondary}
-                            text={"Unlock premium features for 03 months."}
-                        />
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.secondary}
-                            text={"Access advanced matching capabilities."}
-                        />
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.secondary}
-                            text={"Send unlimited likes to increase your connections."}
-                        />
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.secondary}
-                            text={"Flexible monthly pricing for your convenience."}
-                        />
-
-                        <PremiumItem
-                            iconName="checkcircle"
-
-                            iconColor={theme.dark.secondary}
-                            text={"Easily upgrade, downgrade, or cancel anytime."}
-                        />
-
-                    </View>
-                }
-
-                <Button title={"Pay Now!"} />
-
+                {/* {
+                    customer_id != null ?
+                        <Button
+                            onPress={() => {
+                                console.log(planDetail);
+                            }}
+                            title={"Pay Now!"}
+                        /> :
+                        <Button
+                            onPress={() => {
+                                setOverlayOpened(true);
+                            }}
+                            title={"Add Card"}
+                        />} */}
             </View>
-
-
-
+            {isOverlayOpened && Overlay()}
         </SafeAreaView>
     );
 };
@@ -197,22 +341,15 @@ const styles = StyleSheet.create({
     mainContainer: {
         flex: 1,
         backgroundColor: theme.dark.primary,
-
     },
     container: {
         padding: 25,
         alignItems: 'center',
     },
-    title: {
-        color: theme.dark.secondary,
-        fontSize: 24,
-        fontFamily: fonts.fontsType.bold,
-        marginBottom: 20,
-    },
     giftBox: {
         width: 100,
         height: 100,
-        marginTop: scaleHeight(30)
+        marginTop: scaleHeight(30),
     },
     buttonGroup: {
         width: '100%',
@@ -221,7 +358,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         marginTop: scaleHeight(80),
         backgroundColor: theme.dark.inputBg,
-        borderRadius: 14
+        borderRadius: 14,
     },
     button: {
         width: scaleWidth(99),
@@ -231,14 +368,13 @@ const styles = StyleSheet.create({
         margin: 5,
         alignItems: 'center',
         borderRadius: 10,
-
-        justifyContent: 'center'
+        justifyContent: 'center',
     },
     selectedButton: {
         backgroundColor: theme.dark.secondary,
         alignSelf: 'center',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
     },
     buttonText: {
         color: theme.dark.inputLabel,
@@ -250,39 +386,38 @@ const styles = StyleSheet.create({
         color: theme.dark.primary,
         fontSize: scaleHeight(16),
         alignSelf: 'center',
-        fontFamily: fonts.fontsType.bold
+        fontFamily: fonts.fontsType.bold,
     },
     selectedSubText: {
         color: theme.dark.primary,
-        fontSize: scaleHeight(16),
+        fontSize: scaleHeight(14),
         alignSelf: 'center',
-        fontFamily: fonts.fontsType.bold
+        fontFamily: fonts.fontsType.bold,
     },
     buttonSubText: {
         color: theme.dark.inputLabel,
-        fontSize: scaleHeight(16),
-        fontFamily: fonts.fontsType.bold,
+        fontSize: scaleHeight(14),
+        fontFamily: fonts.fontsType.regular,
         alignSelf: 'center',
-
     },
     featuresList: {
         marginBottom: 20,
     },
-    feature: {
-        color: '#FFF',
-        fontSize: 14,
-        marginVertical: 5,
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        zIndex: 100,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    payButton: {
-        backgroundColor: '#FFD700',
-        padding: 15,
-        borderRadius: 5,
-    },
-    payButtonText: {
-        color: '#000',
+    cardHeading: {
+        fontFamily: fonts.fontsType.semiBold,
         fontSize: 16,
-        fontWeight: 'bold',
-    },
+        color: theme.dark.primary,
+        alignSelf: 'center',
+        marginBottom: 20
+    }
 });
 
 export default Premium;
+

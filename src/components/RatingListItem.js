@@ -5,6 +5,8 @@ import fonts from '../styles/fonts';
 import { theme } from '../assets';
 import { scaleWidth } from '../styles/responsive';
 import { stars } from '../assets/images';
+import { StarRatingDisplay } from 'react-native-star-rating-widget';
+import CustomStarIcon from './CustomStarIcon';
 
 const ReviewListItem = ({ profilePic, name, rating, comment }) => {
 
@@ -24,39 +26,29 @@ const ReviewListItem = ({ profilePic, name, rating, comment }) => {
                         //marginTop: 10,
                         //marginLeft:-20
                     }}>
-                        <Image style={{
-                            height: 20,
-                            width: scaleWidth(150)
-                        }} source={stars}
-                            resizeMode='contain'
+                        <StarRatingDisplay
+                            disabled={true}
+                            rating={3}
+                            maxStars={5}
+                            color={theme.dark.secondary}
+                            starSize={20}
+                            StarIconComponent={(props) => <CustomStarIcon {...props} />}
                         />
                     </View>
-
-                    {/* <Rating
-                        type='star'
-                        readonly={true}
-                        startingValue={rating}
-                        imageSize={20}
-                        minValue={0}
-                        ratingCount={5}
-                        ratingBackgroundColor="red"
-                        style={{ alignSelf: 'flex-start'}}
-                        ratingContainerStyle={{
-                            backgroundColor:"red"
-                        }}
-                    /> */}
 
                 </View>
 
             </View>
 
-            <Text style={styles.comment}>{
+            <Text style={styles.comment}>{comment}</Text>
+
+            {/* <Text style={styles.comment}>{
                 showFullDescription
                     ? comment
                     : `${(comment?.length > 70 ? comment?.slice(0, 70)
                         : comment)}...`
-            }</Text>
-            {(
+            }</Text> */}
+            {/* {(
                 comment?.length > 70 && <TouchableOpacity onPress={toggleDescription}>
                     <Text
                         style={{
@@ -68,7 +60,7 @@ const ReviewListItem = ({ profilePic, name, rating, comment }) => {
                         {!showFullDescription ? 'See More' : 'See Less'}
                     </Text>
                 </TouchableOpacity>
-            )}
+            )} */}
         </View>
     );
 };
@@ -76,7 +68,6 @@ const ReviewListItem = ({ profilePic, name, rating, comment }) => {
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-
     },
     mainContainer: {
         backgroundColor: theme.dark.inputBg,
@@ -84,7 +75,8 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 10,
         marginVertical: 5,
-        borderColor: theme.dark.inputLabel
+        borderColor: theme.dark.inputLabel,
+        marginBottom:10
 
     },
     profilePic: {
@@ -102,13 +94,13 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         // marginTop: 10,
         color: theme.dark.white,
-        marginLeft:-65
+        marginLeft: -65
     },
     comment: {
         fontSize: 14,
         marginTop: 15,
         color: theme.dark.inputLabel,
-        fontFamily: fonts.fontsType.regular
+        fontFamily: fonts.fontsType.regular,
     },
 });
 

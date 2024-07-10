@@ -27,11 +27,16 @@ import getAllBuddyRequestRequest from './BuddyDashboard/getAllBuddyRequestSlice'
 import acceptRejectUserRequestReducer from './BuddyDashboard/acceptRejectUserRequestSlice';
 import getRequestByIdReducer from './BuddyDashboard/getRequestByIdSlice';
 import requestBackBuddyReducer from './BuddyDashboard/requestBackBuddySlice';
+import getAllSubscriptionReducer from './getAllSubscriptionSlice';
+import createCustomerReducer from './PaymentSlices/createCustomerSlice';
+import attachPaymentMethodReducer from './PaymentSlices/attachPaymentMethodSlice';
+import payToSubscribeReducer from './PaymentSlices/payToSubscribeSlice';
+import getRatingReducer from './UserDashboard/getRatingSlice';
 
 const persistConfig = {
     key: 'root',
     storage: AsyncStorage,
-    whitelist: ['auth', 'signup', 'accountSubscription']  // Persist 'auth' and 'signup' slices
+    whitelist: ['auth', 'signup']  // Persist 'auth' and 'signup' slices
 };
 
 const rootReducer = combineReducers({
@@ -59,6 +64,11 @@ const rootReducer = combineReducers({
     acceptRejectUserRequest: acceptRejectUserRequestReducer,
     getRequestById: getRequestByIdReducer,
     requestBackBuddy: requestBackBuddyReducer,
+    getSubscription: getAllSubscriptionReducer,
+    createCustomer: createCustomerReducer,
+    attachPaymentMethod: attachPaymentMethodReducer,
+    payToSubscribe: payToSubscribeReducer,
+    getRating: getRatingReducer,
     app: appReducer,
 
 });
