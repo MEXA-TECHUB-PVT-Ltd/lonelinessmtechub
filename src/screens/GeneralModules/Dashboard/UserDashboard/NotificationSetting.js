@@ -36,8 +36,11 @@ const NotificationSetting = ({ navigation }) => {
                     resetNavigation(navigation, SCREENS.NOTIFICATION)
                 }}
                 title={"Notification Settings"}
+                customTextStyle={{
+                    marginStart: 20
+                }}
             />
-            <View style={{ padding: 25, flex:1 }}>
+            <View style={{ padding: 25, flex: 1 }}>
                 <NotificationSettingItem
                     label="Service accepted notification"
                     initialValue={isEnabled1}
@@ -64,12 +67,12 @@ const NotificationSetting = ({ navigation }) => {
                     onToggle={toggleSwitch5}
                 />
             </View>
-            <Button 
-            title={"Save Settings"}
-            customStyle={{
-                width:'85%',
-                marginBottom:scaleHeight(90)
-            }}
+            <Button
+                title={"Save Settings"}
+                customStyle={{
+                    width: '85%',
+                    marginBottom: scaleHeight(90)
+                }}
             />
         </SafeAreaView>
     );

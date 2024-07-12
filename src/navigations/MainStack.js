@@ -2,7 +2,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import BottomTabNavigator from './BottomTabBar';
 import { SCREENS } from '../constant/constants';
-import { BuddySendRequest, BuddyServiceDetails, GeneralChat, ImageViewer, NotificationSetting, Notifications, PaymentCancellation, Premium, Rating, ReportBuddy, SearchServices, SendRequest, ServiceDetails, UserServiceDetails } from '..'
+import { BuddySendRequest, BuddyServiceDetails, GeneralChat, ImageViewer, NotificationSetting, Notifications, PaymentCancellation, Premium, RateBuddy, Rating, ReportBuddy, SearchServices, SendRequest, ServiceDetails, UserServiceDetails } from '..'
 
 
 const Stack = createStackNavigator();
@@ -26,6 +26,7 @@ const MainStack = () => {
             <Stack.Screen name={SCREENS.BUDDY_SERVICE_DETAIL} component={BuddyServiceDetails} />
             <Stack.Screen name={SCREENS.PAYMENT_CANCELLATION} component={PaymentCancellation} />
             <Stack.Screen name={SCREENS.GENERAL_CHAT} component={GeneralChat} />
+            <Stack.Screen name={SCREENS.RATE_BUDDY} component={RateBuddy} />
         </Stack.Navigator>
     );
 };

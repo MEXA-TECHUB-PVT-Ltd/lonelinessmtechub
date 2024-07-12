@@ -1,7 +1,6 @@
 // authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import makeRequest from '../../configs/makeRequest';
-const baseEndpoint = "/users/buddy/get-near-by";
 
 const initialState = {
     response: null,
@@ -9,13 +8,13 @@ const initialState = {
     error: null,
 };
 
-export const getAllNearbyBuddy = createAsyncThunk(
-    'nearByBuddy/getAllNearbyBuddy',
-    async (payload, { getState, rejectWithValue }) => {
+export const cardWalletPaymentTransfer = createAsyncThunk(
+    'cardWalletPaymentTransfer/cardWalletPaymentTransfer',
+    async (paymentPayload, { getState, rejectWithValue }) => {
         try {
             const { token } = getState().auth
             const bearerToken = `Bearer ${token}`
-            const data = await makeRequest('GET', `${baseEndpoint}?latitude=${payload?.latitude}&longitude=${payload?.longitude}&distance=500000000&page=1&limit=10`, null, null, bearerToken);
+            const data = await makeRequest('POST', '/payments/services/transfer-payment', paymentPayload, null, bearerToken);
             return data;
         } catch (error) {
             return error
@@ -23,25 +22,25 @@ export const getAllNearbyBuddy = createAsyncThunk(
     }
 );
 
-const getAllNearbyBuddySlice = createSlice({
-    name: 'nearByBuddy',
+const cardWalletPaymentTransferSlice = createSlice({
+    name: 'cardWalletPaymentTransfer',
     initialState,
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(getAllNearbyBuddy.pending, (state) => {
+            .addCase(cardWalletPaymentTransfer.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(getAllNearbyBuddy.fulfilled, (state, action) => {
+            .addCase(cardWalletPaymentTransfer.fulfilled, (state, action) => {
                 state.loading = false;
-                state.response = action.payload?.result;
+                state.response = action.payload;
             })
-            .addCase(getAllNearbyBuddy.rejected, (state, action) => {
+            .addCase(cardWalletPaymentTransfer.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
     },
 });
 
-export default getAllNearbyBuddySlice.reducer;
+export default cardWalletPaymentTransferSlice.reducer;

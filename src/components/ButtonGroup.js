@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { theme } from '../assets';
 import fonts from '../styles/fonts';
 import { scaleHeight } from '../styles/responsive';
 
-const ButtonGroup = ({ onSelectedChange, buttons }) => {
-    const [selected, setSelected] = useState('Upcoming');
+const ButtonGroup = ({ onSelectedChange, buttons, selectedIndex }) => {
+    // const [selected, setSelected] = useState('Upcoming');
+    const [selected, setSelected] = useState(buttons[selectedIndex]);
+
+    useEffect(() => {
+        setSelected(buttons[selectedIndex]);
+    }, [selectedIndex, buttons]);
 
     const handlePress = (button, index) => {
         setSelected(button);
@@ -24,7 +29,7 @@ const ButtonGroup = ({ onSelectedChange, buttons }) => {
 
     const containerBackgroundColor = selected ? 'rgba(252, 226, 32, 0.2)' : 'transparent';
 
-    
+
 
     return (
         <View style={[styles.container, { backgroundColor: containerBackgroundColor }]}>
@@ -57,7 +62,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         borderRadius: 12,
         backgroundColor: theme.dark.secondary,
-        height:scaleHeight(43),
+        height: scaleHeight(43),
 
     },
     text: {

@@ -1,7 +1,6 @@
 // authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import makeRequest from '../../configs/makeRequest';
-const baseEndpoint = "/users/buddy/get-near-by";
 
 const initialState = {
     response: null,
@@ -9,13 +8,15 @@ const initialState = {
     error: null,
 };
 
-export const getAllNearbyBuddy = createAsyncThunk(
-    'nearByBuddy/getAllNearbyBuddy',
-    async (payload, { getState, rejectWithValue }) => {
+export const rateToBuddy = createAsyncThunk(
+    'rateToBuddy/rateToBuddy',
+    async ({ payload, addRate }, { getState, rejectWithValue }) => {
         try {
             const { token } = getState().auth
             const bearerToken = `Bearer ${token}`
-            const data = await makeRequest('GET', `${baseEndpoint}?latitude=${payload?.latitude}&longitude=${payload?.longitude}&distance=500000000&page=1&limit=10`, null, null, bearerToken);
+            const requestMethod = addRate ? 'POST' : 'PUT';
+            const endpoint = addRate ? '/rating/add' : '/rating/update';
+            const data = await makeRequest(requestMethod, endpoint, payload, null, bearerToken);
             return data;
         } catch (error) {
             return error
@@ -23,25 +24,25 @@ export const getAllNearbyBuddy = createAsyncThunk(
     }
 );
 
-const getAllNearbyBuddySlice = createSlice({
-    name: 'nearByBuddy',
+const rateToBuddySlice = createSlice({
+    name: 'rateToBuddy',
     initialState,
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(getAllNearbyBuddy.pending, (state) => {
+            .addCase(rateToBuddy.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(getAllNearbyBuddy.fulfilled, (state, action) => {
+            .addCase(rateToBuddy.fulfilled, (state, action) => {
                 state.loading = false;
                 state.response = action.payload?.result;
             })
-            .addCase(getAllNearbyBuddy.rejected, (state, action) => {
+            .addCase(rateToBuddy.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
     },
 });
 
-export default getAllNearbyBuddySlice.reducer;
+export default rateToBuddySlice.reducer;

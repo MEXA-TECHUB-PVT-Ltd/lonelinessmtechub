@@ -21,6 +21,7 @@ import { useAlert } from '../../../../providers/AlertContext';
 import { attachPaymentMethod } from '../../../../redux/PaymentSlices/attachPaymentMethodSlice';
 import { payToSubscribe } from '../../../../redux/PaymentSlices/payToSubscribeSlice';
 import { updateUserLoginInfo } from '../../../../redux/AuthModule/signInSlice';
+import * as Animatable from 'react-native-animatable';
 
 const Premium = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -130,7 +131,7 @@ const Premium = ({ navigation }) => {
                     if (result?.payload?.status === "success") {
                         setPaymentLoader(false)
                         handleUserUpdate();
-                       // console.log("Payment sent--->", result?.payload)
+                        // console.log("Payment sent--->", result?.payload)
                         showAlert("Success", "success", result?.payload?.message)
                         setTimeout(() => {
                             resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
@@ -200,13 +201,16 @@ const Premium = ({ navigation }) => {
         return (
             <View style={styles.overlay}>
 
-                <View style={{
-                    backgroundColor: 'white',
-                    width: '80%',
-                    height: keyboardStatus ? '40%' : '25%',
-                    borderRadius: 16,
-                    margin: 30
-                }}>
+                <Animatable.View
+                    animation="bounceIn"
+                    duration={2000}
+                    style={{
+                        backgroundColor: 'white',
+                        width: '80%',
+                        height: keyboardStatus ? '40%' : '25%',
+                        borderRadius: 16,
+                        margin: 30
+                    }}>
 
                     <Icon
                         onPress={() => {
@@ -262,8 +266,8 @@ const Premium = ({ navigation }) => {
                         }}
                     />
 
-                </View>
-            </View>
+                </Animatable.View>
+            </View >
         );
     };
 

@@ -3,13 +3,11 @@ import { View, TouchableOpacity, StyleSheet, Text, Image, Platform } from 'react
 import fonts from '../styles/fonts';
 import { theme } from '../assets';
 import { scaleHeight } from '../styles/responsive';
-import { useAuth } from '../providers/AuthProvider';
 import { useSelector } from 'react-redux';
 
 const CustomBottomTabBar = ({ state, descriptors, navigation, icons, chatBadgeCount }) => {
     const { routes } = state;
-    // const { isLoggedIn, userRole } = useAuth();
-    const { token, role } = useSelector((state) => state.auth);
+    const { role } = useSelector((state) => state.auth);
     return (
         <View style={[styles.tabContainer, { backgroundColor: role === 'USER' ? '#4C4615' : theme.dark.primary, }]}>
             {routes.map((route, index) => {
@@ -65,10 +63,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        backgroundColor: '#4C4615',
+        backgroundColor: '#434343',
         height: Platform.OS === 'ios' ? 80 : 56,
         paddingBottom: Platform.OS === 'ios' ? 15 : 0,
         // shadowOpacity: 0.05,
+        // shadowColor: theme.dark.secondary
         // elevation: 4,
     },
     tabButton: {

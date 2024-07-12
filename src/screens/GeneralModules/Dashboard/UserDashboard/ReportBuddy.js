@@ -11,6 +11,7 @@ import { curveBg } from '../../../../assets/images';
 import { useAlert } from '../../../../providers/AlertContext';
 import { userBuddyAction } from '../../../../redux/userBuddyActionSlice';
 import { useDispatch, useSelector } from 'react-redux';
+import { setRoute } from '../../../../redux/appSlice';
 
 const reportReasons = ["Report for no reason", "Commercial profile", "Scam", "Fake Profile", "Inappropriate picture", "Bad behaviour", "Other"];
 
@@ -25,6 +26,12 @@ const ReportBuddy = ({ navigation }) => {
         if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
             resetNavigation(navigation, currentRoute?.route, { screen: SCREENS.HOME })
         } else {
+            dispatch(setRoute({
+                route: SCREENS.MAIN_DASHBOARD,
+                buddy_id: currentRoute?.buddy_id,
+                request_id: currentRoute?.request_id
+
+            }))
             resetNavigation(navigation, currentRoute?.route)
         }
 
@@ -72,14 +79,6 @@ const ReportBuddy = ({ navigation }) => {
             </TouchableOpacity>
         );
     };
-
-    const handleButtonClick = () => {
-        showAlert("Success", 'success', "Buddy Reported Successfully.")
-        setTimeout(() => {
-            resetNavigation(navigation, SCREENS.USER_SERVICE_DETAIL)
-        }, 3000);
-
-    }
 
     return (
         <SafeAreaView style={styles.safeArea}>

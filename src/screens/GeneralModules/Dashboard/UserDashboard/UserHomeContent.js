@@ -54,6 +54,7 @@ import Spinner from '../../../../components/Spinner';
 import { setIsPremium } from '../../../../redux/accountSubscriptionSlice';
 import { likeDislikeBuddy } from '../../../../redux/UserDashboard/likeDislikeBuddySlice';
 import EmptyListComponent from '../../../../components/EmptyListComponent';
+import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown';
 
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -603,8 +604,9 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                                     style={{
                                         fontFamily: fonts.fontsType.medium,
                                         fontSize: scaleHeight(14),
-                                        color: theme.dark.text,
-                                        marginHorizontal: 10
+                                        color: theme.dark.primary,
+                                        marginHorizontal: 10,
+                                        width: scaleWidth(50)
                                     }}
                                     maxLength={2}
                                     placeholder='00'
@@ -620,7 +622,8 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                                     style={{
                                         fontFamily: fonts.fontsType.medium,
                                         fontSize: scaleHeight(14),
-                                        color: theme.dark.text
+                                        color: theme.dark.primary,
+                                        width: scaleWidth(50)
                                     }}
                                     maxLength={2}
                                     placeholder='00'
@@ -713,8 +716,9 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                                     style={{
                                         fontFamily: fonts.fontsType.medium,
                                         fontSize: scaleHeight(14),
-                                        color: theme.dark.text,
-                                        marginHorizontal: 10
+                                        color: theme.dark.primary,
+                                        marginHorizontal: 10,
+                                        width: scaleWidth(50)
                                     }}
                                     maxLength={2}
                                     keyboardType='number-pad'
@@ -730,7 +734,8 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                                     style={{
                                         fontFamily: fonts.fontsType.medium,
                                         fontSize: scaleHeight(14),
-                                        color: theme.dark.text
+                                        color: theme.dark.primary,
+                                        width: scaleWidth(50)
                                     }}
                                     maxLength={2}
                                     keyboardType='number-pad'
@@ -850,6 +855,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                         }
                     />
 
+
                     <View style={{
                         flexDirection: 'row',
                         justifyContent: 'space-evenly',
@@ -935,7 +941,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
 
     const handleRequestBuddy = () => {
 
-        if (is_subscribed) {
+        if (is_subscribed) { //TODO is_subscribed shoud be true to continue 
             dispatch(setRoute({
                 route: SCREENS.MAIN_DASHBOARD,
                 buddy_id: currentUser?.id,
@@ -1009,7 +1015,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                     width: scaleWidth(150),
                     height: scaleHeight(150),
                 }}
-            /> : (response?.data?.length > 0 || filteredData?.data?.length > 0) ? <SafeAreaView style={styles.container}>
+            /> : (response?.data?.length > 0) ? <SafeAreaView style={styles.container}>
 
                 {!isAppOpened ? (
                     <>
@@ -1202,7 +1208,9 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                                         fontSize: scaleHeight(15),
                                         fontFamily: fonts.fontsType.medium
                                     }}>
-                                        {currentUser?.avg_rating}
+                                        {
+                                            currentUser?.avg_rating > 0 ? parseInt(currentUser?.avg_rating)?.toFixed(1) : 0
+                                        }
                                     </Text>
 
                                 </TouchableOpacity>
@@ -1301,7 +1309,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                                         {images?.slice(1, 3).map((image, index) => (
                                             image && <TouchableOpacity key={index} onPress={() => {
-                                                handlePress(index+1)
+                                                handlePress(index + 1)
                                             }}>
                                                 <Image
                                                     style={{

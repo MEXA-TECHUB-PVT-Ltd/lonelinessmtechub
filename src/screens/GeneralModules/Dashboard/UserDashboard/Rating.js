@@ -38,7 +38,11 @@ const MyReviewScreen = ({ navigation }) => {
     useBackHandler(handleBackPress);
 
     useEffect(() => {
-        dispatch(getAllRating())
+        dispatch(getAllRating({
+            page: 1,
+            limit: 10,
+            buddy_id: 37
+        }))
     }, [dispatch])
 
     if (loading) {

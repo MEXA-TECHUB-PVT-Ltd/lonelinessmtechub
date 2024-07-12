@@ -57,3 +57,4 @@ export { default as BuddyServiceDetails } from './screens/GeneralModules/Dashboa
 export { default as PaymentCancellation } from './screens/GeneralModules/PaymentCancellation'
 export { default as GeneralChat } from './screens/GeneralModules/GeneralChat'
 export { default as StripeAccountCreation } from './screens/StripePaymentModule/StripeAccountCreation'
+export { default as RateBuddy } from './screens/GeneralModules/Dashboard/UserDashboard/RateBuddy'

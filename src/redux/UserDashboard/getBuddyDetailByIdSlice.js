@@ -1,21 +1,21 @@
 // authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import makeRequest from '../../configs/makeRequest';
-const baseEndpoint = "/rating/get-all/buddy/";
+const baseEndpoint = "/requests/get/";
 
 const initialState = {
-    ratings: [],
+    buddyDetail: null,
     loading: false,
     error: null,
 };
 
-export const getAllRating = createAsyncThunk(
-    'getRating/getAllRating',
-    async ({ page = 1, limit = 10, buddy_id }, { getState, rejectWithValue }) => {
+export const getBuddyDetailById = createAsyncThunk(
+    'getBuddyDetailById/getBuddyDetailById',
+    async (requestId, { getState, rejectWithValue }) => {
         try {
             const { token } = getState().auth
             const bearerToken = `Bearer ${token}`
-            const data = await makeRequest('GET', `${baseEndpoint}${buddy_id}?page=${page}&limit=${limit}`, null, null, bearerToken);
+            const data = await makeRequest('GET', `${baseEndpoint}${requestId}`, null, null, bearerToken);
             return data;
         } catch (error) {
             return error
@@ -23,25 +23,25 @@ export const getAllRating = createAsyncThunk(
     }
 );
 
-const getAllRatingSlice = createSlice({
-    name: 'getRating',
+const getBuddyDetailByIdSlice = createSlice({
+    name: 'getBuddyDetailById',
     initialState,
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(getAllRating.pending, (state) => {
+            .addCase(getBuddyDetailById.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(getAllRating.fulfilled, (state, action) => {
+            .addCase(getBuddyDetailById.fulfilled, (state, action) => {
                 state.loading = false;
-                state.ratings = action.payload?.result;
+                state.buddyDetail = action.payload?.result;
             })
-            .addCase(getAllRating.rejected, (state, action) => {
+            .addCase(getBuddyDetailById.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
     },
 });
 
-export default getAllRatingSlice.reducer;
+export default getBuddyDetailByIdSlice.reducer;

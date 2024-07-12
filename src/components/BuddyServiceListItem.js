@@ -1,5 +1,5 @@
 //import liraries
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { theme } from '../assets';
 import { dummyImg } from '../assets/images';
@@ -11,18 +11,24 @@ import { SCREENS } from '../constant/constants';
 import { useAlert } from '../providers/AlertContext';
 import HorizontalDivider from './HorizontalDivider';
 import { Icon } from 'react-native-elements';
+import moment from 'moment';
+import { calculateAge } from '../utils/calculateAge';
+import { useDispatch } from 'react-redux';
+import { setRoute } from '../redux/appSlice';
+import { acceptRejectUserRequest } from '../redux/BuddyDashboard/acceptRejectUserRequestSlice';
 
 // create a component
-const BuddyServiceListItem = ({ item, navigation, index }) => {
+const BuddyServiceListItem = ({ item, navigation, index, onRequestStatusChange }) => {
+    const dispatch = useDispatch();
     const { showAlert } = useAlert();
-
-    console.log('indexessss', index)
-
+    const [requestStatus, setRequestStatus] = useState('');
+    const [loading, setLoading] = useState(false);
+    const dateTime = moment(`${item?.booking_date?.split('T')[0]}T${item?.booking_time}Z`);
 
     const upComingStatus = () => {
-        return <View style={[styles.statusContainer, { backgroundColor: getColorByStatus2(item?.status) },]}>
-            {item?.status === 'Canceled' && <Text style={styles.statusText}>
-                {item?.status}
+        return <View style={[styles.statusContainer, { backgroundColor: getColorByStatus2(item?.canceled_status) },]}>
+            {item?.canceled_status === 'REJECTED' && <Text style={styles.statusText}>
+                {getNameByStatus(item?.canceled_status)}
             </Text>}
         </View>
     }
@@ -31,7 +37,7 @@ const BuddyServiceListItem = ({ item, navigation, index }) => {
 
         switch (status) {
 
-            case "Canceled":
+            case "REJECTED":
                 return '#FF2A04';
 
             default:
@@ -42,21 +48,24 @@ const BuddyServiceListItem = ({ item, navigation, index }) => {
     const getColorByStatus = (status) => {
 
         switch (status) {
-            case "Accepted":
+            case "ACCEPTED":
                 return '#00E200';
 
-            case "Rejected":
+            case "REJECTED":
                 return '#FF2A04';
 
 
-            case "Canceled":
+            case "CANCELLED":
                 return '#FF2A04';
 
 
-            case "Pending":
+            case "PENDING":
                 return '#F9D800';
 
-            case "Requested":
+            case "REQUESTED":
+                return '#4285F4';
+
+            case "REQUEST_BACK":
                 return '#4285F4';
 
             default:
@@ -64,11 +73,54 @@ const BuddyServiceListItem = ({ item, navigation, index }) => {
         }
     }
 
+
+    const getNameByStatus = (status) => {
+
+        switch (status) {
+            case "ACCEPTED":
+                return 'Accepted';
+
+            case "REJECTED":
+                return 'Rejected';
+
+            case "PENDING":
+                return 'Pending';
+
+            case "REQUESTED":
+                return 'Requested';
+
+            case "REQUEST_BACK":
+                return 'Requested by me';
+
+            default:
+                return '';
+        }
+    }
+
     const requestedStatus = () => {
-        return <View style={[styles.statusContainer, { backgroundColor: getColorByStatus(item?.status) },]}>
+        return item?.status !== "REQUESTED" && <View style={[styles.statusContainer,
+        {
+            backgroundColor: (item?.buddy_request_back?.buddy_status === "ACCEPTED" ||
+                item?.buddy_request_back?.buddy_status === "REJECTED") ?
+                getColorByBackStatus(item?.buddy_request_back?.buddy_status) :
+                getColorByStatus(item?.status)
+        },]}>
+
             <Text style={styles.statusText}>
-                {item?.status}
+                {(item?.buddy_request_back?.buddy_status === "ACCEPTED" ||
+                    item?.buddy_request_back?.buddy_status === "REJECTED") ?
+                    getNameByBackStatus(item?.buddy_request_back?.buddy_status) :
+                    getNameByStatus(item?.status)}
+                {/* {
+                                    item?.status !== "REQUESTED"
+                                        ? getNameByStatus(item?.status)
+                                        : ''
+                                } */}
             </Text>
+
+            {/* <Text style={styles.statusText}>
+                {getNameByStatus(item?.status)}
+            </Text> */}
         </View>
     }
 
@@ -77,7 +129,7 @@ const BuddyServiceListItem = ({ item, navigation, index }) => {
             width: scaleWidth(46),
             height: scaleHeight(25),
             borderRadius: 30,
-            backgroundColor: theme.dark.secondary,
+            backgroundColor: item?.is_released ? theme.dark.secondary : '#D2D2D2',
             alignItems: 'center',
             justifyContent: 'center',
         }}>
@@ -85,23 +137,77 @@ const BuddyServiceListItem = ({ item, navigation, index }) => {
         </TouchableOpacity>
     }
 
+    const handleAcceptRejectRequest = (status) => {
+        setLoading(true);
+        setRequestStatus(status)
+        const acceptRejectPayload = {
+            request_id: item?.id,
+            status: status
+        }
+
+        dispatch(acceptRejectUserRequest(acceptRejectPayload)).then((result) => {
+            setLoading(false);
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message)
+                onRequestStatusChange(item?.id, status);
+
+            } else {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const handleServiceDetailNav = () => {
+        const routePayload = {
+            request_id: item?.id,
+            route: SCREENS.MAIN_DASHBOARD
+        }
+        dispatch(setRoute(routePayload))
+        resetNavigation(navigation, SCREENS.BUDDY_SERVICE_DETAIL)
+    }
+
+    const getNameByBackStatus = (status) => {
+        switch (status) {
+            case "ACCEPTED":
+                return 'Accepted';
+
+            case "REJECTED":
+                return 'Rejected';
+            default:
+                return '';
+        }
+    }
+
+    const getColorByBackStatus = (status) => {
+        switch (status) {
+            case "ACCEPTED":
+                return '#00E200';
+
+            case "REJECTED":
+                return '#FF2A04';
+
+            default:
+                return '#00000000';
+        }
+    }
+
     return (
         <TouchableOpacity
             onPress={() => {
-                resetNavigation(navigation, SCREENS.BUDDY_SERVICE_DETAIL, { index: index })
+                handleServiceDetailNav();
             }}
             style={styles.container}>
             <View style={styles.row}>
                 <Image
                     style={styles.image}
-                    source={{ uri: item?.image }}
+                    source={{ uri: item?.user?.images[0]?.image_url }}
                     resizeMode='cover'
                 />
 
                 <View style={styles.flex1}>
                     <View style={styles.headerRow}>
                         <Text style={styles.userName}>
-                            {item?.name}
+                            {`${item?.user?.full_name?.split(" ")[0]} (${calculateAge(item?.user?.dob)})`}
                         </Text>
                         {
                             index == 0 ? upComingStatus() : index == 1 ? completedStatus() : index == 2 ? requestedStatus() : <></>
@@ -114,7 +220,7 @@ const BuddyServiceListItem = ({ item, navigation, index }) => {
                             Category
                         </Text>
                         <Text style={styles.infoText}>
-                            {item?.category}
+                            {item?.category?.name}
                         </Text>
                     </View>
 
@@ -123,31 +229,37 @@ const BuddyServiceListItem = ({ item, navigation, index }) => {
                             Date/Time
                         </Text>
                         <Text style={styles.infoText}>
-                            {item?.dateTime}
+                            {dateTime?.format('DD/MM/YYYY/hh:mma')}
                         </Text>
                     </View>
                 </View>
             </View>
 
-            <HorizontalDivider customStyle={{
-                top: 10
-            }} />
+            <HorizontalDivider customStyle={{ top: 10 }} />
 
             {index !== 2 && <View style={styles.locationSection}>
                 <Icon name="location-on" type="material" color={theme.dark.secondary} />
-                <Text style={styles.locationText}>Randall Peterson 1234 Maple, Street, Spr</Text>
+                <Text style={styles.locationText}>{item?.location}</Text>
             </View>}
 
-            {item?.status === 'Pending' && index == 2 && <View style={styles.buttonRow}>
+            {item?.status === 'REQUESTED' && index == 2 && <View style={styles.buttonRow}>
                 <Button
                     onPress={() => {
+                        setRequestStatus("REJECTED");
+                        handleAcceptRejectRequest("REJECTED");
                     }}
                     title={"Reject Request"}
+                    loading={requestStatus === "REJECTED" && loading}
                     customStyle={styles.rejectButton}
                     textCustomStyle={styles.rejectButtonText}
                 />
 
                 <Button
+                    onPress={() => {
+                        setRequestStatus("ACCEPTED");
+                        handleAcceptRejectRequest("ACCEPTED");
+                    }}
+                    loading={requestStatus === "ACCEPTED" && loading}
                     title={"Accept Request"}
                     customStyle={styles.acceptButton}
                     textCustomStyle={styles.acceptButtonText}
@@ -174,7 +286,8 @@ const styles = StyleSheet.create({
     image: {
         width: scaleWidth(60),
         height: scaleHeight(70),
-        borderRadius: 12
+        borderRadius: 12,
+        alignSelf: 'center'
     },
     flex1: {
         flex: 1

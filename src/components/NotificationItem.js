@@ -38,19 +38,20 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     title: {
-        fontSize: scaleHeight(17),
-        fontFamily: fonts.fontsType.semiBold,
+        fontSize: scaleHeight(16),
+        fontFamily: fonts.fontsType.medium,
         marginBottom: 5,
         color: theme.dark.white,
         marginTop:scaleHeight(20)
     },
     description: {
-        fontSize: scaleHeight(14),
+        fontSize: scaleHeight(13),
         fontFamily: fonts.fontsType.regular,
         marginBottom: 5,
         color: theme.dark.inputLabel,
     },
     time: {
+        fontFamily: fonts.fontsType.light,
         fontSize: 12,
         color: '#999',
     },

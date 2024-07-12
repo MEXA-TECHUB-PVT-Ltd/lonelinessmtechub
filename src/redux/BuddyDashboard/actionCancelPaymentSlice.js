@@ -8,13 +8,13 @@ const initialState = {
     error: null,
 };
 
-export const createConnectedAccount = createAsyncThunk(
-    'connectedAccount/createConnectedAccount',
-    async (_, { getState, rejectWithValue }) => {
+export const actionCancelPayment = createAsyncThunk(
+    'actionCancelPayment/actionCancelPayment',
+    async (paymentPayload, { getState, rejectWithValue }) => {
         try {
-            const { bearerToken } = getState().signup;
-            const token = `Bearer ${bearerToken}`;
-            const data = await makeRequest('POST', '/payments/connected-account/create', null, null, token);
+            const { token } = getState().auth
+            const bearerToken = `Bearer ${token}`
+            const data = await makeRequest('POST', '/payments/services/cancel-payment/actions', paymentPayload, null, bearerToken);
             return data;
         } catch (error) {
             return error
@@ -22,25 +22,25 @@ export const createConnectedAccount = createAsyncThunk(
     }
 );
 
-const createConnectedAccountSlice = createSlice({
-    name: 'connectedAccount',
+const actionCancelPaymentSlice = createSlice({
+    name: 'actionCancelPayment',
     initialState,
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(createConnectedAccount.pending, (state) => {
+            .addCase(actionCancelPayment.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(createConnectedAccount.fulfilled, (state, action) => {
+            .addCase(actionCancelPayment.fulfilled, (state, action) => {
                 state.loading = false;
                 state.response = action.payload?.result;
             })
-            .addCase(createConnectedAccount.rejected, (state, action) => {
+            .addCase(actionCancelPayment.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
     },
 });
 
-export default createConnectedAccountSlice.reducer;
+export default actionCancelPaymentSlice.reducer;

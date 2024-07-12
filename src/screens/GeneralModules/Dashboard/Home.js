@@ -30,7 +30,7 @@ const Home = ({ navigation }) => {
 
             <View style={styles.headerContainer}>
                 <TouchableOpacity onPress={() => dispatch(logout())}>
-                    <Image source={homeLogo} style={styles.logo} />
+                    <Image source={homeLogo} style={[styles.logo, { right: role !== "USER" ? 15 : 0 }]} />
                 </TouchableOpacity>
 
                 <Image source={labelHome} style={styles.labelHome} />
@@ -39,9 +39,9 @@ const Home = ({ navigation }) => {
                     <Image source={bellHome} style={styles.bellIcon} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.filterContainer} onPress={() => setFilterModal(true)}>
+                {role === 'USER' && <TouchableOpacity style={styles.filterContainer} onPress={() => setFilterModal(true)}>
                     <Image source={isFilter ? filterHome : filterHomeOff} style={styles.filterIcon} />
-                </TouchableOpacity>
+                </TouchableOpacity>}
             </View>
 
             {
