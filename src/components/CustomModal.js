@@ -26,7 +26,8 @@ const CustomModal = ({
     parallelButtonText2,
     parallelButtonPress1,
     parallelButtonPress2,
-    loading
+    loading,
+    secondaryLoader
 }) => {
     return (
         <Modal
@@ -65,8 +66,10 @@ const CustomModal = ({
                 {
                     isParallelButton && <View style={{ flexDirection: 'row', marginTop: scaleHeight(10), }}>
                         <Button
+                            loading={secondaryLoader === true && secondaryLoader}
                             title={parallelButtonText1}
                             onPress={parallelButtonPress1}
+                            isBgTransparent={true}
                             customStyle={{
                                 width: '48%',
                                 marginHorizontal: '2%',
@@ -76,7 +79,9 @@ const CustomModal = ({
                                 marginBottom: scaleHeight(0)
                             }}
                             textCustomStyle={{
-                                color: theme.dark.secondary
+                                color: theme.dark.secondary,
+                                fontFamily: fonts.fontsType.bold,
+                                fontSize: scaleHeight(12),
                             }}
                         />
 
@@ -87,6 +92,10 @@ const CustomModal = ({
                             customStyle={{
                                 width: '48%',
                                 marginBottom: scaleHeight(0)
+                            }}
+                            textCustomStyle={{
+                                fontFamily: fonts.fontsType.bold,
+                                fontSize: scaleHeight(13),
                             }}
                         />
                     </View>

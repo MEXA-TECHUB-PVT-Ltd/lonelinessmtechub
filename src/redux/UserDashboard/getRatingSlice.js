@@ -1,7 +1,7 @@
 // authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import makeRequest from '../../configs/makeRequest';
-const baseEndpoint = "/rating/get-all/buddy?page=1&limit=15";
+const baseEndpoint = "/rating/get-all/buddy/";
 
 const initialState = {
     ratings: [],
@@ -11,11 +11,11 @@ const initialState = {
 
 export const getAllRating = createAsyncThunk(
     'getRating/getAllRating',
-    async (_, { getState, rejectWithValue }) => {
+    async ({ page = 1, limit = 10, buddy_id }, { getState, rejectWithValue }) => {
         try {
             const { token } = getState().auth
             const bearerToken = `Bearer ${token}`
-            const data = await makeRequest('GET', baseEndpoint, null, null, bearerToken);
+            const data = await makeRequest('GET', `${baseEndpoint}${buddy_id}?page=${page}&limit=${limit}`, null, null, bearerToken);
             return data;
         } catch (error) {
             return error

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { bellHome, dummy2 } from '../../../../assets/images';
 import { theme } from '../../../../assets';
@@ -29,6 +29,7 @@ const ServiceDetails = ({ navigation }) => {
     const { address } = useSelector((state) => state.getAddress)
     const { currentRoute } = useSelector((state) => state.app)
     const [requestLoader, setRequestLoader] = useState(false);
+    const [requestStatus, setRequestStatus] = useState('');
 
     const handleBackPress = () => {
         resetNavigation(navigation, currentRoute?.route, { screen: SCREENS.HOME })
@@ -128,14 +129,9 @@ const ServiceDetails = ({ navigation }) => {
     const requestedByMeTime = requestDetail?.result?.buddy_request_back?.booking_time ? moment(requestDetail?.result?.buddy_request_back?.booking_time, 'HH:mm').format('hh:mm A') : '';
     const requestedByMeLocation = requestDetail?.result?.buddy_request_back?.buddy_location ? requestDetail?.result?.buddy_request_back?.buddy_location : '';
 
-    if (loading) {
-        return <FullScreenLoader
-            title={"Please wait fetching detail..."}
-            loading={loading} />
-    }
-
     const handleAcceptRejectRequest = (status) => {
         setRequestLoader(true);
+        setRequestStatus(status);
         const acceptRejectPayload = {
             request_id: currentRoute?.request_id,
             status: status
@@ -151,6 +147,7 @@ const ServiceDetails = ({ navigation }) => {
                 }, 3000);
 
             } else {
+                setRequestLoader(false);
                 showAlert("Error", "error", result?.payload?.message)
             }
         })
@@ -165,6 +162,12 @@ const ServiceDetails = ({ navigation }) => {
         resetNavigation(navigation, SCREENS.BUDDY_SEND_REQUEST)
     }
 
+    const renderLoader = () => {
+        return <FullScreenLoader
+            title={"Please wait fetching detail..."}
+            loading={loading} />
+    }
+
     return (
         <SafeAreaView style={styles.mianContainer}>
             <Header
@@ -176,169 +179,192 @@ const ServiceDetails = ({ navigation }) => {
             <HorizontalDivider customStyle={{
                 marginTop: scaleHeight(10)
             }} />
-            <View style={styles.container}>
 
-                <View style={styles.profileSection}>
-                    <View style={styles.profileView}>
-                        <Image
-                            style={styles.profileImage}
-                            source={{ uri: images[0]?.image_url }}
-                        />
-                    </View>
-                    <View style={styles.profileInfo}>
-                        <Text style={styles.profileName}>{`${full_name} (${calculateAge(dob)})`}</Text>
-                        <Text style={styles.profileGender}>{gender}</Text>
-                    </View>
-                </View>
+            {loading ? renderLoader() : <ScrollView style={{ flex: 1 }}>
 
-                <HorizontalDivider />
+                <View style={styles.container}>
 
-                <View style={styles.locationSection}>
-                    <Icon style={{
-                        top: 8,
-                        marginBottom: 8,
-                        alignSelf: 'center'
-                    }} name="location-on" type="material" color="#ffd700" />
-                    <Text style={styles.locationText}>{country && city ?
-                        `${country}, ${city}` :
-                        (address?.city || address?.town) && address?.country ?
-                            `${address.city || address.town}, ${address.country}` :
-                            'Location not available'
-                    }</Text>
-                </View>
-                <HorizontalDivider customStyle={{
-                    marginTop: scaleHeight(18)
-                }} />
-                <View style={styles.categorySection}>
-                    <Text style={{
-                        color: theme.dark.secondary,
-                        fontSize: scaleHeight(18),
-                        fontFamily: fonts.fontsType.medium,
-                        marginHorizontal: 10
-
-                    }}>
-                        Category
-                    </Text>
-                    <TouchableOpacity
-                        style={[styles.containerItem]}
-                    >
-                        <Image source={{
-                            uri: category?.image_url
-                        }} style={styles.image} />
-                        <Text style={styles.text}>{category?.name}</Text>
-                    </TouchableOpacity>
-                </View>
-                <HorizontalDivider customStyle={{
-                    marginTop: scaleHeight(10)
-                }} />
-                <View style={styles.detailsSection}>
-                    <DetailItem label="Date" value={date} />
-                    <DetailItem label="Time" value={time} />
-                    <DetailItem label="Hours For Booking" value={`${hours} HOURS`} />
-                    <DetailItem label="Total Price" value={`$${hourly_rate}`} />
-                    <DetailItem label="Status" value={getNameByStatus(status)} customTextStyle={{
-                        color: getColorByStatus(status)
-                    }} />
-                </View>
-
-                <HorizontalDivider customStyle={{
-                    marginTop: scaleHeight(18)
-                }} />
-
-                {requestDetail?.result?.buddy_request_back?.buddy_status != null && <View>
-
-                    <View style={styles.statusSection}>
-                        <Text style={{
-                            color: theme.dark.secondary,
-                            fontSize: scaleHeight(18),
-                            fontFamily: fonts.fontsType.medium,
-                            marginHorizontal: 10,
-                            flex: 1
-
-                        }}>
-                            Request by me
-                        </Text>
-                        <TouchableOpacity
-                            style={[styles.statusContainer, {
-                                backgroundColor: getColorByStatus(requestDetail?.result?.buddy_request_back?.buddy_status)
-                            }]}
-                        >
-                            <Text style={[styles.text, { fontSize: 12, fontFamily: fonts.fontsType.semiBold }]}>{getNameByStatus(requestDetail?.result?.buddy_request_back?.buddy_status)}</Text>
-                        </TouchableOpacity>
+                    <View style={styles.profileSection}>
+                        <View style={styles.profileView}>
+                            <Image
+                                style={styles.profileImage}
+                                source={{ uri: images[0]?.image_url }}
+                            />
+                        </View>
+                        <View style={styles.profileInfo}>
+                            <Text style={styles.profileName}>{`${full_name} (${calculateAge(dob)})`}</Text>
+                            <Text style={styles.profileGender}>{gender}</Text>
+                        </View>
                     </View>
 
-                    <View style={styles.detailsSection}>
-                        <DetailItem label="Date" value={requestedByMeDate} />
-                        <DetailItem label="Time" value={requestedByMeTime} />
-                        <DetailItem label="Location" />
-                    </View>
+                    <HorizontalDivider />
 
-                    <View style={[styles.locationSection, { top: -20 }]}>
+                    <View style={styles.locationSection}>
                         <Icon style={{
                             top: 8,
                             marginBottom: 8,
                             alignSelf: 'center'
-                        }} name="location-on" type="material" color={theme.dark.secondary} />
-                        <Text style={[styles.locationText, { fontSize: 14 }]}>{requestedByMeLocation}</Text>
+                        }} name="location-on" type="material" color="#ffd700" />
+                        <Text style={styles.locationText}>{country && city ?
+                            `${country}, ${city}` :
+                            (address?.city || address?.town) && address?.country ?
+                                `${address.city || address.town}, ${address.country}` :
+                                'Location not available'
+                        }</Text>
+                    </View>
+                    <HorizontalDivider customStyle={{
+                        marginTop: scaleHeight(18)
+                    }} />
+                    <View style={styles.categorySection}>
+                        <Text style={{
+                            color: theme.dark.secondary,
+                            fontSize: scaleHeight(18),
+                            fontFamily: fonts.fontsType.medium,
+                            marginHorizontal: 10
+
+                        }}>
+                            Category
+                        </Text>
+                        <TouchableOpacity
+                            style={[styles.containerItem]}
+                        >
+                            <Image source={{
+                                uri: category?.image_url
+                            }} style={styles.image} />
+                            <Text style={styles.text}>{category?.name}</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <HorizontalDivider customStyle={{
+                        marginTop: scaleHeight(10)
+                    }} />
+                    <View style={styles.detailsSection}>
+                        <DetailItem label="Date" value={date} />
+                        <DetailItem label="Time" value={time} />
+                        <DetailItem label="Hours For Booking" value={`${hours} HOURS`} />
+                        <DetailItem label="Total Price" value={`$${hourly_rate}`} />
+                        <DetailItem label="Status" value={getNameByStatus(status)} customTextStyle={{
+                            color: getColorByStatus(status)
+                        }} />
                     </View>
 
-                </View>}
+                    <HorizontalDivider customStyle={{
+                        marginTop: scaleHeight(18)
+                    }} />
+
+                    {requestDetail?.result?.buddy_request_back?.buddy_status != null && <View>
+
+                        <View style={styles.statusSection}>
+                            <Text style={{
+                                color: theme.dark.secondary,
+                                fontSize: scaleHeight(18),
+                                fontFamily: fonts.fontsType.medium,
+                                marginHorizontal: 10,
+                                flex: 1
+
+                            }}>
+                                Request by me
+                            </Text>
+                            <TouchableOpacity
+                                style={[styles.statusContainer, {
+                                    backgroundColor: getColorByStatus(requestDetail?.result?.buddy_request_back?.buddy_status)
+                                }]}
+                            >
+                                <Text style={[styles.text, { fontSize: 12, fontFamily: fonts.fontsType.semiBold }]}>{getNameByStatus(requestDetail?.result?.buddy_request_back?.buddy_status)}</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.detailsSection}>
+                            <DetailItem label="Date" value={requestedByMeDate} />
+                            <DetailItem label="Time" value={requestedByMeTime} />
+                            <DetailItem label="Location" />
+                        </View>
+
+                        <View style={[styles.locationSection, { top: -20 }]}>
+                            <Icon style={{
+                                top: 8,
+                                marginBottom: 8,
+                                alignSelf: 'center'
+                            }} name="location-on" type="material" color={theme.dark.secondary} />
+                            <Text style={[styles.locationText, { fontSize: 14 }]}>{requestedByMeLocation}</Text>
+                        </View>
+
+                    </View>}
 
 
+                </View>
+            </ScrollView>}
+            <View style={styles.buttonSection}>
 
-                <View style={styles.buttonSection}>
-                    {requestDetail?.result?.buddy_request_back?.buddy_status === null || status != "ACCEPTED" || status != "REJECTED" && <Button
-                        onPress={() => {
-                            handleRequestBack();
-                        }}
+                {(status === "REQUESTED" &&
+                    status !== "ACCEPTED" &&
+                    status !== "REJECTED" &&
+                    (requestDetail?.result?.buddy_request_back?.buddy_status !== "ACCEPTED" &&
+                        requestDetail?.result?.buddy_request_back?.buddy_status !== "REJECTED")) &&
+                    <Button
+                        onPress={handleRequestBack}
                         title={"Request Back"}
                         customStyle={{
                             width: '95%',
                             top: scaleHeight(30)
                         }}
-                        textCustomStyle={{
+                        textCustomStyle={{}}
+                    />
+                }
+
+                {/* {status != "ACCEPTED" && status != "REJECTED" && !loading && <Button
+                    onPress={() => {
+                        handleRequestBack();
+                    }}
+                    title={"Request Back"}
+                    customStyle={{
+                        width: '95%',
+                        top: scaleHeight(20)
+                    }}
+                    textCustomStyle={{
+                    }}
+                />} */}
+
+
+                {status === "REQUESTED" && !loading && <View style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    //marginBottom: scaleHeight(-160)
+                }}>
+
+                    <Button
+                        onPress={() => {
+                            setRequestStatus("REJECTED");
+                            handleAcceptRejectRequest("REJECTED");
                         }}
-                    />}
+                        title={"Reject"}
+                        loading={requestStatus === "REJECTED" && requestLoader}
+                        customStyle={{
+                            width: '48%',
+                            borderWidth: 1,
+                            borderColor: theme.dark.secondary,
+                            backgroundColor: theme.dark.transparentBg,
+                            marginHorizontal: '2%',
+                        }}
+                        textCustomStyle={{
+                            color: theme.dark.secondary,
 
-                    {status === "PENDING" || status === "REQUESTED" && <View style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        marginBottom: scaleHeight(-160)
-                    }}>
+                        }}
+                        isBgTransparent={true}
+                    />
 
-                        <Button
-                            onPress={() => {
-                                handleAcceptRejectRequest("REJECTED");
-                            }}
-                            title={"Reject"}
-                            loading={status === "REJECTED" && requestLoader}
-                            customStyle={{
-                                width: '48%',
-                                borderWidth: 1,
-                                borderColor: theme.dark.secondary,
-                                backgroundColor: theme.dark.transparentBg,
-                                marginHorizontal: '2%',
-                            }}
-                            textCustomStyle={{
-                                color: theme.dark.secondary,
+                    <Button
+                        onPress={() => {
+                            setRequestStatus("ACCEPTED");
+                            handleAcceptRejectRequest("ACCEPTED");
+                        }}
+                        loading={requestStatus === "ACCEPTED" && requestLoader}
+                        title={"Accept"}
+                        customStyle={{
+                            width: '48%',
+                        }}
+                    />
 
-                            }}
-                            isBgTransparent={true}
-                        />
-
-                        <Button
-                            onPress={() => {
-                                handleAcceptRejectRequest("ACCEPTED");
-                            }}
-                            loading={status === "ACCEPTED" && requestLoader}
-                            title={"Accept"}
-                            customStyle={{
-                                width: '48%',
-                            }}
-                        />
-
-                    </View>}
-                </View>
+                </View>}
             </View>
         </SafeAreaView>
     );

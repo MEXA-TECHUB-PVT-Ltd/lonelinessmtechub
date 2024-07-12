@@ -51,3 +51,4 @@ export const editImage = require('../images/edit_image.png');
 export const stars = require('../images/rating_stars.png');
 export const resetText = require('../images/reset_text.png');
 export const emptyStar = require('../images/empty_star.png');
+export const updateRating = require('../images/update_rating.png');

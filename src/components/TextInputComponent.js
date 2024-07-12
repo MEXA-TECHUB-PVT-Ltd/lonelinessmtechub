@@ -20,7 +20,8 @@ const CustomTextInput = ({
     label,
     mainContainer,
     secureTextEntry,
-    placeholderTextStyle
+    placeholderTextStyle,
+    customLabelStyle
 }) => {
     const [text, setText] = useState("");
     const [isFocused, setIsFocused] = useState(false);
@@ -40,7 +41,7 @@ const CustomTextInput = ({
 
     return (
         <View style={mainContainer}>
-            {label && <Text style={styles.label}>{label}</Text>}
+            {label && <Text style={[styles.label,customLabelStyle]}>{label}</Text>}
             <View
                 style={[
                     styles.container,

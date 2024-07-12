@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { bellHome, dummy2, locationPin } from '../../../../assets/images';
@@ -14,36 +14,71 @@ import { SCREENS } from '../../../../constant/constants';
 import useBackHandler from '../../../../utils/useBackHandler';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useAlert } from '../../../../providers/AlertContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { setRoute } from '../../../../redux/appSlice';
+import { getUserDetailByService } from '../../../../redux/BuddyDashboard/getUserDetailByServiceSlice';
+import { calculateAge } from '../../../../utils/calculateAge';
+import moment from 'moment';
+import { StarRatingDisplay } from 'react-native-star-rating-widget';
+import { getServiceRating } from '../../../../redux/getServiceRatingSlice';
+import CustomStarIcon from '../../../../components/CustomStarIcon';
+import FullScreenLoader from '../../../../components/FullScreenLoader';
+import { actionCancelPayment } from '../../../../redux/BuddyDashboard/actionCancelPaymentSlice';
+import { acceptRejectUserRequest } from '../../../../redux/BuddyDashboard/acceptRejectUserRequestSlice';
+import { requestForPayment } from '../../../../redux/BuddyDashboard/requestForPaymentSlice';
+import { color } from '@rneui/base';
 
-const BuddyServiceDetails = ({ navigation, route }) => {
+const BuddyServiceDetails = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { currentRoute } = useSelector((state) => state.app)
+    const { userDetail, loading } = useSelector((state) => state.getUserDetailByService)
+    const { ratingDetail, loading: ratingLoader, error } = useSelector((state) => state.getServiceRating)
+    const { loading: acceptPaymentLoader } = useSelector((state) => state.actionCancelPayment)
+    const { loading: requestPaymentLoader } = useSelector((state) => state.requestForPayment)
     const { showAlert } = useAlert();
-    const { index } = route.params
+    const categories = userDetail?.category;
+    const [requestLoader, setRequestLoader] = useState(false);
+    const [requestStatus, setRequestStatus] = useState('');
 
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.SERVICES })
+        if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
+            resetNavigation(navigation, currentRoute?.route, { screen: SCREENS.SERVICES })
+        } else {
+            resetNavigation(navigation, currentRoute?.route)
+        }
         return true;
     };
     useBackHandler(handleBackPress);
 
 
+    useEffect(() => {
+        dispatch(getUserDetailByService(currentRoute?.request_id));
+        dispatch(getServiceRating(currentRoute?.request_id));
+    }, [dispatch, currentRoute])
+
+
+
     const getColorByStatus = (status) => {
 
         switch (status) {
-            case "Accepted":
+            case "ACCEPTED":
                 return '#00E200';
 
-            case "Rejected":
+            case "REJECTED":
                 return '#FF2A04';
 
 
-            case "Canceled":
+            case "CANCELLED":
                 return '#FF2A04';
 
 
-            case "Pending":
+            case "PENDING":
                 return '#F9D800';
 
-            case "Requested":
+            case "REQUESTED":
+                return '#F9D800';
+
+            case "REQUEST_BACK":
                 return '#4285F4';
 
             default:
@@ -51,239 +86,459 @@ const BuddyServiceDetails = ({ navigation, route }) => {
         }
     }
 
-    const handleButtonClick = (description) => {
-        showAlert("Success", "success", description)
-        setTimeout(() => {
-            resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.SERVICES })
-        }, 3000);
+    const getNameByStatus = (status) => {
+        switch (status) {
+            case "ACCEPTED":
+                return 'Accepted';
 
+            case "REJECTED":
+                return 'Rejected';
+
+            case "CANCELLED":
+                return 'CANCELLED';
+
+            case "PENDING":
+                return 'Pending';
+
+            case "REQUEST_BACK":
+                return 'Requested by me';
+
+            case "REQUESTED":
+                return 'Pending';
+
+            default:
+                return ''; // Default color if status doesn't match
+        }
+    }
+
+
+    const handleCancelPayment = () => {
+
+        dispatch(setRoute({
+            route: SCREENS.BUDDY_SERVICE_DETAIL,
+            request_id: userDetail?.id,
+            user_id: userDetail?.user_id,
+        }))
+        resetNavigation(navigation, SCREENS.PAYMENT_CANCELLATION);
+    }
+
+    const handleAcceptPayment = () => {
+
+        const payload = {
+            request_id: userDetail?.id,
+            user_id: userDetail?.user_id,
+            action: "ACCEPTED"
+        }
+        dispatch(actionCancelPayment(payload)).then((result) => {
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message);
+                setTimeout(() => {
+                    handleBackPress();
+                }, 3000);
+
+            } else if (result?.payload?.status === "error") {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const handleRequestBack = () => {
+        const payload = {
+            request_id: userDetail?.id,
+            route: SCREENS.BUDDY_SERVICE_DETAIL
+        }
+        dispatch(setRoute(payload))
+        resetNavigation(navigation, SCREENS.BUDDY_SEND_REQUEST)
+    }
+
+    const handleAcceptRejectRequest = (status) => {
+        setRequestLoader(true);
+        setRequestStatus(status);
+        const acceptRejectPayload = {
+            request_id: userDetail?.id,
+            status: status
+        }
+
+        dispatch(acceptRejectUserRequest(acceptRejectPayload)).then((result) => {
+            setRequestLoader(false);
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message)
+
+                setTimeout(() => {
+                    handleBackPress();
+                }, 3000);
+
+            } else {
+                setRequestLoader(false);
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const handleRequestForPayment = () => {
+        dispatch(requestForPayment(userDetail?.id)).then((result) => {
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message)
+                setTimeout(() => {
+                    handleBackPress();
+                }, 3000);
+
+            } else {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const renderLoader = () => {
+        return <FullScreenLoader
+            title={"Please wait fetching user detail..."}
+            loading={loading} />
     }
 
     return (
         <SafeAreaView style={styles.mianContainer}>
             <Header
                 onPress={() => {
-                    resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.SERVICES })
+                    handleBackPress();
                 }}
                 title={"Service Details"}
             />
             <HorizontalDivider customStyle={{
                 marginTop: scaleHeight(10)
             }} />
+            {
+                loading ? renderLoader() : <ScrollView style={{
+                    flex: 1
+                }}>
+                    <View style={styles.container}>
 
-            <ScrollView>
-                <View style={styles.container}>
+                        <View style={styles.profileSection}>
+                            <View style={styles.profileView}>
+                                <Image
+                                    style={styles.profileImage}
+                                    source={{ uri: userDetail?.user?.images[0]?.image_url }} // Replace with actual image URL
+                                />
+                            </View>
+                            <View style={styles.profileInfo}>
+                                <Text style={styles.profileName}>{`${userDetail?.user?.full_name} (${calculateAge(userDetail?.user?.dob)})`}</Text>
+                                <Text style={styles.profileGender}>{userDetail?.user?.gender}</Text>
+                            </View>
 
-                    <View style={styles.profileSection}>
-                        <View style={styles.profileView}>
-                            <Image
-                                style={styles.profileImage}
-                                source={dummy2} // Replace with actual image URL
-                            />
+                            {/*completed section here... */}
+
+                            {userDetail?.status === "COMPLETED" && <TouchableOpacity style={{
+                                width: scaleWidth(46),
+                                height: scaleHeight(25),
+                                borderRadius: 30,
+                                backgroundColor: userDetail?.is_released ? theme.dark.secondary : '#D2D2D2',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginBottom: 12
+                            }}>
+                                <Icon name="check" type="material" size={16} color={theme.dark.black} />
+                            </TouchableOpacity>}
                         </View>
-                        <View style={styles.profileInfo}>
-                            <Text style={styles.profileName}>Olivia Williams (24)</Text>
-                            <Text style={styles.profileGender}>Female</Text>
+
+                        <HorizontalDivider />
+
+                        <View style={styles.locationSection}>
+                            <Icon style={{
+                                top: 8
+                            }} name="location-on" type="material" color={theme.dark.secondary} />
+                            <Text style={styles.locationText}>{userDetail?.location}</Text>
                         </View>
+                        <HorizontalDivider customStyle={{
+                            marginTop: scaleHeight(18)
+                        }} />
+                        <View style={styles.categorySection}>
+                            <Text style={{
+                                color: theme.dark.secondary,
+                                fontSize: scaleHeight(18),
+                                fontFamily: fonts.fontsType.medium,
+                                marginHorizontal: 10
 
-                        {index == 1 && <TouchableOpacity style={{
-                            width: scaleWidth(46),
-                            height: scaleHeight(25),
-                            borderRadius: 30,
-                            backgroundColor: theme.dark.secondary,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: 12
-                        }}>
-                            <Icon name="check" type="material" size={16} color={theme.dark.black} />
-                        </TouchableOpacity>}
-                    </View>
+                            }}>
+                                Category
+                            </Text>
+                            <TouchableOpacity
+                                style={[styles.containerItem]}
+                            >
+                                <Image source={{ uri: categories?.image_url }} style={styles.image} />
+                                <Text style={styles.text}>{categories?.name}</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <HorizontalDivider customStyle={{
+                            marginTop: scaleHeight(10)
+                        }} />
+                        <View style={styles.detailsSection}>
+                            <DetailItem label="Date" value={moment(userDetail?.booking_date?.split('T')[0]).format('DD/MM/YYYY')} />
+                            <DetailItem label="Time" value={moment(userDetail?.booking_time, 'HH:mm').format('hh:mm A')} />
+                            <DetailItem label="Hours For Booking" value={`${userDetail?.hours} HOURS`} />
+                            <DetailItem label="Total Price" value={`$${userDetail?.booking_price}`} />
+                            <DetailItem label="Status" value={getNameByStatus(userDetail?.status)} customTextStyle={{
+                                color: getColorByStatus(userDetail?.status)
+                            }} />
+                        </View>
+                        <HorizontalDivider />
 
-                    <HorizontalDivider />
+                        {/* requested section here... */}
 
-                    <View style={styles.locationSection}>
-                        <Icon name="location-on" type="material" color={theme.dark.secondary} />
-                        <Text style={styles.locationText}>Randall Peterson 1234 Maple, Street, Spr</Text>
-                    </View>
-                    <HorizontalDivider customStyle={{
-                        marginTop: scaleHeight(18)
-                    }} />
-                    <View style={styles.categorySection}>
-                        <Text style={{
-                            color: theme.dark.secondary,
-                            fontSize: scaleHeight(18),
-                            fontFamily: fonts.fontsType.medium,
-                            marginHorizontal: 10
+                        {userDetail?.status === "REQUEST_BACK" && <View>
 
-                        }}>
-                            Category
-                        </Text>
-                        <TouchableOpacity
-                            style={[styles.containerItem]}
-                        >
-                            <Image source={bellHome} style={styles.image} />
-                            <Text style={styles.text}>{'Movie Night'}</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <HorizontalDivider customStyle={{
-                        marginTop: scaleHeight(10)
-                    }} />
-                    <View style={styles.detailsSection}>
-                        <DetailItem label="Date" value="24/05/2024" />
-                        <DetailItem label="Time" value="03:00 PM" />
-                        <DetailItem label="Hours For Booking" value="2 HOURS" />
-                        <DetailItem label="Total Price" value="$ 45" />
-                        {/* <DetailItem label="Status" value="Accepted" /> */}
-                    </View>
-                    <HorizontalDivider />
+                            <View style={[styles.categorySection, { marginTop: 10, flexDirection: 'row' }]}>
+                                <Text style={{
+                                    color: theme.dark.secondary,
+                                    fontSize: scaleHeight(18),
+                                    fontFamily: fonts.fontsType.medium,
+                                    marginHorizontal: 10,
+                                    marginBottom: 10,
+                                    flex: 1
 
+                                }}>
+                                    Request by me
+                                </Text>
 
-                    {index === 2 && <View>
+                                <View style={[styles.statusContainer, { backgroundColor: getColorByStatus(userDetail?.buddy_request_back?.buddy_status) },]}>
+                                    <Text style={styles.statusText}>
+                                        {getNameByStatus(userDetail?.buddy_request_back?.buddy_status)}
+                                    </Text>
+                                </View>
 
-                        <View style={[styles.categorySection, { marginTop: 10, flexDirection: 'row' }]}>
+                            </View>
+
+                            <DetailItem label="Date" value={moment(userDetail?.buddy_request_back?.booking_date?.split('T')[0]).format('DD/MM/YYYY')} />
+                            <DetailItem label="Time" value={moment(userDetail?.buddy_request_back?.booking_time, 'HH:mm').format('hh:mm A')} />
+                            <DetailItem label="Location" />
+                            <View style={{
+                                flexDirection: 'row',
+                                marginTop: scaleHeight(10),
+                                marginHorizontal: -5,
+                            }}>
+
+                                <Image
+                                    resizeMode='contain'
+                                    style={{
+
+                                        width: scaleWidth(22),
+                                        height: scaleHeight(22),
+                                        alignSelf: 'center',
+
+                                    }} source={locationPin} />
+
+                                <Text style={{
+                                    color: theme.dark.white,
+                                    fontSize: scaleHeight(14),
+                                    fontFamily: fonts.fontsType.regular,
+                                    marginHorizontal: 5
+                                }}>
+                                    {userDetail?.buddy_request_back?.buddy_location}
+                                </Text>
+
+                            </View>
+                        </View>
+                        }
+                        {/* completed section 2 here... */}
+                        {userDetail?.status === "COMPLETED" && ratingDetail != null && <View style={[styles.categorySection, { marginTop: 10 }]}>
                             <Text style={{
                                 color: theme.dark.secondary,
                                 fontSize: scaleHeight(18),
                                 fontFamily: fonts.fontsType.medium,
                                 marginHorizontal: 10,
-                                marginBottom: 10,
-                                flex: 1
+                                marginBottom: 10
 
                             }}>
-                                Request by me
+                                Rating of Services
                             </Text>
 
-                            <View style={[styles.statusContainer, { backgroundColor: getColorByStatus("Accepted") },]}>
-                                <Text style={styles.statusText}>
-                                    {'Accepted'}
-                                </Text>
-                            </View>
-
-                        </View>
-
-                        <DetailItem label="Date" value="24/05/2024" />
-                        <DetailItem label="Time" value="03:00 PM" />
-                        <DetailItem label="Location" />
-                        <View style={{
-                            flexDirection: 'row',
-                            marginTop: scaleHeight(10),
-                            marginHorizontal: -5,
-                        }}>
-
-                            <Image
-                                resizeMode='contain'
+                            <StarRatingDisplay
+                                disabled={true}
+                                rating={ratingDetail?.stars ? ratingDetail?.stars : 0}
+                                maxStars={5}
+                                color={theme.dark.secondary}
+                                starSize={20}
+                                StarIconComponent={(props) => <CustomStarIcon {...props} />}
                                 style={{
-
-                                    width: scaleWidth(22),
-                                    height: scaleHeight(22),
-                                    alignSelf: 'center',
-
-                                }} source={locationPin} />
+                                    marginTop: 5,
+                                    marginStart: 2
+                                }}
+                            />
 
                             <Text style={{
-                                color: theme.dark.white,
-                                fontSize: scaleHeight(14),
-                                fontFamily: fonts.fontsType.regular,
-                                marginHorizontal: 5
+                                color: theme.dark.inputLabel,
+                                fontSize: scaleHeight(16),
+                                fontFamily: fonts.fontsType.light,
+                                marginHorizontal: 10
+
                             }}>
-                                Randall Peterson 1234 Maple, Street, Spr...
+                                {ratingDetail?.comment}
                             </Text>
+
+                        </View>}
+
+                        {/* payment rejected section here... */}
+
+                        {userDetail?.canceled_status === "REJECTED" && <View style={[styles.categorySection, { marginTop: 10 }]}>
+                            <Text style={{
+                                color: theme.dark.secondary,
+                                fontSize: scaleHeight(18),
+                                fontFamily: fonts.fontsType.medium,
+                                marginHorizontal: 10,
+                                marginBottom: 10
+
+                            }}>
+                                Reason of cancellation
+                            </Text>
+
+                            <Text style={{
+                                color: theme.dark.inputLabel,
+                                fontSize: scaleHeight(16),
+                                fontFamily: fonts.fontsType.light,
+                                marginHorizontal: 10
+
+                            }}>
+                                {userDetail?.canceled_reason}
+                            </Text>
+
+                        </View>}
+
+                        <View style={styles.buttonSection}>
+                            {userDetail?.status === "PAID" && <Button
+                                onPress={() => {
+                                    handleRequestForPayment();
+                                }}
+                                title={"Request for Payment"}
+                                loading={requestPaymentLoader}
+                                customStyle={{
+                                    width: '95%',
+                                    top: scaleHeight(30)
+                                }}
+                                textCustomStyle={{
+                                }}
+                            />}
+
+                            {
+                                console.log(userDetail)
+                            }
+
+
+                            {(userDetail?.status === "REQUESTED" &&
+                                userDetail?.status !== "ACCEPTED" &&
+                                userDetail?.status !== "REJECTED" &&
+                                (userDetail?.buddy_request_back?.buddy_status !== "ACCEPTED" &&
+                                    userDetail?.buddy_request_back?.buddy_status !== "REJECTED")) &&
+                                <Button
+                                    onPress={handleRequestBack}
+                                    title={"Request Back"}
+                                    customStyle={{
+                                        width: '95%',
+                                        top: scaleHeight(30)
+                                    }}
+                                    textCustomStyle={{}}
+                                />
+                            }
+
+
+                            {/* {userDetail?.status !== "ACCEPTED" && userDetail?.status !== "REJECTED" && userDetail?.status == "REQUESTED" && <Button
+                                onPress={() => {
+                                    handleRequestBack();
+                                }}
+                                title={"Request Back"}
+                                customStyle={{
+                                    width: '95%',
+                                    top: scaleHeight(30)
+                                }}
+                                textCustomStyle={{
+                                }}
+                            />} */}
+
+                            {/* these button show here if status requested or pending... */}
+
+                            {userDetail?.status === "REQUESTED" && <View style={{
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                                //marginTop: '40%'
+                                //marginBottom: scaleHeight(-160)
+                            }}>
+
+                                <Button
+                                    onPress={() => {
+                                        setRequestStatus("REJECTED");
+                                        handleAcceptRejectRequest("REJECTED")
+                                    }}
+                                    title={"Reject"}
+                                    loading={requestStatus === "REJECTED" && requestLoader}
+                                    isBgTransparent={true}
+                                    customStyle={{
+                                        width: '48%',
+                                        borderWidth: 1,
+                                        borderColor: theme.dark.secondary,
+                                        backgroundColor: theme.dark.transparentBg,
+                                        marginHorizontal: '2%',
+                                    }}
+                                    textCustomStyle={{
+                                        color: theme.dark.secondary,
+
+                                    }}
+                                />
+
+                                <Button
+                                    onPress={() => {
+                                        setRequestStatus("ACCEPTED");
+                                        handleAcceptRejectRequest("ACCEPTED")
+                                    }}
+                                    title={"Accept"}
+                                    loading={requestStatus === "ACCEPTED" && requestLoader}
+                                    customStyle={{
+                                        width: '48%',
+                                    }}
+                                />
+
+                            </View>}
+
+
+                            {/* these button show here if status cancelled and paid... */}
+
+                            {userDetail?.canceled_status === "REJECTED" && userDetail?.status === "PAID" && <View style={{
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                                //marginBottom: scaleHeight(-160)
+                            }}>
+
+                                <Button
+                                    onPress={() => {
+                                        handleCancelPayment();
+                                    }}
+                                    title={"Reject"}
+                                    customStyle={{
+                                        width: '48%',
+                                        borderWidth: 1,
+                                        borderColor: theme.dark.secondary,
+                                        backgroundColor: theme.dark.transparentBg,
+                                        marginHorizontal: '2%',
+                                    }}
+                                    textCustomStyle={{
+                                        color: theme.dark.secondary,
+
+                                    }}
+                                />
+
+                                <Button
+                                    loading={acceptPaymentLoader}
+                                    onPress={() => {
+                                        handleAcceptPayment();
+                                    }}
+                                    title={"Accept"}
+                                    customStyle={{
+                                        width: '48%',
+                                    }}
+                                />
+
+                            </View>}
+
 
                         </View>
                     </View>
-                    }
-
-                    {index == 1 && <View style={[styles.categorySection, { marginTop: 10 }]}>
-                        <Text style={{
-                            color: theme.dark.secondary,
-                            fontSize: scaleHeight(18),
-                            fontFamily: fonts.fontsType.medium,
-                            marginHorizontal: 10,
-                            marginBottom: 10
-
-                        }}>
-                            Rating of Services
-                        </Text>
-
-                        <Image
-                            style={{
-                                width: scaleWidth(128),
-                                height: scaleHeight(22),
-                                marginHorizontal: 8,
-                                marginBottom: 10
-                            }}
-                            source={require('../../../../assets/images/stars.png')} />
-
-                        <Text style={{
-                            color: theme.dark.inputLabel,
-                            fontSize: scaleHeight(16),
-                            fontFamily: fonts.fontsType.light,
-                            marginHorizontal: 10
-
-                        }}>
-                            Had an amazing time with Olivia William! Great company and lots of fun. Looking forward to our next get-together!
-                        </Text>
-
-                    </View>}
-
-                    <View style={styles.buttonSection}>
-                        {index !== 1 && <Button
-                            onPress={() => {
-                                //resetNavigation(navigation, SCREENS.BUDDY_SEND_REQUEST)
-
-                                if (index == 0) {
-                                    handleButtonClick("Request sent successfully")
-                                } else {
-                                    resetNavigation(navigation, SCREENS.BUDDY_SEND_REQUEST)
-                                }
-                            }}
-                            title={index == 0 ? "Request for Payment" : "Request Back"}
-                            customStyle={{
-                                width: '95%',
-                                top: scaleHeight(30)
-                            }}
-                            textCustomStyle={{
-                            }}
-                        />}
-
-                        {index !== 1 && index !== 0 && <View style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                            //marginBottom: scaleHeight(-160)
-                        }}>
-
-                            <Button
-                                onPress={() => {
-                                    handleButtonClick("Request rejected successfully.")
-                                }}
-                                title={"Reject"}
-                                customStyle={{
-                                    width: '48%',
-                                    borderWidth: 1,
-                                    borderColor: theme.dark.secondary,
-                                    backgroundColor: theme.dark.transparentBg,
-                                    marginHorizontal: '2%',
-                                }}
-                                textCustomStyle={{
-                                    color: theme.dark.secondary,
-
-                                }}
-                            />
-
-                            <Button
-                                onPress={() => {
-                                    handleButtonClick("Request accepted successfully.")
-                                }}
-                                title={"Accept"}
-                                customStyle={{
-                                    width: '48%',
-                                }}
-                            />
-
-                        </View>}
-                    </View>
-                </View>
-            </ScrollView>
+                </ScrollView>}
         </SafeAreaView>
     );
 };
@@ -344,11 +599,12 @@ const styles = StyleSheet.create({
     locationSection: {
         flexDirection: 'row',
         alignItems: 'center',
+        marginTop: scaleHeight(10),
     },
     locationText: {
         color: theme.dark.white,
         fontFamily: fonts.fontsType.regular,
-        fontSize: scaleHeight(17),
+        fontSize: scaleHeight(15),
         width: '90%',
         alignSelf: 'center',
         top: 8

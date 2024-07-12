@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, FlatList, SafeAreaView, Image, TouchableOpacity, StyleSheet } from 'react-native';
-
 import Button from '../../components/ButtonComponent';
 import Header from '../../components/Header';
-
-
 import CustomTextInput from '../../components/TextInputComponent';
 import { SCREENS } from '../../constant/constants';
 import { resetNavigation } from '../../utils/resetNavigation';
@@ -12,42 +9,85 @@ import useBackHandler from '../../utils/useBackHandler';
 import { theme } from '../../assets';
 import fonts from '../../styles/fonts';
 import { scaleHeight } from '../../styles/responsive';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../providers/AlertContext';
+import { cancelPayment } from '../../redux/UserDashboard/cancelPaymentSlice';
+import { setRoute } from '../../redux/appSlice';
+import { actionCancelPayment } from '../../redux/BuddyDashboard/actionCancelPaymentSlice';
 
 const PaymentCancellation = ({ navigation }) => {
-
-    const [form, setForm] = useState({ about: '' });
-    const [errors, setErrors] = useState({ about: '' });
-
-
-    const handleChange = (name, value) => {
-        setForm({ ...form, [name]: value });
-
-        let error = '';
-        if (name === 'about') {
-            if (value === '') {
-                error = 'About can not be empty';
-            }
-        }
-        setErrors({ ...errors, [name]: error });
-    };
+    const dispatch = useDispatch();
+    const { loading } = useSelector((state) => state.cancelPayment)
+    const { loading: acceptPaymentLoader } = useSelector((state) => state.actionCancelPayment)
+    const { currentRoute } = useSelector((state) => state.app)
+    const { role } = useSelector((state) => state.auth)
+    const { showAlert } = useAlert()
+    const [reason, setReason] = useState('');
 
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.USER_SERVICE_DETAIL)
+        dispatch(setRoute({
+            route: SCREENS.MAIN_DASHBOARD,
+            request_id: currentRoute?.request_id,
+        }))
+        resetNavigation(navigation, currentRoute?.route)
         return true;
     };
     useBackHandler(handleBackPress);
 
+    const handleCancelPayment = () => {
+
+        const payload = {
+            request_id: currentRoute?.request_id,
+            reason: reason
+        }
+        dispatch(cancelPayment(payload)).then((result) => {
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message);
+                setTimeout(() => {
+                    handleBackPress();
+                }, 3000);
+
+            } else if (result?.payload?.status === "error") {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const handleBuddyCancelPayment = () => {
+
+        const payload = {
+            request_id: currentRoute?.request_id,
+            reason: reason,
+            user_id: currentRoute?.user_id,
+            action: "REJECTED"
+        }
+        dispatch(actionCancelPayment(payload)).then((result) => {
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message);
+                setTimeout(() => {
+                    handleBackPress();
+                }, 3000);
+
+            } else if (result?.payload?.status === "error") {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
     return (
         <SafeAreaView style={styles.safeArea}>
-            <Header />
+            <Header
+                onPress={() => {
+                    handleBackPress();
+                }}
+            />
             <Text style={styles.headerText}>Tell us the reason why are you cancelling the payment?</Text>
-            <Text style={styles.subHeaderText}>You will no longer see this person or receive any message from them. Let us know what happened.</Text>
             <View style={styles.listContainer}>
                 <CustomTextInput
                     label={"Add Reason"}
-                    identifier={'about'}
-                    value={form.about}
-                    onValueChange={(value) => handleChange('about', value)}
+                    identifier={'reason'}
+                    value={reason}
+                    onValueChange={(value) => setReason(value)}
                     mainContainer={{}}
                     customInputStyle={{}}
                     customContainerStyle={{}}
@@ -56,8 +96,11 @@ const PaymentCancellation = ({ navigation }) => {
 
             </View>
             <Button
-                onPress={() => { }}
-                title={'Report'}
+                loading={role === "USER" ? loading : acceptPaymentLoader}
+                onPress={() => {
+                    role === "USER" ? handleCancelPayment() : handleBuddyCancelPayment();
+                }}
+                title={'Submit Reason'}
                 customStyle={{ marginBottom: scaleHeight(30) }}
             />
         </SafeAreaView>

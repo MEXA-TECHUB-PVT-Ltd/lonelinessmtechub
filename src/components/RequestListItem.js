@@ -34,6 +34,9 @@ const RequestListItem = ({ item, navigation, onRequestStatusChange }) => {
             case "REQUEST_BACK":
                 return '#4285F4';
 
+            case "REQUESTED":
+                return '#4285F4';
+
             default:
                 return '#00000000'; // Default color if status doesn't match
         }
@@ -50,8 +53,36 @@ const RequestListItem = ({ item, navigation, onRequestStatusChange }) => {
             case "REQUEST_BACK":
                 return 'Requested by me';
 
+            case "REQUESTED":
+                return 'Requested';
+
             default:
-                return ''; // Default color if status doesn't match
+                return '';
+        }
+    }
+
+    const getNameByBackStatus = (status) => {
+        switch (status) {
+            case "ACCEPTED":
+                return 'Accepted';
+
+            case "REJECTED":
+                return 'Rejected';
+            default:
+                return '';
+        }
+    }
+
+    const getColorByBackStatus = (status) => {
+        switch (status) {
+            case "ACCEPTED":
+                return '#00E200';
+
+            case "REJECTED":
+                return '#FF2A04';
+
+            default:
+                return '#00000000'; // Default color if status doesn't match
         }
     }
 
@@ -102,16 +133,25 @@ const RequestListItem = ({ item, navigation, onRequestStatusChange }) => {
                         <Text style={styles.userName}>
                             {item?.user?.full_name}
                         </Text>
-                        <View style={[styles.statusContainer, { backgroundColor: getColorByStatus(item?.status) },]}>
+                        {item?.status !== "REQUESTED" && <View style={[styles.statusContainer,
+                        {
+                            backgroundColor: (item?.buddy_request_back?.buddy_status === "ACCEPTED" ||
+                                item?.buddy_request_back?.buddy_status === "REJECTED") ?
+                                getColorByBackStatus(item?.buddy_request_back?.buddy_status) :
+                                getColorByStatus(item?.status)
+                        },]}>
                             <Text style={styles.statusText}>
-                                {/* {item?.status !== "PENDING" || item?.status !== "REQUESTED" && item?.status} */}
-                                {
-                                    item?.status !== "PENDING" && item?.status !== "REQUESTED"
+                                {(item?.buddy_request_back?.buddy_status === "ACCEPTED" ||
+                                    item?.buddy_request_back?.buddy_status === "REJECTED") ?
+                                    getNameByBackStatus(item?.buddy_request_back?.buddy_status) :
+                                    getNameByStatus(item?.status)}
+                                {/* {
+                                    item?.status !== "REQUESTED"
                                         ? getNameByStatus(item?.status)
                                         : ''
-                                }
+                                } */}
                             </Text>
-                        </View>
+                        </View>}
                     </View>
 
                     <View style={styles.infoRow}>
@@ -134,7 +174,7 @@ const RequestListItem = ({ item, navigation, onRequestStatusChange }) => {
                 </View>
             </View>
 
-            {item?.status === 'PENDING' || item?.status === 'REQUESTED' && <View style={styles.buttonRow}>
+            {item?.status === 'REQUESTED' && <View style={styles.buttonRow}>
                 <Button
                     onPress={() => {
                         setRequestStatus("REJECTED");
@@ -171,7 +211,7 @@ const styles = StyleSheet.create({
         margin: 8,
         borderRadius: 20,
         padding: 8,
-        marginTop: 10
+        marginTop: 10,
     },
     row: {
         flexDirection: 'row'
@@ -180,7 +220,7 @@ const styles = StyleSheet.create({
         width: scaleWidth(60),
         height: scaleHeight(70),
         borderRadius: 12,
-        alignSelf:'center'
+        alignSelf: 'center'
     },
     flex1: {
         flex: 1
@@ -213,7 +253,8 @@ const styles = StyleSheet.create({
     infoRow: {
         flexDirection: 'row',
         marginHorizontal: 8,
-        marginTop: 5
+        marginTop: 5,
+
     },
     categoryText: {
         fontFamily: fonts.fontsType.medium,

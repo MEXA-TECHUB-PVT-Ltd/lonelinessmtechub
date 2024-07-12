@@ -8,7 +8,7 @@ const CategoryList = ({ categories, onPress, isPress = true }) => {
     const [selectedCategory, setSelectedCategory] = useState(null);
 
     const handlePress = (item) => {
-        setSelectedCategory(item.id);
+        setSelectedCategory(item?.id);
         if (isPress) {
             onPress(item);
         }
@@ -16,14 +16,14 @@ const CategoryList = ({ categories, onPress, isPress = true }) => {
     };
 
     const renderItem = ({ item }) => {
-        const isSelected = item.id === selectedCategory;
+        const isSelected = item?.id === selectedCategory;
         return (
-            item.name && <TouchableOpacity
+            item?.name && <TouchableOpacity
                 style={[styles.container, isSelected && styles.selectedContainer]}
                 onPress={() => isPress && handlePress(item)}
             >
-                <Image source={{ uri: item.image_url }} style={styles.image} />
-                <Text style={[styles.text, isSelected && styles.selectedText]}>{item.name}</Text>
+                <Image source={{ uri: item?.image_url }} style={styles.image} />
+                <Text style={[styles.text, isSelected && styles.selectedText]}>{item?.name}</Text>
             </TouchableOpacity>
         );
     };
@@ -32,7 +32,7 @@ const CategoryList = ({ categories, onPress, isPress = true }) => {
         <FlatList
             data={categories}
             renderItem={renderItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, index) => item + index}
             numColumns={2}
             contentContainerStyle={styles.list}
         />

@@ -32,6 +32,19 @@ import createCustomerReducer from './PaymentSlices/createCustomerSlice';
 import attachPaymentMethodReducer from './PaymentSlices/attachPaymentMethodSlice';
 import payToSubscribeReducer from './PaymentSlices/payToSubscribeSlice';
 import getRatingReducer from './UserDashboard/getRatingSlice';
+import getAllNotificationsReducer from './getAllNotificationsSlice';
+import getAllServiceRequestsReducer from './UserDashboard/getAllServiceRequestsSlice';
+import getBuddyDetailByIdReducer from './UserDashboard/getBuddyDetailByIdSlice';
+import acceptRejectBuddyRequestReducer from './UserDashboard/acceptRejectBuddyRequestSlice';
+import rateToBuddyReducer from './UserDashboard/rateToBuddySlice';
+import releasePaymentReducer from './UserDashboard/releasePaymentSlice';
+import cancelPaymentReducer from './UserDashboard/cancelPaymentSlice';
+import cardWalletPaymentTransferReducer from './UserDashboard/cardWalletPaymentTransferSlice';
+import getAllBuddyServicesReducer from './BuddyDashboard/getAllBuddyServicesSlices';
+import getUserDetailByServiceReducer from './BuddyDashboard/getUserDetailByServiceSlice';
+import getServiceRatingReducer from './getServiceRatingSlice';
+import actionCancelPaymentReducer from './BuddyDashboard/actionCancelPaymentSlice';
+import requestForPaymentReducer from './BuddyDashboard/requestForPaymentSlice';
 
 const persistConfig = {
     key: 'root',
@@ -69,6 +82,19 @@ const rootReducer = combineReducers({
     attachPaymentMethod: attachPaymentMethodReducer,
     payToSubscribe: payToSubscribeReducer,
     getRating: getRatingReducer,
+    getAllNotifications: getAllNotificationsReducer,
+    getAllServiceRequests: getAllServiceRequestsReducer,
+    getBuddyDetailById: getBuddyDetailByIdReducer,
+    acceptRejectBuddyRequest: acceptRejectBuddyRequestReducer,
+    rateToBuddy: rateToBuddyReducer,
+    releasePayment: releasePaymentReducer,
+    cancelPayment: cancelPaymentReducer,
+    cardWalletPaymentTransfer: cardWalletPaymentTransferReducer,
+    getAllBuddyServices: getAllBuddyServicesReducer,
+    getUserDetailByService: getUserDetailByServiceReducer,
+    getServiceRating: getServiceRatingReducer,
+    actionCancelPayment: actionCancelPaymentReducer,
+    requestForPayment: requestForPaymentReducer,
     app: appReducer,
 
 });

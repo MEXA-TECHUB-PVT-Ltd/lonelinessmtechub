@@ -13,5 +13,6 @@ export default {
     almostBlack: '#191919',
     transparent: 'transparent',
     gray: '#C3C3C3',
-    grayLight: '#E6E6E6'
+    grayLight: '#E6E6E6',
+    grey: '#313131'
 };

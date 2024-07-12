@@ -1,5 +1,5 @@
 import React, { Component, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, FlatList } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, FlatList, RefreshControl, ScrollView } from 'react-native';
 import { theme } from '../../../../assets';
 import RequestListItem from '../../../../components/RequestListItem';
 import { useNavigation } from '@react-navigation/native';
@@ -16,6 +16,7 @@ const BuddyHomeContent = () => {
     const [page, setPage] = useState(1);
     const navigation = useNavigation();
     const [loader, setLoader] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [requestData, setRequestData] = useState([]);
 
     useEffect(() => {
@@ -42,6 +43,14 @@ const BuddyHomeContent = () => {
         }
     };
 
+    const onRefresh = () => {
+        setRefreshing(true);
+        setPage(1); // Reset to first page
+        dispatch(getAllBuddyRequest({ page: 1, limit: 10 }))
+            .then(() => setRefreshing(false))
+            .catch(() => setRefreshing(false));
+    };
+
     const updateRequestStatus = (updatedRequestId, newStatus) => {
         const updatedRequests = requestData?.map(request =>
             request.id === updatedRequestId ? { ...request, status: newStatus } : request
@@ -57,7 +66,7 @@ const BuddyHomeContent = () => {
         />
     );
 
-    if (loader) {
+    if (loader && !refreshing) {
         return <FullScreenLoader
             title={"Please wait fetching requests..."}
             loading={loader} />
@@ -79,13 +88,42 @@ const BuddyHomeContent = () => {
                     marginHorizontal: 16
                 }}>Service Requests</Text>
                 {
-                    requestData?.length > 0 ? <FlatList
-                        data={requestData}
-                        renderItem={renderItem}
-                        keyExtractor={(item, index) => item + index}
-                        onEndReached={handleLoadMore}
-                        onEndReachedThreshold={0.5}
-                    /> : <EmptyListComponent title={"No Requests Yet."} />
+                    requestData?.length > 0 ? <View style={{
+                        marginBottom: 20
+                    }}>
+
+                        <FlatList
+                            data={requestData}
+                            renderItem={renderItem}
+                            keyExtractor={(item, index) => item + index}
+                            onEndReached={handleLoadMore}
+                            onEndReachedThreshold={0.5}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={refreshing}
+                                    onRefresh={onRefresh}
+                                    colors={[theme.dark.primary]}
+                                    progressBackgroundColor={theme.dark.secondary}
+                                />
+                            }
+                        />
+
+                    </View> :
+                        (
+                            <ScrollView
+                                contentContainerStyle={{ flex: 1 }}
+                                refreshControl={
+                                    <RefreshControl
+                                        refreshing={refreshing}
+                                        onRefresh={onRefresh}
+                                        colors={[theme.dark.primary]}
+                                        progressBackgroundColor={theme.dark.secondary}
+                                    />
+                                }
+                            >
+                                <EmptyListComponent title={"No Requests Yet."} />
+                            </ScrollView>
+                        )
                 }
             </View>
 

@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
         marginTop:scaleHeight(20)
     },
     settingText: {
-        fontSize: scaleHeight(16),
+        fontSize: scaleHeight(14),
         fontFamily:fonts.fontsType.semiBold,
         marginRight: 10,
         flex: 1,

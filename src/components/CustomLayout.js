@@ -7,7 +7,7 @@ const CustomLayout = ({ children, customStyle }) => {
         <View style={[styles.container, customStyle]}>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <ScrollView 
-                    style={{ backgroundColor: theme.dark.background }}
+                    style={{ backgroundColor: theme.dark.transparentBg }}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps='handled'>
                     {children}
@@ -20,7 +20,7 @@ const CustomLayout = ({ children, customStyle }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.dark.background,
+        backgroundColor: theme.dark.transparentBg,
     }
 });
 

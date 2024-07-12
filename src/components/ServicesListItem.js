@@ -11,12 +11,15 @@ import { SCREENS } from '../constant/constants';
 import { useAlert } from '../providers/AlertContext';
 import HorizontalDivider from './HorizontalDivider';
 import { Icon } from 'react-native-elements';
+import moment from 'moment';
+import { useDispatch } from 'react-redux';
+import { setRoute } from '../redux/appSlice';
 
-// create a component
+
 const ServicesListItem = ({ item, navigation, index }) => {
+    const dispatch = useDispatch();
     const { showAlert } = useAlert();
-
-    console.log('indexessss', index)
+    const dateTime = moment(`${item?.booking_date?.split('T')[0]}T${item?.booking_time}Z`);
 
 
     const upComingStatus = () => {
@@ -24,27 +27,30 @@ const ServicesListItem = ({ item, navigation, index }) => {
             width: scaleWidth(46),
             height: scaleHeight(25),
             borderRadius: 30,
-            backgroundColor: '#D2D2D2',
+            backgroundColor: item?.is_released ? theme.dark.secondary : '#D2D2D2',
             alignItems: 'center',
             justifyContent: 'center',
         }}>
-            <Icon name="check" type="material" size={16} color={theme.dark.black} />
+            <Icon name="check" type="material" size={18} color={theme.dark.black} />
         </TouchableOpacity>
     }
 
     const getColorByStatus = (status) => {
 
         switch (status) {
-            case "Accepted":
+            case "ACCEPTED":
                 return '#00E200';
 
-            case "Rejected":
+            case "REJECTED":
                 return '#FF2A04';
 
-            case "Pending":
+            case "PENDING":
                 return '#F9D800';
 
-            case "Requested":
+            case "REQUESTED":
+                return '#F9D800';
+
+            case "REQUEST_BACK":
                 return '#4285F4';
 
             default:
@@ -52,11 +58,77 @@ const ServicesListItem = ({ item, navigation, index }) => {
         }
     }
 
+    const getNameByStatus = (status) => {
+
+        switch (status) {
+            case "ACCEPTED":
+                return 'Accepted';
+
+            case "REJECTED":
+                return 'Rejected';
+
+            case "PENDING":
+                return 'Pending';
+
+            case "REQUEST_BACK":
+                return 'Requested by buddy';
+
+            case "REQUESTED":
+                return 'Pending';
+
+            default:
+                return '#00000000';
+        }
+    }
+
+    const getNameByBackStatus = (status) => {
+        switch (status) {
+            case "ACCEPTED":
+                return 'Accepted';
+
+            case "REJECTED":
+                return 'Rejected';
+            default:
+                return '';
+        }
+    }
+
+    const getColorByBackStatus = (status) => {
+        switch (status) {
+            case "ACCEPTED":
+                return '#00E200';
+
+            case "REJECTED":
+                return '#FF2A04';
+
+            default:
+                return '#00000000';
+        }
+    }
+
     const requestedStatus = () => {
-        return <View style={[styles.statusContainer, { backgroundColor: getColorByStatus(item?.status) },]}>
+        return <View style={[styles.statusContainer, {
+            backgroundColor: (item?.buddy_request_back?.buddy_status === "ACCEPTED" ||
+                item?.buddy_request_back?.buddy_status === "REJECTED") ?
+                getColorByBackStatus(item?.buddy_request_back?.buddy_status) :
+                getColorByStatus(item?.status)
+        },]}>
+
             <Text style={styles.statusText}>
-                {item?.status}
+                {(item?.buddy_request_back?.buddy_status === "ACCEPTED" ||
+                    item?.buddy_request_back?.buddy_status === "REJECTED") ?
+                    getNameByBackStatus(item?.buddy_request_back?.buddy_status) :
+                    getNameByStatus(item?.status)}
+                {/* {
+                                    item?.status !== "REQUESTED"
+                                        ? getNameByStatus(item?.status)
+                                        : ''
+                                } */}
             </Text>
+
+            {/* <Text style={styles.statusText}>
+                {getNameByStatus(item?.status)}
+            </Text> */}
         </View>
     }
 
@@ -64,23 +136,32 @@ const ServicesListItem = ({ item, navigation, index }) => {
         return <></>
     }
 
+    const handleServiceDetailNav = () => {
+        const routePayload = {
+            request_id: item?.id,
+            route: SCREENS.MAIN_DASHBOARD
+        }
+        dispatch(setRoute(routePayload))
+        resetNavigation(navigation, SCREENS.USER_SERVICE_DETAIL)
+    }
+
     return (
         <TouchableOpacity
             onPress={() => {
-                resetNavigation(navigation, SCREENS.USER_SERVICE_DETAIL)
+                handleServiceDetailNav();
             }}
             style={styles.container}>
             <View style={styles.row}>
                 <Image
                     style={styles.image}
-                    source={dummyImg}
+                    source={{ uri: item?.buddy?.images[0]?.image_url }}
                     resizeMode='cover'
                 />
 
                 <View style={styles.flex1}>
                     <View style={styles.headerRow}>
                         <Text style={styles.userName}>
-                            {item?.name}
+                            {item?.buddy?.full_name?.split(" ")[0]}
                         </Text>
                         {
                             index == 0 ? upComingStatus() : index == 1 ? requestedStatus() : index == 2 ? completedStatus() : <></>
@@ -93,7 +174,7 @@ const ServicesListItem = ({ item, navigation, index }) => {
                             Category
                         </Text>
                         <Text style={styles.infoText}>
-                            {item?.category}
+                            {item?.category?.name}
                         </Text>
                     </View>
 
@@ -102,7 +183,7 @@ const ServicesListItem = ({ item, navigation, index }) => {
                             Date/Time
                         </Text>
                         <Text style={styles.infoText}>
-                            {item?.dateTime}
+                            {dateTime?.format('DD/MM/YYYY/hh:mma')}
                         </Text>
                     </View>
                 </View>
@@ -114,7 +195,7 @@ const ServicesListItem = ({ item, navigation, index }) => {
 
             <View style={styles.locationSection}>
                 <Icon name="location-on" type="material" color={theme.dark.secondary} />
-                <Text style={styles.locationText}>Randall Peterson 1234 Maple, Street, Spr</Text>
+                <Text style={styles.locationText}>{item?.location}</Text>
             </View>
 
             {/* {item?.status === 'Pending' && <View style={styles.buttonRow}>
@@ -153,7 +234,8 @@ const styles = StyleSheet.create({
     image: {
         width: scaleWidth(60),
         height: scaleHeight(70),
-        borderRadius: 12
+        borderRadius: 12,
+        alignSelf: 'center'
     },
     flex1: {
         flex: 1
@@ -170,10 +252,10 @@ const styles = StyleSheet.create({
         flex: 1
     },
     statusContainer: {
-        height: scaleHeight(25),
+        //height: scaleHeight(25),
         backgroundColor: '#00E200',
         borderRadius: 20,
-        padding: 4,
+        padding: 6,
         justifyContent: 'center',
         alignItems: 'center'
     },

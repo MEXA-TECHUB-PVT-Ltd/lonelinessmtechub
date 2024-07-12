@@ -1,58 +1,142 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, FlatList } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, FlatList, RefreshControl, ScrollView } from 'react-native';
 import { theme } from '../../../../assets';
 import RequestListItem from '../../../../components/RequestListItem';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { scaleHeight } from '../../../../styles/responsive';
 import fonts from '../../../../styles/fonts';
 import BuddyServiceListItem from '../../../../components/BuddyServiceListItem';
 import ButtonGroup from '../../../../components/ButtonGroup';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllBuddyServices } from '../../../../redux/BuddyDashboard/getAllBuddyServicesSlices';
+import FullScreenLoader from '../../../../components/FullScreenLoader';
+import EmptyListComponent from '../../../../components/EmptyListComponent';
 
-const BuddyServicesContent = ({ setCurrentIndex }) => {
+const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0 }) => {
+    const dispatch = useDispatch();
+    const { serviceRequests, loading, currentPage, totalPages } = useSelector((state) => state.getAllBuddyServices);
+    const [page, setPage] = useState(1);
     const buttons = ['Upcoming', 'Completed', 'My Requests'];
-    const [selectedIndex, setSelectedIndex] = useState(0);
-    const navigation = useNavigation();
+    const [selectedIndex, setSelectedIndex] = useState(initialIndex);
+    const [requestData, setRequestData] = useState([]);
+    const [refreshing, setRefreshing] = useState(false);
+    const navigation = useNavigation()
 
-    const data = [
-        { id: '1', name: 'Olivia Williams (24)', age: 24, status: 'Pending', category: 'Lunch', dateTime: '24/05/2024/03:00pm', image: 'https://randomuser.me/api/portraits/women/1.jpg' },
-        { id: '2', name: 'John Doe (21)', age: 30, status: 'Requested', category: 'Dinner', dateTime: '25/05/2024/07:00pm', image: 'https://randomuser.me/api/portraits/men/1.jpg' },
-        { id: '3', name: 'Jane Smith (22)', age: 22, status: 'Canceled', category: 'Breakfast', dateTime: '26/05/2024/08:00am', image: 'https://randomuser.me/api/portraits/women/2.jpg' },
-        { id: '4', name: 'Charlie (19)', age: 22, status: 'Rejected', category: 'Breakfast', dateTime: '26/05/2024/08:00am', image: 'https://randomuser.me/api/portraits/women/3.jpg' },
-        { id: '5', name: 'Taylor (28)', age: 22, status: 'Accepted', category: 'Breakfast', dateTime: '26/05/2024/08:00am', image: 'https://randomuser.me/api/portraits/women/4.jpg' },
-        { id: '6', name: 'Swift (25)', age: 22, status: 'Rejected', category: 'Breakfast', dateTime: '26/05/2024/08:00am', image: 'https://randomuser.me/api/portraits/women/5.jpg' },
-    ];
-    
+    const handleSelectedChange = (button, index) => {
+        setSelectedIndex(index)
+        setCurrentIndex(index)
+    };
+
+    const getStatusByIndex = (index) => {
+        switch (index) {
+            case 0:
+                return 'PAID';
+            case 1:
+                return 'COMPLETED';
+            case 2:
+                return '';
+            default:
+                return '';
+        }
+    };
+
+    const selectedStatus = getStatusByIndex(selectedIndex);
+
+    useEffect(() => {
+        dispatch(getAllBuddyServices({ page, limit: 10, status: selectedStatus }))
+    }, [dispatch, page, selectedStatus])
+
+    useEffect(() => {
+        setRequestData(serviceRequests);
+    }, [serviceRequests]);
+
+
+    const handleLoadMore = () => {
+        if (currentPage < totalPages && !loading) {
+            setPage((prevPage) => prevPage + 1);
+        }
+    };
+
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        setPage(1); // Reset to first page
+        dispatch(getAllBuddyServices({ page: 1, limit: 10, status: selectedStatus }))
+            .then(() => setRefreshing(false))
+            .catch(() => setRefreshing(false));
+    };
+
+    const updateRequestStatus = (updatedRequestId, newStatus) => {
+        const updatedRequests = requestData?.map(request =>
+            request.id === updatedRequestId ? { ...request, status: newStatus } : request
+        );
+        setRequestData(updatedRequests);
+    };
+
 
     const renderItem = ({ item }) => (
         <BuddyServiceListItem
             item={item}
             navigation={navigation}
-            index={selectedIndex} />
+            index={selectedIndex}
+            onRequestStatusChange={updateRequestStatus}
+        />
     );
 
-    const handleSelectedChange = (button, index) => {
-        setSelectedIndex(index)
-        setCurrentIndex(index)
-        console.log(`Selected Index: ${index}`)
-    };
 
+    const showLoader = () => {
+        return <FullScreenLoader
+            title={"Please wait fetching requests..."}
+            loading={loading}
+        />
+    }
 
     return (
         <SafeAreaView style={styles.container}>
 
             <View style={{
+                flex: 1,
                 padding: 10,
-                marginBottom:scaleHeight(70)
+                marginBottom: scaleHeight(70)
             }}>
                 <ButtonGroup
                     onSelectedChange={handleSelectedChange}
                     buttons={buttons}
+                    selectedIndex={selectedIndex}
                 />
-                <FlatList
-                    data={data}
-                    renderItem={renderItem}
-                    keyExtractor={item => item.id}
-                />
+                {
+                    loading && !refreshing ? showLoader() : serviceRequests?.length > 0 ? <View>
+                        <FlatList
+                            data={requestData}
+                            renderItem={renderItem}
+                            keyExtractor={(item, index) => item + index}
+                            onEndReached={handleLoadMore}
+                            onEndReachedThreshold={0.5}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={refreshing}
+                                    onRefresh={onRefresh}
+                                    colors={[theme.dark.primary]} // Customize loader color
+                                />
+                            }
+                        />
+                    </View> :
+                        (
+                            <ScrollView
+                                contentContainerStyle={{ flex: 1 }}
+                                refreshControl={
+                                    <RefreshControl
+                                        refreshing={refreshing}
+                                        onRefresh={onRefresh}
+                                        colors={[theme.dark.primary]}
+                                        progressBackgroundColor={theme.dark.secondary}
+                                    />
+                                }
+                            >
+                                <EmptyListComponent title={"No requests yet."} />
+                            </ScrollView>
+                        )
+                }
             </View>
 
         </SafeAreaView>

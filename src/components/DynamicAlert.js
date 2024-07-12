@@ -86,15 +86,17 @@ const styles = StyleSheet.create({
         borderWidth: 1.5,
     },
     text: {
-        fontFamily:fonts.fontsType.bold,
+        fontFamily: fonts.fontsType.bold,
         color: 'white',
-        fontSize: width * 0.04,
+        // fontSize: width * 0.04,
+        fontSize: 17,
         marginLeft: width * 0.02,
     },
     descriptionText: {
-        fontFamily:fonts.fontsType.regular,
+        fontFamily: fonts.fontsType.regular,
         color: theme.dark.inputLabel,
-        fontSize: width * 0.04,
+        // fontSize: width * 0.04,
+        fontSize: 14,
         marginLeft: width * 0.02,
     },
     icon: {
