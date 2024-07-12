@@ -60,6 +60,24 @@ const UserServiceDetails = ({ navigation }) => {
     const categories = buddyDetail?.category;
     const { customer_id } = userLoginInfo?.user
 
+    //Rate buddy and release button conditions
+    const isPaid = buddyDetail?.status === "PAID";
+    const hasNoRating = buddyDetail?.status === "COMPLETED" && buddyDetail?.rating?.id === null;
+    const canRateBuddy = (isPaid || hasNoRating) && !loading;
+    const canReleasePayment = isPaid || buddyDetail?.rating?.id !== null;
+
+    // requested button show/hide conditions
+
+    const isRequested = buddyDetail?.status === "REQUESTED";
+    const isBuddyRequestBackRequested = buddyDetail?.buddy_request_back?.buddy_status === "REQUESTED";
+    const canRespondToRequest = (isRequested || isBuddyRequestBackRequested) && !loading;
+
+    // pay for service section show/hide conditions 
+
+    const isAccepted = buddyDetail?.status === "ACCEPTED" || buddyDetail?.buddy_request_back?.buddy_status === "ACCEPTED";
+    const isNotPaidOrCompleted = buddyDetail?.status !== "PAID" && buddyDetail?.status !== "COMPLETED";
+    const canPayForService = isAccepted && isNotPaidOrCompleted && !loading;
+
 
 
     const handleBackPress = () => {
@@ -863,39 +881,32 @@ const UserServiceDetails = ({ navigation }) => {
             }
 
 
-            {(buddyDetail?.status === "ACCEPTED" ||
-                buddyDetail?.buddy_request_back?.buddy_status === "ACCEPTED")
-                && buddyDetail?.status !== "PAID"
-                && !loading && <Button
-                    onPress={() => {
-                        handleServicePayOpenModal();
-                    }}
-                    title={"Pay for Service"}
+            {canPayForService && (
+                <Button
+                    onPress={handleServicePayOpenModal}
+                    title="Pay for Service"
                     customStyle={{
                         marginBottom: 20
                     }}
-                />}
+                />
+            )}
 
 
             {/* requested buttons show here..... */}
 
-
-            {/* {buddyDetail?.status === "REQUEST_BACK" && !loading && <View style={{ */}
-            {(buddyDetail?.status === "REQUESTED" ||
-                buddyDetail?.buddy_request_back?.buddy_status === "REQUESTED")
-                && !loading && <View style={{
+            {canRespondToRequest && (
+                <View style={{
                     flexDirection: 'row',
                     justifyContent: 'space-between',
                     padding: 20
                     //marginBottom: scaleHeight(-160)
                 }}>
-
                     <Button
                         onPress={() => {
                             setRequestStatus("REJECTED");
                             handleAcceptRejectRequest("REJECTED");
                         }}
-                        title={"Reject"}
+                        title="Reject"
                         loading={requestStatus === "REJECTED" && requestLoader}
                         customStyle={{
                             width: '48%',
@@ -907,79 +918,76 @@ const UserServiceDetails = ({ navigation }) => {
                         }}
                         textCustomStyle={{
                             color: theme.dark.secondary,
-
                         }}
                     />
-
                     <Button
                         onPress={() => {
                             setRequestStatus("ACCEPTED");
                             handleAcceptRejectRequest("ACCEPTED");
                         }}
                         loading={requestStatus === "ACCEPTED" && requestLoader}
-                        title={"Accept"}
+                        title="Accept"
                         customStyle={{
                             width: '48%',
                             marginBottom: scaleHeight(0)
                         }}
                     />
+                </View>
+            )}
 
-                </View>}
+
+            {/* {buddyDetail?.status === "REQUEST_BACK" && !loading && <View style={{ */}
+
 
             {/* paid buttons show here..... */}
-            {buddyDetail?.status === "PAID" && !loading && <View style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                padding: 20,
-                //marginBottom: scaleHeight(-160)
-            }}>
 
-                {<Button
-                    onPress={() => {
-                        handleRateToBuddy();
-
-                    }}
-                    title={"Rate Buddy"}
-                    customStyle={{
-                        width: '48%',
-                        borderWidth: 1,
-                        borderColor: theme.dark.secondary,
-                        backgroundColor: theme.dark.transparentBg,
-                        marginRight: '2%',
-                        marginBottom: scaleHeight(0),
-                    }}
-                    textCustomStyle={{
-                        color: theme.dark.secondary,
-                        fontFamily: fonts.fontsType.bold,
-                        fontSize: scaleHeight(13),
-                    }}
-                />}
-
-                {
+            {canRateBuddy && (
+                <View style={{
+                    flexDirection: 'row',
+                    justifyContent: canReleasePayment ? 'space-between' : 'center',
+                    padding: 20,
+                    //marginBottom: scaleHeight(-160)
+                }}>
                     <Button
-                        onPress={() => {
-                            handleRelaseOpenModal();
-                        }}
-                        disabled={buddyDetail?.is_released}
-                        title={!buddyDetail?.is_released ? "Release Payment" : "Payment Released"}
+                        onPress={handleRateToBuddy}
+                        title="Rate Buddy"
                         customStyle={{
-                            width: '48%',
+                            width: canReleasePayment ? '48%' : '100%',
+                            borderWidth: 1,
+                            borderColor: theme.dark.secondary,
+                            backgroundColor: theme.dark.transparentBg,
+                            marginRight: canReleasePayment ? '2%' : '0%',
                             marginBottom: scaleHeight(0),
-                            backgroundColor: !buddyDetail?.is_released ?
-                                theme.dark.secondary :
-                                theme.dark.disableButton
-
                         }}
                         textCustomStyle={{
+                            color: theme.dark.secondary,
                             fontFamily: fonts.fontsType.bold,
                             fontSize: scaleHeight(13),
-                            color: !buddyDetail?.is_released ?
-                                theme.dark.buttonText :
-                                theme.dark.disableButtonText
                         }}
-                    />}
-
-            </View>}
+                    />
+                    {canReleasePayment && (
+                        <Button
+                            onPress={handleRelaseOpenModal}
+                            disabled={buddyDetail?.is_released}
+                            title={!buddyDetail?.is_released ? "Release Payment" : "Payment Released"}
+                            customStyle={{
+                                width: '48%',
+                                marginBottom: scaleHeight(0),
+                                backgroundColor: !buddyDetail?.is_released ?
+                                    theme.dark.secondary :
+                                    theme.dark.disableButton
+                            }}
+                            textCustomStyle={{
+                                fontFamily: fonts.fontsType.bold,
+                                fontSize: scaleHeight(13),
+                                color: !buddyDetail?.is_released ?
+                                    theme.dark.buttonText :
+                                    theme.dark.disableButtonText
+                            }}
+                        />
+                    )}
+                </View>
+            )}
 
 
             {isOverlayOpened && Overlay()}

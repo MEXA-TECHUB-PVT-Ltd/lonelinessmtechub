@@ -20,7 +20,7 @@ const CustomHeader = ({
 }) => {
     return (
         <View style={[styles.container, containerStyle]}>
-            <Image source={homeLogo} style={[styles.homeLogo, imageStyle]} />
+            <Image resizeMode='contain' source={homeLogo} style={[styles.homeLogo, imageStyle]} />
             <Text style={[styles.title, textStyle]}>{title}</Text>
             <TouchableOpacity style={[styles.searchButton, searchButtonStyle]} onPress={onSearchPress}>
                 <Image source={searchIcon} style={[styles.searchIcon, searchIconStyle]} />

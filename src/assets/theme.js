@@ -23,7 +23,8 @@ const darkTheme = {
     heading: palette.gray,
     inActiveColor: palette.grayLight,
     disableButton: palette.lightGray,
-    disableButtonText: palette.darkGray
+    disableButtonText: palette.darkGray,
+    labelColor: palette.grey
 };
 
 export default {
