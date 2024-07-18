@@ -1,41 +1,40 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
-import { resetNavigation } from '../../../utils/resetNavigation';
-import { SCREENS } from '../../../constant/constants';
-import useBackHandler from '../../../utils/useBackHandler';
-import { theme } from '../../../assets';
-import CustomTextInput from '../../../components/TextInputComponent';
-import CustomLayout from '../../../components/CustomLayout';
-import fonts from '../../../styles/fonts';
-import { scaleHeight, scaleWidth } from '../../../styles/responsive';
-import CheckBox from '../../../components/CheckboxComponent';
-import HorizontalDivider from '../../../components/HorizontalDivider';
-import Button from '../../../components/ButtonComponent';
-import Icon from 'react-native-vector-icons/MaterialIcons'
-import EmailIcon from 'react-native-vector-icons/Zocial'
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
-import { Image } from 'react-native';
-import { alertLogo, resetText } from '../../../assets/images';
-import Spinner from '../../../components/Spinner';
-import Modal from "react-native-modal";
-import { resetPassword } from '../../../redux/AuthModule/resetPasswordSlice';
-import { useDispatch } from 'react-redux';
-import { useAlert } from '../../../providers/AlertContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAlert } from '../../providers/AlertContext';
+import { resetNavigation } from '../../utils/resetNavigation';
+import { SCREENS } from '../../constant/constants';
+import useBackHandler from '../../utils/useBackHandler';
+import { scaleHeight, scaleWidth } from '../../styles/responsive';
+import CustomLayout from '../../components/CustomLayout';
+import { theme } from '../../assets';
+import CustomTextInput from '../../components/TextInputComponent';
+import Button from '../../components/ButtonComponent';
+import fonts from '../../styles/fonts';
+import Header from '../../components/Header';
+import { changePassword } from '../../redux/AuthModule/changePasswordSlice';
 
-const ResetPassword = ({ navigation }) => {
+const ChangePassword = ({ navigation }) => {
     const dispatch = useDispatch();
+    const { loading } = useSelector((state) => state.changePassword)
     const { showAlert } = useAlert();
-    const [form, setForm] = useState({ newPassword: '', confirmPassword: '' });
+    const [form, setForm] = useState({ newPassword: '', confirmPassword: '', oldPassword: '' });
     const [errors, setErrors] = useState({ newPassword: '', confirmPassword: '' });
     const [showPassword, setShowPassword] = useState(false);
     const [confirmPassShow, setConfirmPassShow] = useState(false);
-    const [modalVisible, setModalVisible] = useState(false);
+    const [oldPassword, setOldPassword] = useState(false);
 
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
 
         let error = '';
-        if (name === 'newPassword') {
+        if (name === 'oldPassword') {
+            if (value === '') {
+                error = 'Old Password is required.';
+            }
+        }
+        else if (name === 'newPassword') {
             if (value === '') {
                 error = 'Password is required.';
             } else if (!validatePassword(value)) {
@@ -51,7 +50,7 @@ const ResetPassword = ({ navigation }) => {
     };
 
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.VERIFY_EMAIL)
+        resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.PROFILE })
         return true;
     };
     useBackHandler(handleBackPress);
@@ -61,11 +60,16 @@ const ResetPassword = ({ navigation }) => {
     };
 
     const handleResetPassword = () => {
-        const { newPassword, confirmPassword } = form;
+        const { newPassword, confirmPassword, oldPassword } = form;
         let valid = true;
-        let newErrors = { newPassword: '', confirmPassword: '' };
+        let newErrors = { newPassword: '', confirmPassword: '', oldPassword };
 
-        if (newPassword === '') {
+        if (oldPassword === '') {
+            newErrors.oldPassword = 'Old Password is required.';
+            valid = false;
+        }
+
+        else if (newPassword === '') {
             newErrors.newPassword = 'New Password is required.';
             valid = false;
         } else if (!validatePassword(newPassword)) {
@@ -88,13 +92,17 @@ const ResetPassword = ({ navigation }) => {
         if (valid) {
 
             const payload = {
+                old_password: oldPassword,
                 new_password: newPassword,
                 confirm_password: confirmPassword
             }
 
-            dispatch(resetPassword(payload)).then((result) => {
+            dispatch(changePassword(payload)).then((result) => {
                 if (result?.payload?.status === "success") {
-                    showHideModal();
+                    showAlert("Success", "success", result?.payload?.message)
+                    setTimeout(() => {
+                        handleBackPress();
+                    }, 3000);
                 } else {
                     showAlert("Error", "error", result?.payload?.message)
                 }
@@ -104,90 +112,43 @@ const ResetPassword = ({ navigation }) => {
     };
 
 
-    const showHideModal = () => {
-        setModalVisible(true);
-        // Hide the modal after 3 seconds
-        setTimeout(() => {
-            setModalVisible(false);
-            resetNavigation(navigation, SCREENS.LOGIN)
-        }, 3000);
-    };
-
-    const showModalView = () => {
-
-        return <Modal
-            backdropOpacity={0.90}
-            backdropColor={'rgba(85, 85, 85, 0.70)'}
-            isVisible={modalVisible}
-            animationIn={'bounceIn'}
-            animationOut={'bounceOut'}
-            animationInTiming={1000}
-            animationOutTiming={1000}
-        >
-            <View style={{
-                backgroundColor: '#111111',
-                width: '90%',
-                height: '50%',
-                alignSelf: 'center',
-                borderRadius: 20,
-                elevation: 20,
-                padding: 20
-            }}>
-
-                <Image
-                    resizeMode='contain'
-                    source={alertLogo}
-                    style={{
-                        width: scaleWidth(120),
-                        height: scaleHeight(120),
-                        alignSelf: 'center'
-                    }}
-                />
-
-                <Image
-                    resizeMode='contain'
-                    source={resetText}
-                    style={{
-                        width: scaleWidth(200),
-                        height: scaleHeight(55),
-                        alignSelf: 'center',
-                        marginTop: 10
-                    }}
-                />
-                <Text style={[styles.subTitle, { textAlign: 'center' }]}>
-                    {`Please wait...${'\n'}You will be directed to the Sign In Page`}
-                </Text>
-                <Spinner />
-            </View>
-        </Modal>
-    }
-
     return (
         <SafeAreaView style={styles.container}>
-            <TouchableOpacity
+            <Header
                 onPress={() => {
-                    resetNavigation(navigation, SCREENS.VERIFY_EMAIL)
+                    handleBackPress();
                 }}
-                style={styles.backButton}>
-
-                <Icon name={'arrow-back'} size={28} color={theme.dark.secondary} />
-
-            </TouchableOpacity>
+                title={"Change Password"} />
             <CustomLayout>
                 <View style={styles.contentContainer}>
-                    <Text style={styles.welcomeText}>
-                        Reset Password 🔒
-                    </Text>
-                    <Text style={styles.subTitle}>
-                        Create your new password
-                    </Text>
+
+                    <CustomTextInput
+                        label={'Old Password'}
+                        identifier={'oldPassword'}
+                        value={form.oldPassword}
+                        secureTextEntry={!oldPassword}
+                        onValueChange={(value) => handleChange('oldPassword', value)}
+                        iconComponent={
+                            <MaterialCommunityIcons
+                                onPress={() => {
+                                    setOldPassword(!oldPassword)
+                                }}
+                                style={{
+                                    marginEnd: 8
+
+                                }} name={!oldPassword ? "eye" : 'eye-off'} size={20}
+                                color={theme.dark.text} />
+                        }
+                    />
+                    {errors.oldPassword ? <Text style={styles.errorText}>{errors.oldPassword}</Text> : null}
+
                     <CustomTextInput
                         label={'New Password'}
                         identifier={'newPassword'}
                         value={form.newPassword}
                         secureTextEntry={!showPassword}
                         onValueChange={(value) => handleChange('newPassword', value)}
-                        mainContainer={{ marginTop: 50 }}
+                        mainContainer={{ marginTop: 15 }}
                         iconComponent={
                             <MaterialCommunityIcons
                                 onPress={() => {
@@ -225,15 +186,13 @@ const ResetPassword = ({ navigation }) => {
                 </View>
 
             </CustomLayout>
-
-            {showModalView()}
-
             <View style={styles.buttonContainer}>
                 <Button
+                    loading={loading}
                     onPress={() => {
                         handleResetPassword();
                     }}
-                    title={'Reset'}
+                    title={'Change Password'}
                 />
             </View>
 
@@ -284,5 +243,5 @@ const styles = StyleSheet.create({
 });
 
 
-export default ResetPassword;
+export default ChangePassword;
 

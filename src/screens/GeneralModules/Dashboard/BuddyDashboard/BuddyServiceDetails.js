@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { bellHome, dummy2, locationPin } from '../../../../assets/images';
+import {  locationPin } from '../../../../assets/images';
 import { theme } from '../../../../assets';
 import DetailItem from '../../../../components/DetailItem';
 import Button from '../../../../components/ButtonComponent';
@@ -415,10 +415,6 @@ const BuddyServiceDetails = ({ navigation }) => {
                                 textCustomStyle={{
                                 }}
                             />}
-
-                            {
-                                console.log(userDetail)
-                            }
 
 
                             {(userDetail?.status === "REQUESTED" &&

@@ -50,5 +50,15 @@ export const SCREENS = {
     PAYMENT_CANCELLATION: "PaymentCancellationScreen",
     GENERAL_CHAT: "GeneralChatScreen",
     STRIPE_ACCOUNT_CREATION: "StripeAccountCreation",
-    RATE_BUDDY: "RateBuddyScreen"
+    RATE_BUDDY: "RateBuddyScreen",
+    MY_WALLET: "MyWallet",
+    MY_LIKES: "MyLikes",
+    USER_LIKES_DETAIL: "UserLikesDetail",
+    BUDDY_PROFILE_DETAIL: "BuddyProfileDetail",
+    USER_PROFILE_DETAIL: "UserProfileDetail",
+    UPDATE_BUDDY_PROFILE: "UpdateBuddyProfile",
+    UPDATE_INTERESTS: "UpdateInterests",
+    UPDATE_LANGUAGES: "UpdateLanguages",
+    CHANGE_LOCATION: "ChangeLocation",
+    CHANGE_PASSWORD: "ChangePassword"
 };

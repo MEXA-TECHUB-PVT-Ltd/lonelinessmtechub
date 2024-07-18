@@ -21,7 +21,8 @@ const CustomTextInput = ({
     mainContainer,
     secureTextEntry,
     placeholderTextStyle,
-    customLabelStyle
+    customLabelStyle,
+    isColorWhite = false
 }) => {
     const [text, setText] = useState("");
     const [isFocused, setIsFocused] = useState(false);
@@ -41,7 +42,7 @@ const CustomTextInput = ({
 
     return (
         <View style={mainContainer}>
-            {label && <Text style={[styles.label,customLabelStyle]}>{label}</Text>}
+            {label && <Text style={[styles.label, customLabelStyle]}>{label}</Text>}
             <View
                 style={[
                     styles.container,
@@ -61,7 +62,7 @@ const CustomTextInput = ({
                         {
                             textAlignVertical: multiline && "top",
                             // paddingBottom:multiline&& '30%' 
-                            color: isFocused ? theme.dark.secondary : theme.dark.text // Change text color when focused
+                            color: isFocused && !isColorWhite ? theme.dark.secondary : isColorWhite && isFocused ? theme.dark.white : theme.dark.text // Change text color when focused
                         },
                     ]}
                     editable={isEditable}

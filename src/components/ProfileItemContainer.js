@@ -5,10 +5,17 @@ import { scaleHeight } from '../styles/responsive';
 import fonts from '../styles/fonts';
 import ArrowIcon from '../assets/svgs/arrow_forward_white.svg';
 import HorizontalDivider from './HorizontalDivider';
+import * as Animatable from 'react-native-animatable';
 
-const ProfileItemContainer = ({ IconComponent, text, onPress }) => {
+const ProfileItemContainer = ({ IconComponent, text, onPress, index }) => {
     return (
-        <View style={{ marginTop: 12 }}>
+        <Animatable.View
+            //animation={'flipInX'}
+            //animation={'fadeInDownBig'}
+            //animation={'zoomInLeft'}
+            animation={'fadeInUp'}
+            duration={1000}
+            delay={index * 300} style={{ marginTop: 12 }}>
             <TouchableOpacity onPress={onPress} style={styles.container}>
                 <View style={styles.imageContainer}>
                     <IconComponent width={24} height={24} style={styles.icon} />
@@ -17,9 +24,9 @@ const ProfileItemContainer = ({ IconComponent, text, onPress }) => {
                 <ArrowIcon style={styles.icon} />
             </TouchableOpacity>
             <HorizontalDivider customStyle={{
-                marginVertical:0
+                marginVertical: 0
             }} />
-        </View>
+        </Animatable.View>
     );
 };
 

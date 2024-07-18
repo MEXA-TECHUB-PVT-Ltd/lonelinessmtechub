@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getAllRating } from '../../../../redux/UserDashboard/getRatingSlice';
 import FullScreenLoader from '../../../../components/FullScreenLoader';
 import EmptyListComponent from '../../../../components/EmptyListComponent';
+import { current } from '@reduxjs/toolkit';
 
 
 const data = Array(10).fill({

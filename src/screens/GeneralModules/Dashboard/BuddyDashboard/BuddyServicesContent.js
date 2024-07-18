@@ -11,10 +11,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getAllBuddyServices } from '../../../../redux/BuddyDashboard/getAllBuddyServicesSlices';
 import FullScreenLoader from '../../../../components/FullScreenLoader';
 import EmptyListComponent from '../../../../components/EmptyListComponent';
+import SkeletonLoader from '../../../../components/SkeletonLoader';
 
 const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0 }) => {
     const dispatch = useDispatch();
     const { serviceRequests, loading, currentPage, totalPages } = useSelector((state) => state.getAllBuddyServices);
+    const { lastIndex } = useSelector((state) => state.setLastIndex);
     const [page, setPage] = useState(1);
     const buttons = ['Upcoming', 'Completed', 'My Requests'];
     const [selectedIndex, setSelectedIndex] = useState(initialIndex);
@@ -50,6 +52,12 @@ const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0 }) => {
         setRequestData(serviceRequests);
     }, [serviceRequests]);
 
+    useFocusEffect(
+        React.useCallback(() => {
+            setSelectedIndex(lastIndex)
+        }, [lastIndex])
+    );
+
 
     const handleLoadMore = () => {
         if (currentPage < totalPages && !loading) {
@@ -84,11 +92,15 @@ const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0 }) => {
     );
 
 
+    // const showLoader = () => {
+    //     return <FullScreenLoader
+    //         title={"Please wait fetching requests..."}
+    //         loading={loading}
+    //     />
+    // }
+
     const showLoader = () => {
-        return <FullScreenLoader
-            title={"Please wait fetching requests..."}
-            loading={loading}
-        />
+        return <SkeletonLoader />
     }
 
     return (

@@ -1,7 +1,7 @@
 import React, { Component, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, FlatList, RefreshControl, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, FlatList, RefreshControl, ScrollView, Animated, Dimensions } from 'react-native';
 import RequestListItem from '../../../../components/RequestListItem';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { scaleHeight } from '../../../../styles/responsive';
 import fonts from '../../../../styles/fonts';
 import { theme } from '../../../../assets';
@@ -11,16 +11,19 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getAllServiceRequests } from '../../../../redux/UserDashboard/getAllServiceRequestsSlice';
 import FullScreenLoader from '../../../../components/FullScreenLoader';
 import EmptyListComponent from '../../../../components/EmptyListComponent';
-
+import Skeleton from '../../../../components/Skeleton';
+import SkeletonLoader from '../../../../components/SkeletonLoader';
 
 const UserServicesContent = ({ setCurrentIndex, initialIndex = 0 }) => {
     const dispatch = useDispatch();
     const { serviceRequests, loading, currentPage, totalPages } = useSelector((state) => state.getAllServiceRequests);
+    const { lastIndex } = useSelector((state) => state.setLastIndex);
     const [selectedIndex, setSelectedIndex] = useState(initialIndex);
     const [page, setPage] = useState(1);
     const [refreshing, setRefreshing] = useState(false);
     const navigation = useNavigation();
     const buttons = ['Upcoming', 'Requested', 'Completed'];
+
 
 
     const handleSelectedChange = (button, index) => {
@@ -48,6 +51,13 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0 }) => {
         dispatch(getAllServiceRequests({ page, limit: 10, status: selectedStatus }))
     }, [dispatch, page, selectedStatus])
 
+
+    useFocusEffect(
+        React.useCallback(() => {
+            setSelectedIndex(lastIndex)
+        }, [lastIndex])
+    );
+
     const onRefresh = () => {
         setRefreshing(true);
         setPage(1); // Reset to first page
@@ -70,10 +80,14 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0 }) => {
         />
     );
 
+    // const showLoader = () => {
+    //     return <FullScreenLoader
+    //         title={"Please wait fetching requests..."}
+    //         loading={loading} />
+    // }
+
     const showLoader = () => {
-        return <FullScreenLoader
-            title={"Please wait fetching requests..."}
-            loading={loading} />
+        return <SkeletonLoader />
     }
 
     return (
@@ -93,7 +107,7 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0 }) => {
                 {
                     loading && !refreshing ? showLoader() : serviceRequests?.length > 0 ? <View>
 
-                        <FlatList
+                        <Animated.FlatList
                             data={serviceRequests}
                             renderItem={renderItem}
                             keyExtractor={(item, index) => item + index}

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useEffect } from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 import { theme } from '../../../assets';
 import ProfileHeader from '../../../components/ProfileHeader';
@@ -15,13 +15,18 @@ import PrivacyPolicyIcon from '../../../assets/svgs/privacy_policy_icon.svg';
 import TermsConditionsIcon from '../../../assets/svgs/terms_conditions_icon.svg';
 import LogoutIcon from '../../../assets/svgs/logout_icon.svg';
 import DeleteAccountIcon from '../../../assets/svgs/delete_account_icon.svg';
+import { resetNavigation } from '../../../utils/resetNavigation';
+import { SCREENS } from '../../../constant/constants';
+import { HeartIcon, UpdateBuddyProfile, UpdateInterests, UpdateRate } from '../../../assets/svgs';
+import { useDispatch, useSelector } from 'react-redux';
+import { getUserDetail } from '../../../redux/BuddyDashboard/userLikesDetailSlice';
 
 
-const data = [
-    { id: '1', icon: WalletIcon, text: 'My Wallet' },
+const userList = [
+    { id: '1', icon: WalletIcon, text: 'My Wallet', route: SCREENS.MY_WALLET },
     { id: '2', icon: PremiumIcon, text: 'Go Premium' },
     { id: '3', icon: ProfileIcon, text: 'Update Profile' },
-    { id: '4', icon: PasswordIcon, text: 'Change Password' },
+    { id: '4', icon: PasswordIcon, text: 'Change Password', route: SCREENS.CHANGE_PASSWORD },
     { id: '5', icon: RateAppIcon, text: 'Rate App' },
     { id: '6', icon: ShareAppIcon, text: 'Share App' },
     { id: '7', icon: PrivacyPolicyIcon, text: 'Privacy Policy' },
@@ -30,17 +35,50 @@ const data = [
     { id: '10', icon: DeleteAccountIcon, text: 'Delete Account' },
 ];
 
+const buddyList = [
+    { id: '1', icon: WalletIcon, text: 'My Wallet', route: SCREENS.MY_WALLET },
+    { id: '2', icon: HeartIcon, text: 'My Likes', route: SCREENS.MY_LIKES },
+    { id: '3', icon: RateAppIcon, text: 'My Ratings', route: SCREENS.RATING },
+    { id: '4', icon: UpdateRate, text: 'Update Rate' },
+    { id: '5', icon: UpdateInterests, text: 'Update Intersets' },
+    { id: '6', icon: UpdateBuddyProfile, text: 'Update Profile' },
+    { id: '4', icon: PasswordIcon, text: 'Change Password', route: SCREENS.CHANGE_PASSWORD },
+    { id: '7', icon: RateAppIcon, text: 'Rate App' },
+    { id: '8', icon: ShareAppIcon, text: 'Share App' },
+    { id: '9', icon: PrivacyPolicyIcon, text: 'Privacy Policy' },
+    { id: '10', icon: TermsConditionsIcon, text: 'Terms & Conditions' },
+    { id: '11', icon: LogoutIcon, text: 'Logout' },
+    { id: '12', icon: DeleteAccountIcon, text: 'Delete Account' },
+];
 
-const Profile = () => {
+
+const Profile = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { userDetail, loading } = useSelector((state) => state.getUserDetail)
+    const { role, userLoginInfo } = useSelector((state) => state.auth);
+    const profileList = role === "USER" ? userList : buddyList
+    const profileNav = role === "USER" ? SCREENS.USER_PROFILE_DETAIL : SCREENS.BUDDY_PROFILE_DETAIL;
+    const user_id = userLoginInfo?.user?.id
 
 
-    const renderItem = ({ item }) => (
+
+    useEffect(() => {
+        dispatch(getUserDetail(user_id));
+    }, [dispatch, user_id])
+
+
+    const handleNavigation = (route) => {
+        resetNavigation(navigation, route)
+    }
+
+
+    const renderItem = ({ item, index }) => (
         <ProfileItemContainer
-            onPress={() => {
-                console.log(item)
-            }}
+            onPress={() => { handleNavigation(item?.route) }}
             IconComponent={item.icon}
-            text={item.text} />
+            text={item.text}
+            index={index}
+        />
     );
 
     return (
@@ -51,13 +89,25 @@ const Profile = () => {
             />
 
             <View style={{
-                padding: 25
+                flex: 1,
+                paddingHorizontal: 25
             }}>
-                <ProfileHeader />
+                <ProfileHeader
+                    onPress={() => {
+                        resetNavigation(navigation, profileNav)
+                    }}
+                    image_url={userDetail?.image_urls[0]}
+                    full_name={userDetail?.full_name}
+                    gender={userDetail?.gender}
+                    customHeaderStyle={{
+                        marginTop: 20,
+                        marginBottom: 10
+                    }} />
                 <FlatList
-                    data={data}
+                    data={profileList}
                     renderItem={renderItem}
-                    keyExtractor={item => item.id}
+                    keyExtractor={(item, index) => item + index}
+                    showsVerticalScrollIndicator={false}
                 />
             </View>
 

@@ -129,7 +129,7 @@ const AddLocation = ({ navigation }) => {
             formData.append('city', newPayload?.city);
             formData.append('state', newPayload?.state);
             //dispatch(setDataPayload(newPayload));
-            dispatch(updateProfile()).then((result) => {
+            dispatch(updateProfile(formData)).then((result) => {
                 if (result?.payload?.status === "success") {
                     showHideModal();
                 } else if (result?.payload?.status === "error") {
