@@ -64,15 +64,15 @@ const EnableLocation = ({ navigation }) => {
                 formData.append('about', newPayload?.about);
                 formData.append('gender', newPayload?.gender);
                 formData.append('looking_for_gender', newPayload?.looking_for_gender);
-                formData.append('category_ids', newPayload?.category_ids);
+                formData.append('category_ids', JSON.stringify([8, 7, 6]));
                 formData.append('latitude', newPayload?.latitude);
                 formData.append('longitude', newPayload?.longitude);
                 formData.append('dob', newPayload?.dob);
                 formData.append('phone_country_code', newPayload?.phone_country_code);
                 formData.append('phone_number', newPayload?.phone_number);
-                // console.log(JSON.stringify(formData))
+                 //console.log(JSON.stringify(formData))
                 //dispatch(setDataPayload(newPayload));
-                dispatch(updateProfile()).then((result) => {
+                dispatch(updateProfile(formData)).then((result) => {
                     console.log('result data', result?.payload)
                     if (result?.payload?.status === "success") {
                         showHideModal();

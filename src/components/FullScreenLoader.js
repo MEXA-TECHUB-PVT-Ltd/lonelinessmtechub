@@ -5,16 +5,16 @@ import Spinner from './Spinner';
 import { scaleHeight, scaleWidth } from '../styles/responsive';
 import fonts from '../styles/fonts';
 
-const FullScreenLoader = ({ loading, title, customTitleStyle }) => {
+const FullScreenLoader = ({ loading, title, customTitleStyle, spinnerStyle }) => {
     return (
         loading && <View style={styles.container}>
 
             <Spinner
                 isTimer={false}
-                lottieCustomStyle={{
+                lottieCustomStyle={[{
                     width: scaleWidth(150),
                     height: scaleHeight(150),
-                }} />
+                }, spinnerStyle]} />
             {title && <Text style={[styles.titleStyle, { customTitleStyle }]}>{title}</Text>}
         </View>
     );

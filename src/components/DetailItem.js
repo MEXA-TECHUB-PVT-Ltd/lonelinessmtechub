@@ -4,11 +4,11 @@ import { scaleHeight } from '../styles/responsive';
 import fonts from '../styles/fonts';
 import { theme } from '../assets';
 
-const DetailItem = ({ label, value, customTextStyle }) => (
-    <View style={styles.detailItem}>
+const DetailItem = ({ label, value, customTextStyle, customDetailContainer }) => (
+    <View style={[styles.detailItem, customDetailContainer]}>
         <Text style={styles.detailLabel}>{label}</Text>
         {value !== undefined && value !== null && (
-            <Text style={[styles.detailValue,customTextStyle]}>{value}</Text>
+            <Text style={[styles.detailValue, customTextStyle]}>{value}</Text>
         )}
     </View>
 );

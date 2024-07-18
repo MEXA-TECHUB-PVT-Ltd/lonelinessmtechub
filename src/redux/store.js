@@ -45,6 +45,12 @@ import getUserDetailByServiceReducer from './BuddyDashboard/getUserDetailByServi
 import getServiceRatingReducer from './getServiceRatingSlice';
 import actionCancelPaymentReducer from './BuddyDashboard/actionCancelPaymentSlice';
 import requestForPaymentReducer from './BuddyDashboard/requestForPaymentSlice';
+import setIndexesReducer from './setIndexesSlice';
+import getTransactionHistoryReducer from './PaymentSlices/getTransactionHistorySlice';
+import withdrawAmountReducer from './PaymentSlices/withdrawAmountSlice';
+import getLikesReducer from './BuddyDashboard/getLikesSlice';
+import userLikesDetailReducer from './BuddyDashboard/userLikesDetailSlice';
+import changePasswordReducer from './AuthModule/changePasswordSlice';
 
 const persistConfig = {
     key: 'root',
@@ -95,7 +101,13 @@ const rootReducer = combineReducers({
     getServiceRating: getServiceRatingReducer,
     actionCancelPayment: actionCancelPaymentReducer,
     requestForPayment: requestForPaymentReducer,
+    getTransactionHistory: getTransactionHistoryReducer,
+    withdrawAmount: withdrawAmountReducer,
+    getLikes: getLikesReducer,
+    getUserDetail: userLikesDetailReducer,
+    changePassword: changePasswordReducer,
     app: appReducer,
+    setLastIndex: setIndexesReducer
 
 });
 

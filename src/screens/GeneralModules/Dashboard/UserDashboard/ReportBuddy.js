@@ -19,6 +19,7 @@ const ReportBuddy = ({ navigation }) => {
     const dispatch = useDispatch();
     const { loading } = useSelector((state) => state.userBuddyAction)
     const { currentRoute } = useSelector((state) => state.app)
+    const { role } = useSelector((state) => state.auth)
     const { showAlert } = useAlert();
     const [selectedReason, setSelectedReason] = useState(null);
 
@@ -26,12 +27,22 @@ const ReportBuddy = ({ navigation }) => {
         if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
             resetNavigation(navigation, currentRoute?.route, { screen: SCREENS.HOME })
         } else {
-            dispatch(setRoute({
+
+            const buddyReturnPayload = {
+                route: SCREENS.MY_LIKES,
+                user_id: currentRoute?.user_id,
+            }
+
+            const userReturnPayload = {
                 route: SCREENS.MAIN_DASHBOARD,
                 buddy_id: currentRoute?.buddy_id,
                 request_id: currentRoute?.request_id
 
-            }))
+            }
+
+            const returnPayload = role === "USER" ? userReturnPayload : buddyReturnPayload;
+
+            dispatch(setRoute(returnPayload))
             resetNavigation(navigation, currentRoute?.route)
         }
 
@@ -40,11 +51,22 @@ const ReportBuddy = ({ navigation }) => {
     useBackHandler(handleBackPress);
 
     const handleReportBuddy = () => {
-        dispatch(userBuddyAction({
+
+        const userPayload = {
             buddy_id: currentRoute?.buddy_id,
             reason: selectedReason,
             type: "REPORT" // BLOCK OR REPORT -- 
-        })).then((result) => {
+        }
+
+        const buddyPayload = {
+            user_id: currentRoute?.user_id,
+            reason: selectedReason,
+            type: "REPORT"
+        }
+
+        const newPayload = role === "USER" ? userPayload : buddyPayload
+
+        dispatch(userBuddyAction(newPayload)).then((result) => {
             if (result?.payload?.status === "success") {
                 showAlert("Success", "success", result?.payload?.message);
                 setTimeout(() => {

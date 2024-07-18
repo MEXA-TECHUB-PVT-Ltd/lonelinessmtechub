@@ -3,8 +3,11 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { theme } from '../assets';
 import fonts from '../styles/fonts';
 import { scaleHeight } from '../styles/responsive';
+import { useDispatch } from 'react-redux';
+import { setLastIndex } from '../redux/setIndexesSlice';
 
 const ButtonGroup = ({ onSelectedChange, buttons, selectedIndex }) => {
+    const dispatch = useDispatch();
     // const [selected, setSelected] = useState('Upcoming');
     const [selected, setSelected] = useState(buttons[selectedIndex]);
 
@@ -16,6 +19,7 @@ const ButtonGroup = ({ onSelectedChange, buttons, selectedIndex }) => {
         setSelected(button);
         if (onSelectedChange) {
             onSelectedChange(button, index);
+            dispatch(setLastIndex(index))
         }
     };
 

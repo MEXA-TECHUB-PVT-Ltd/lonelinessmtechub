@@ -131,7 +131,7 @@ const BuddyAddLocation = ({ navigation }) => {
             formData.append('languages', newPayload?.languages);
             formData.append('dob', newPayload?.birthDate);
             //dispatch(setDataPayload(newPayload));
-            dispatch(updateProfile()).then((result) => {
+            dispatch(updateProfile(formData)).then((result) => {
                 if (result?.payload?.status === "success") {
                     resetNavigation(navigation, SCREENS.STRIPE_ACCOUNT_CREATION)
                     //showHideModal();

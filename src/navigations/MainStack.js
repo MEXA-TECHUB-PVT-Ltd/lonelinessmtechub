@@ -2,7 +2,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import BottomTabNavigator from './BottomTabBar';
 import { SCREENS } from '../constant/constants';
-import { BuddySendRequest, BuddyServiceDetails, GeneralChat, ImageViewer, NotificationSetting, Notifications, PaymentCancellation, Premium, RateBuddy, Rating, ReportBuddy, SearchServices, SendRequest, ServiceDetails, UserServiceDetails } from '..'
+import { BuddyProfileDetail, BuddySendRequest, BuddyServiceDetails, ChangeLocation, ChangePassword, GeneralChat, ImageViewer, MyLikes, MyWallet, NotificationSetting, Notifications, PaymentCancellation, Premium, RateBuddy, Rating, ReportBuddy, SearchServices, SendRequest, ServiceDetails, UpdateBuddyProfile, UpdateInterests, UpdateLanguages, UserLikesDetail, UserServiceDetails } from '..'
 
 
 const Stack = createStackNavigator();
@@ -27,6 +27,15 @@ const MainStack = () => {
             <Stack.Screen name={SCREENS.PAYMENT_CANCELLATION} component={PaymentCancellation} />
             <Stack.Screen name={SCREENS.GENERAL_CHAT} component={GeneralChat} />
             <Stack.Screen name={SCREENS.RATE_BUDDY} component={RateBuddy} />
+            <Stack.Screen name={SCREENS.MY_WALLET} component={MyWallet} />
+            <Stack.Screen name={SCREENS.MY_LIKES} component={MyLikes} />
+            <Stack.Screen name={SCREENS.USER_LIKES_DETAIL} component={UserLikesDetail} />
+            <Stack.Screen name={SCREENS.BUDDY_PROFILE_DETAIL} component={BuddyProfileDetail} />
+            <Stack.Screen name={SCREENS.UPDATE_BUDDY_PROFILE} component={UpdateBuddyProfile} />
+            <Stack.Screen name={SCREENS.UPDATE_INTERESTS} component={UpdateInterests} />
+            <Stack.Screen name={SCREENS.UPDATE_LANGUAGES} component={UpdateLanguages} />
+            <Stack.Screen name={SCREENS.CHANGE_LOCATION} component={ChangeLocation} />
+            <Stack.Screen name={SCREENS.CHANGE_PASSWORD} component={ChangePassword} />
         </Stack.Navigator>
     );
 };

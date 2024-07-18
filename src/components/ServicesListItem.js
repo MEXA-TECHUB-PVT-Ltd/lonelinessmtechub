@@ -1,6 +1,6 @@
 //import liraries
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
 import { theme } from '../assets';
 import { dummyImg } from '../assets/images';
 import { scaleHeight, scaleWidth } from '../styles/responsive';

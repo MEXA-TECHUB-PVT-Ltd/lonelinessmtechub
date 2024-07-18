@@ -6,19 +6,21 @@ import { dummyImg } from '../assets/images';
 import fonts from '../styles/fonts';
 import Icon from '../assets/svgs/arrow_forward.svg';
 
-const ProfileHeader = () => {
+const ProfileHeader = ({ customHeaderStyle, onPress, image_url, full_name, gender }) => {
     return (
-        <TouchableOpacity style={styles.container}>
+        <TouchableOpacity
+            onPress={onPress}
+            style={[styles.container, customHeaderStyle]}>
             <View style={styles.imageContainer}>
                 <Image
-                    resizeMode='contain'
+                    //resizeMode='contain'
                     style={styles.image}
-                    source={dummyImg}
+                    source={{ uri: image_url }}
                 />
             </View>
             <View style={styles.textContainer}>
-                <Text style={styles.nameText}>Olivia Williams</Text>
-                <Text style={styles.genderText}>Female</Text>
+                <Text style={styles.nameText}>{full_name}</Text>
+                <Text style={styles.genderText}>{gender}</Text>
             </View>
             <Icon style={styles.icon} />
         </TouchableOpacity>

@@ -1,9 +1,10 @@
 import React from 'react';
 import { TouchableOpacity, Text, View } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons'; // Change the icon library if necessary
+import { Icon } from 'react-native-elements'; // Change the icon library if necessary
 import { theme } from '../assets';
 import fonts from '../styles/fonts';
 import { scaleHeight } from '../styles/responsive';
+import { BackArrow } from '../assets/svgs';
 
 const Header = ({ onPress, title, customTextStyle, icon, iconPress }) => {
     return (
@@ -11,10 +12,11 @@ const Header = ({ onPress, title, customTextStyle, icon, iconPress }) => {
             <TouchableOpacity
                 onPress={onPress}
                 style={styles.backButton}>
-                <Icon name={'arrow-back'} size={24} color={theme.dark.secondary} />
+                {/* <Icon name={'arrow-back'} size={24} color={theme.dark.secondary} /> */}
+                <BackArrow width={32} height={32} />
             </TouchableOpacity>
             <Text style={[styles.title, customTextStyle]}>{title}</Text>
-            {icon && <TouchableOpacity onPress={iconPress}>
+            {icon && <TouchableOpacity style={styles.iconContainer} onPress={iconPress}>
                 <Icon name={icon} size={24} color={theme.dark.secondary} />
             </TouchableOpacity>}
         </View>
@@ -27,7 +29,7 @@ const styles = {
         alignItems: 'center',
         paddingHorizontal: 10,
         marginTop: 15,
-        marginBottom:10
+        marginBottom: 10
 
     },
     backButton: {
@@ -40,6 +42,9 @@ const styles = {
         marginStart: 55,
         flex: 1
     },
+    iconContainer: {
+        marginEnd: 10
+    }
 };
 
 export default Header;

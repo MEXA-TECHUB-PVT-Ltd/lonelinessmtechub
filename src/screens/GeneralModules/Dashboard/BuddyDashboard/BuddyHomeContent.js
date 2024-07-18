@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getAllBuddyRequest } from '../../../../redux/BuddyDashboard/getAllBuddyRequestSlice';
 import EmptyListComponent from '../../../../components/EmptyListComponent';
 import FullScreenLoader from '../../../../components/FullScreenLoader';
+import SkeletonLoader from '../../../../components/SkeletonLoader';
 
 const BuddyHomeContent = () => {
     const dispatch = useDispatch();
@@ -16,7 +17,7 @@ const BuddyHomeContent = () => {
     const [page, setPage] = useState(1);
     const navigation = useNavigation();
     const [loader, setLoader] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
+    //const [refreshing, setRefreshing] = useState(false);
     const [requestData, setRequestData] = useState([]);
 
     useEffect(() => {
@@ -44,11 +45,11 @@ const BuddyHomeContent = () => {
     };
 
     const onRefresh = () => {
-        setRefreshing(true);
+        setLoader(true);
         setPage(1); // Reset to first page
         dispatch(getAllBuddyRequest({ page: 1, limit: 10 }))
-            .then(() => setRefreshing(false))
-            .catch(() => setRefreshing(false));
+            .then(() => setLoader(false))
+            .catch(() => setLoader(false));
     };
 
     const updateRequestStatus = (updatedRequestId, newStatus) => {
@@ -66,13 +67,18 @@ const BuddyHomeContent = () => {
         />
     );
 
-    if (loader && !refreshing) {
-        return <FullScreenLoader
-            title={"Please wait fetching requests..."}
-            loading={loader} />
-    }
+    // if (loader && !refreshing) {
+    //     <SkeletonLoader />
+    //     // return <FullScreenLoader
+    //     //     title={"Please wait fetching requests..."}
+    //     //     loading={loader} />
+    // }
 
     //console.log('requestData', requestData)
+
+    const showLoader = () => {
+        return <SkeletonLoader />
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -88,7 +94,7 @@ const BuddyHomeContent = () => {
                     marginHorizontal: 16
                 }}>Service Requests</Text>
                 {
-                    requestData?.length > 0 ? <View style={{
+                    loader ? showLoader() : requestData?.length > 0 ? <View style={{
                         marginBottom: 20
                     }}>
 
@@ -100,7 +106,7 @@ const BuddyHomeContent = () => {
                             onEndReachedThreshold={0.5}
                             refreshControl={
                                 <RefreshControl
-                                    refreshing={refreshing}
+                                    refreshing={loader}
                                     onRefresh={onRefresh}
                                     colors={[theme.dark.primary]}
                                     progressBackgroundColor={theme.dark.secondary}
@@ -114,7 +120,7 @@ const BuddyHomeContent = () => {
                                 contentContainerStyle={{ flex: 1 }}
                                 refreshControl={
                                     <RefreshControl
-                                        refreshing={refreshing}
+                                        refreshing={loader}
                                         onRefresh={onRefresh}
                                         colors={[theme.dark.primary]}
                                         progressBackgroundColor={theme.dark.secondary}
