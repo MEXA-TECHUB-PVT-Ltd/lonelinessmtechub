@@ -13,17 +13,26 @@ import Button from '../../../../../components/ButtonComponent';
 import { theme } from '../../../../../assets';
 import fonts from '../../../../../styles/fonts';
 import { scaleHeight } from '../../../../../styles/responsive';
+import Header from '../../../../../components/Header';
+import { updateProfile } from '../../../../../redux/AuthModule/updateProfileSlice';
 
 
 const UpdateInterests = ({ navigation }) => {
     const dispatch = useDispatch();
     const { categories } = useSelector((state) => state.getCategories)
+    const { loading } = useSelector((state) => state.createProfile)
     const { showAlert } = useAlert();
     const { dataPayload } = useSelector((state) => state.app);
+    const { currentRoute } = useSelector((state) => state.app);
     const [selectedInterests, setSelectedInterests] = useState([]);
 
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.SELECT_LANGUAGE)
+        if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
+            resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.PROFILE })
+        } else {
+            resetNavigation(navigation, currentRoute?.route)
+        }
+
         return true;
     };
     useBackHandler(handleBackPress);
@@ -34,13 +43,13 @@ const UpdateInterests = ({ navigation }) => {
     }, [dispatch])
 
 
-    useEffect(() => {
-        if (dataPayload?.category_ids?.length) {
-            const preSelectedInterests = categories?.filter(interest => dataPayload.category_ids.includes(interest.id));
-            setSelectedInterests(preSelectedInterests);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dataPayload]);
+    // useEffect(() => {
+    //     if (currentRoute?.categories?.length > 0) {
+    //         const preSelectedInterests = categories?.filter(interest => currentRoute?.categories?.name?.includes(interest.name));
+    //         setSelectedInterests(preSelectedInterests);
+    //     }
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [currentRoute]);
 
 
     const handleItemSelected = (item) => {
@@ -56,11 +65,26 @@ const UpdateInterests = ({ navigation }) => {
         selectedInterests?.map((item) => {
             categoryIds.push(item?.id)
         })
-        const newPayload = { ...dataPayload, category_ids: categoryIds };
+        const newPayload = { category_ids: categoryIds };
+
+        const formData = new FormData();
+        formData.append('category_ids', newPayload?.category_ids);
+        dispatch(updateProfile(formData)).then((result) => {
+            if (result?.payload?.status === "success") {
+                setTimeout(() => {
+                    handleBackPress();
+                }, 3000);
+            } else if (result?.payload?.status === "error") {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
     }
 
     return (
         <SafeAreaView style={styles.container}>
+            <Header onPress={() => {
+                handleBackPress();
+            }} />
             <CustomLayout>
                 <View style={styles.contentContainer}>
                     <Text style={styles.welcomeText}>
@@ -88,6 +112,7 @@ const UpdateInterests = ({ navigation }) => {
                     }} />
 
                 <Button
+                    loading={loading}
                     onPress={() => {
                         handleSelectedInterests();
                     }}

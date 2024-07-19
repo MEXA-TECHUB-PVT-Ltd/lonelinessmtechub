@@ -20,16 +20,20 @@ import { CrossWhite } from '../../../../../assets/svgs';
 import CustomTextInput from '../../../../../components/TextInputComponent';
 import { withdrawAmount } from '../../../../../redux/PaymentSlices/withdrawAmountSlice';
 import { useAlert } from '../../../../../providers/AlertContext';
+import ButtonGroup from '../../../../../components/ButtonGroup';
 
 const MyWallet = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
-    const { transactions, loading, currentPage,
-        totalPages, walletAmount } = useSelector((state) => state.getTransactionHistory);
+    const { transactions, loading, currentPage, totalPages, walletAmount } = useSelector((state) => state.getTransactionHistory);
     const { loading: amountLoading } = useSelector((state) => state.withdrawAmount)
+    const { role } = useSelector((state) => state.auth)
+    const [selectedIndex, setSelectedIndex] = useState(0);
+    const buttons = ['Transaction History', 'Refund History'];
     const [page, setPage] = useState(1);
     const [refreshing, setRefreshing] = useState(false);
     const [loader, setLoader] = useState(true);
+    const [isRefund, setIsRefund] = useState(false);
     const [amount, setAmount] = useState('');
     const [amountError, setAmountError] = useState('');
     const refRBSheet = useRef();
@@ -51,13 +55,13 @@ const MyWallet = ({ navigation }) => {
     }, []);
 
     useEffect(() => {
-        dispatch(getTransactionHistory({ page, limit: 10 }));
-    }, [dispatch, page]);
+        dispatch(getTransactionHistory({ page, limit: 10, is_refunded: isRefund }));
+    }, [dispatch, page, isRefund]);
 
     const onRefresh = () => {
         setRefreshing(true);
         setPage(1); // Reset to first page
-        dispatch(getTransactionHistory({ page, limit: 10 }))
+        dispatch(getTransactionHistory({ page, limit: 10, is_refunded: isRefund }))
             .then(() => setRefreshing(false))
             .catch(() => setRefreshing(false));
     };
@@ -69,7 +73,7 @@ const MyWallet = ({ navigation }) => {
     };
 
     const renderItem = ({ item, index }) => (
-        <TransactionListItem item={item} index={index} />
+        <TransactionListItem item={item} index={index}  />
     );
 
     const showLoader = () => {
@@ -122,6 +126,17 @@ const MyWallet = ({ navigation }) => {
 
     }
 
+    const handleSelectedChange = (button, index) => {
+        setSelectedIndex(index)
+        if (index == 0) {
+            setIsRefund(false)
+        } else if (index == 1) {
+            setIsRefund(true)
+        }
+        //setCurrentIndex(index)
+        console.log(`Selected Index: ${index}`)
+    };
+
 
     const renderSheet = () => {
         return (
@@ -134,7 +149,7 @@ const MyWallet = ({ navigation }) => {
                 }}
             >
                 <View style={styles.header}>
-                    <Text style={styles.sheetHeaderText}>Withdraw</Text>
+                    <Text style={styles.sheetHeaderText}>{role === "USER" ? "Add Amount" : "Withdraw"}</Text>
                     <TouchableOpacity onPress={handleSheetClose} style={styles.closeButton}>
                         <CrossWhite />
                     </TouchableOpacity>
@@ -152,7 +167,7 @@ const MyWallet = ({ navigation }) => {
                     <Button
                         loading={amountLoading}
                         onPress={handleWithdrawPayment}
-                        title={"Withdraw"}
+                        title={role === "USER" ? "Add" : "Withdraw"}
                         customStyle={styles.button}
                     />
                 </View>
@@ -168,6 +183,7 @@ const MyWallet = ({ navigation }) => {
                 customTextStyle={styles.headerText} />
 
             <View style={styles.walletContainer}>
+
                 <View style={styles.walletCard}>
                     <Text style={styles.walletAmount}>
                         {`$${walletAmount}`}
@@ -177,7 +193,7 @@ const MyWallet = ({ navigation }) => {
                     </Text>
                     <Button
                         onPress={() => { handleSheetOpen() }}
-                        title={"Withdraw"}
+                        title={role === "USER" ? "Top-Up" : "Withdraw"}
                         customStyle={styles.withdrawButton}
                         textCustomStyle={styles.withdrawButtonText}
                     />
@@ -186,7 +202,14 @@ const MyWallet = ({ navigation }) => {
                 <Image style={styles.topWalletImg} source={topWalletImg} />
             </View>
 
-            {transactions?.length > 0 && <View style={styles.transactionHistoryContainer}>
+            {role === "USER" && <ButtonGroup
+                onSelectedChange={handleSelectedChange}
+                buttons={buttons}
+                selectedIndex={selectedIndex}
+                customStyle={{ marginHorizontal: 20, top: 10, marginBottom: 20 }}
+            />}
+
+            {transactions?.length > 0 && role !== "USER" && <View style={styles.transactionHistoryContainer}>
                 <Text style={styles.transactionHistoryText}>
                     Transaction History
                 </Text>
@@ -296,7 +319,8 @@ const styles = StyleSheet.create({
         color: theme.dark.white,
     },
     flatListContent: {
-        padding: 25,
+        paddingHorizontal: 25,
+        paddingBottom: 20
     },
     footerSpinner: {
         width: scaleWidth(120),

@@ -6,7 +6,7 @@ import { scaleHeight } from '../styles/responsive';
 import { useDispatch } from 'react-redux';
 import { setLastIndex } from '../redux/setIndexesSlice';
 
-const ButtonGroup = ({ onSelectedChange, buttons, selectedIndex }) => {
+const ButtonGroup = ({ onSelectedChange, buttons, selectedIndex, customStyle }) => {
     const dispatch = useDispatch();
     // const [selected, setSelected] = useState('Upcoming');
     const [selected, setSelected] = useState(buttons[selectedIndex]);
@@ -36,7 +36,7 @@ const ButtonGroup = ({ onSelectedChange, buttons, selectedIndex }) => {
 
 
     return (
-        <View style={[styles.container, { backgroundColor: containerBackgroundColor }]}>
+        <View style={[styles.container, { backgroundColor: containerBackgroundColor },customStyle]}>
             {buttons.map((button, index) => (
                 <TouchableOpacity
                     key={button}

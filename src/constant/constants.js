@@ -56,9 +56,13 @@ export const SCREENS = {
     USER_LIKES_DETAIL: "UserLikesDetail",
     BUDDY_PROFILE_DETAIL: "BuddyProfileDetail",
     USER_PROFILE_DETAIL: "UserProfileDetail",
+    UPDATE_USER_PROFILE: "UpdateUserProfile",
     UPDATE_BUDDY_PROFILE: "UpdateBuddyProfile",
     UPDATE_INTERESTS: "UpdateInterests",
     UPDATE_LANGUAGES: "UpdateLanguages",
     CHANGE_LOCATION: "ChangeLocation",
-    CHANGE_PASSWORD: "ChangePassword"
+    CHANGE_PASSWORD: "ChangePassword",
+    POLICY_TERMS: "PolicyAndTerms",
+    DELETE_ACCOUNT: "DeleteAccount",
+    UPDATE_RATE: "UpdateRate"
 };

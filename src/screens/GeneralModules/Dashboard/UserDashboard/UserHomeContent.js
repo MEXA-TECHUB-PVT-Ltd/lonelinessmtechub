@@ -469,7 +469,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                         }}>
                             <CheckBox
                                 onStatusChange={handleCheckBoxStatusChange}
-                                label={"Men"}
+                                label={"Male"}
                                 mode="single"
                                 formField={"gender"}
                                 selectedOption={selectedOption}
@@ -481,7 +481,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                                 }} />
                             <CheckBox
                                 onStatusChange={handleCheckBoxStatusChange}
-                                label={"Women"}
+                                label={"Female"}
                                 mode="single"
                                 formField={"gender"}
                                 selectedOption={selectedOption}

@@ -29,7 +29,7 @@ const Home = ({ navigation }) => {
         <SafeAreaView style={styles.container}>
 
             <View style={styles.headerContainer}>
-                <TouchableOpacity onPress={() => dispatch(logout())}>
+                <TouchableOpacity onPress={() => {}}>
                     <Image source={homeLogo} style={[styles.logo, { right: role !== "USER" ? 15 : 0 }]} />
                 </TouchableOpacity>
 

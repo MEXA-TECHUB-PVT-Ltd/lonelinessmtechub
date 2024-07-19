@@ -67,3 +67,8 @@ export { default as UpdateInterests } from './screens/GeneralModules/Dashboard/B
 export { default as UpdateLanguages } from './screens/GeneralModules/Dashboard/BuddyDashboard/ProfileScreen/UpdateLanguages'
 export { default as ChangeLocation } from './screens/GeneralModules/ChangeLocation'
 export { default as ChangePassword } from './screens/GeneralModules/ChangePassword'
+export { default as UserProfileDetail } from './screens/GeneralModules/Dashboard/UserDashboard/ProfileScreen/UserProfileDetail'
+export { default as UpdateUserProfile } from './screens/GeneralModules/Dashboard/UserDashboard/ProfileScreen/UpdateUserProfile'
+export { default as PolicyAndTerms } from './screens/GeneralModules/PolicyAndTerms'
+export { default as DeleteAccount } from './screens/GeneralModules/DeleteAccount'
+export { default as UpdateRate } from './screens/GeneralModules/Dashboard/BuddyDashboard/ProfileScreen/UpdateRate'

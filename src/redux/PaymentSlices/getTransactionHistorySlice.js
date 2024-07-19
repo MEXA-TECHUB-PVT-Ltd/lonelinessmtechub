@@ -14,11 +14,11 @@ const initialState = {
 
 export const getTransactionHistory = createAsyncThunk(
     'getTransactionHistory/getTransactionHistory',
-    async ({ page = 1, limit = 10 }, { getState, rejectWithValue }) => {
+    async ({ page = 1, limit = 10, is_refunded }, { getState, rejectWithValue }) => {
         try {
             const { token } = getState().auth;
             const bearerToken = `Bearer ${token}`;
-            let url = `${baseEndpoint}?page=${page}&limit=${limit}`;
+            let url = `${baseEndpoint}?page=${page}&limit=${limit}&is_refunded=${is_refunded}`;
             const data = await makeRequest('GET', url, null, null, bearerToken);
             return data;
         } catch (error) {

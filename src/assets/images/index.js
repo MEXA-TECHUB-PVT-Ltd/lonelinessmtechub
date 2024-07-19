@@ -54,3 +54,6 @@ export const emptyStar = require('../images/empty_star.png');
 export const updateRating = require('../images/update_rating.png');
 export const topWalletImg = require('../images/top_wallet_img.png');
 export const bottomWalletImg = require('../images/bottom_wallet_img.png');
+export const privacyPolicy = require('../images/privacy_policy_img.png');
+export const termsCondition = require('../images/terms_img.png');
+export const deleteAccount = require('../images/delete_account.png');

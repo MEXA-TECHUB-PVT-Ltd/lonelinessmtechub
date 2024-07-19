@@ -12,13 +12,16 @@ import { theme } from '../../../../../assets';
 import Button from '../../../../../components/ButtonComponent';
 import { scaleHeight } from '../../../../../styles/responsive';
 import fonts from '../../../../../styles/fonts';
+import { updateProfile } from '../../../../../redux/AuthModule/updateProfileSlice';
+import Header from '../../../../../components/Header';
 
 
 const UpdateLanguages = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
     const { languages } = useSelector((state) => state.getLanguages);
-    const { dataPayload } = useSelector((state) => state.app);
+    const { currentRoute } = useSelector((state) => state.app);
+    const { loading } = useSelector((state) => state.createProfile)
     const [selectedLanguages, setSelectedLanguages] = useState([]);
     const [searchText, setSearchText] = useState('');
 
@@ -37,7 +40,12 @@ const UpdateLanguages = ({ navigation }) => {
     };
 
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.HEIGHT_WEIGHT);
+        if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
+            resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.PROFILE })
+        } else {
+            resetNavigation(navigation, currentRoute?.route)
+        }
+
         return true;
     };
     useBackHandler(handleBackPress);
@@ -46,15 +54,25 @@ const UpdateLanguages = ({ navigation }) => {
         dispatch(getLanguages())
     }, [dispatch])
 
-    useEffect(() => {
-        if (dataPayload?.languages) {
-            setSelectedLanguages(dataPayload?.languages)
-        }
+    // useEffect(() => {
+    //     if (dataPayload?.languages) {
+    //         setSelectedLanguages(dataPayload?.languages)
+    //     }
 
-    }, [dataPayload]);
+    // }, [dataPayload]);
 
-    const handleSelectLanguages = () => {
-        const newPayload = { ...dataPayload, languages: selectedLanguages };
+    const handleUpdateLanguages = () => {
+        const formData = new FormData();
+        formData.append('languages', selectedLanguages);
+        dispatch(updateProfile(formData)).then((result) => {
+            if (result?.payload?.status === "success") {
+                setTimeout(() => {
+                    handleBackPress();
+                }, 3000);
+            } else if (result?.payload?.status === "error") {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
     }
 
     const renderLanguages = ({ item, index }) => {
@@ -82,6 +100,9 @@ const UpdateLanguages = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <Header onPress={() => {
+                handleBackPress();
+            }} />
             <View style={styles.contentContainer}>
                 <Text style={styles.welcomeText}>
                     Select Language
@@ -109,16 +130,18 @@ const UpdateLanguages = ({ navigation }) => {
                         keyboardShouldPersistTaps='always'
                     />
                 </View>
-                <View style={styles.buttonContainer}>
+               
+            </View>
+            <View style={styles.buttonContainer}>
                     <Button
+                        loading={loading}
                         onPress={() => {
-                            handleSelectLanguages()
+                            handleUpdateLanguages()
                         }}
-                        title={'Continue'}
+                        title={'Change'}
                         customStyle={styles.continueButton}
                     />
                 </View>
-            </View>
         </SafeAreaView>
     );
 };
@@ -129,7 +152,7 @@ const styles = StyleSheet.create({
         backgroundColor: theme.dark.background
     },
     contentContainer: {
-        padding: 25,
+        paddingHorizontal: 25,
     },
     welcomeText: {
         fontFamily: fonts.fontsType.semiBold,
@@ -171,15 +194,16 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     languageListContainer: {
-        height: scaleHeight(450)
+        height: scaleHeight(510)
     },
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(10),
+       // marginTop: scaleHeight(10),
     },
     continueButton: {
-        width: '100%'
+        width: '100%',
+        marginTop:30
     },
     languageContainer: {},
     languageRow: {

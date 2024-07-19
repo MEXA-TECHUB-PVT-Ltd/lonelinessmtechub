@@ -12,9 +12,9 @@ export const updateProfile = createAsyncThunk(
     'createProfile/updateProfile',
     async (profilePayload, { getState, rejectWithValue }) => {
         try {
-            const { bearerToken } = getState().signup
-            const token = `Bearer ${bearerToken}`
-            console.log(token)
+            const { signup } = getState();
+            const { auth } = getState();
+            const token = auth.token ? `Bearer ${auth.token}` : `Bearer ${signup.bearerToken}`;
             const data = await makeRequest('PUT', '/users/update-profile', profilePayload, null, token);
             return data;
         } catch (error) {

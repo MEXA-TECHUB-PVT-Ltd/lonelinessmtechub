@@ -11,7 +11,6 @@ const initialState = {
 export const getAddressByLatLong = createAsyncThunk(
     'getAddress/getAddressByLatLong',
     async (payload, { rejectWithValue }) => {
-        console.log(payload)
         try {
             const response = await axios.get(`https://nominatim.openstreetmap.org/reverse`, {
                 params: {

@@ -22,7 +22,7 @@ import { setRoute } from '../../../../../redux/appSlice';
 
 const MyLikes = ({ navigation }) => {
     const dispatch = useDispatch();
-    const { likes, loading, currentPage, totalPages } = useSelector((state) => state.getLikes);
+    const { likes, loading, currentPage, totalPages, totalCount } = useSelector((state) => state.getLikes);
     const [page, setPage] = useState(1);
     const [allLikes, setAllLikes] = useState(4530);
     const [refreshing, setRefreshing] = useState(false);
@@ -133,7 +133,7 @@ const MyLikes = ({ navigation }) => {
                     </Animatable.View>
                     <Text
                         style={styles.likeCount}>
-                        {allLikes.toLocaleString()}
+                        {totalCount.toLocaleString()}
                     </Text>
                 </View>
                 <Text style={styles.overallLikes}>Overall Likes</Text>

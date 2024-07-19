@@ -9,6 +9,7 @@ const initialState = {
     error: null,
     currentPage: 1,
     totalPages: 1,
+    totalCount: 0,
 };
 
 export const getLikes = createAsyncThunk(
@@ -44,6 +45,7 @@ const getLikesSlice = createSlice({
                 }
                 state.currentPage = action.meta.arg.page;
                 state.totalPages = action.payload.result?.totalPages;
+                state.totalCount = action.payload.result?.totalCount;
             })
             .addCase(getLikes.rejected, (state, action) => {
                 state.loading = false;
