@@ -25,11 +25,14 @@ import { getUserDetail } from '../../../../../redux/BuddyDashboard/userLikesDeta
 import { getAddressByLatLong } from '../../../../../redux/getAddressByLatLongSlice';
 import { useAlert } from '../../../../../providers/AlertContext';
 import { setRoute } from '../../../../../redux/appSlice';
+import { updateProfile } from '../../../../../redux/AuthModule/updateProfileSlice';
+import LanguagesItem from '../../../../../components/LanguagesItem';
 
 const UpdateBuddyProfile = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
-    const { userDetail, loading } = useSelector((state) => state.getUserDetail)
+    const { userDetail } = useSelector((state) => state.getUserDetail)
+    const { loading } = useSelector((state) => state.createProfile)
     const { address } = useSelector((state) => state.getAddress)
     const { userLoginInfo } = useSelector((state) => state.auth)
     const user_id = userLoginInfo?.user?.id
@@ -315,6 +318,49 @@ const UpdateBuddyProfile = ({ navigation }) => {
             </View>
         </Modal>
     );
+
+    const handleUpdateProfile = () => {
+        const { day, month, year } = form;
+        const birthDate = `${year}-${month}-${day}`;
+        const imageType = selectedImages[0]?.endsWith('.png') ? 'image/png' : 'image/jpeg';
+        const formData = new FormData();
+
+        formData.append('file', {
+            uri: selectedImages[0],
+            type: imageType,
+            name: `image_${Date.now()}.${imageType.split('/')[1]}`,
+        });
+
+        formData.append('file', {
+            uri: selectedImages[1],
+            type: imageType,
+            name: `image_${Date.now()}.${imageType.split('/')[1]}`,
+        });
+
+        formData.append('file', {
+            uri: selectedImages[2],
+            type: imageType,
+            name: `image_${Date.now()}.${imageType.split('/')[1]}`,
+        });
+        formData.append('full_name', inputValues?.full_name);
+        formData.append('about', inputValues?.about);
+        formData.append('gender', selectedOption);
+        formData.append('height_ft', inputValues?.height_ft);
+        formData.append('height_in', inputValues?.height_in);
+        formData.append('weight', inputValues?.weight);
+        formData.append('weight_unit', inputValues?.weight_unit);
+        formData.append('dob', birthDate);
+        dispatch(updateProfile(formData)).then((result) => {
+            if (result?.payload?.status === "success") {
+                setTimeout(() => {
+                    handleBackPress();
+                }, 3000);
+            } else if (result?.payload?.status === "error") {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -767,7 +813,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
                     }}>
                         <View style={{
                             flexDirection: 'row',
-                            marginHorizontal: -5,
+                          //  marginHorizontal: -5,
                             //  marginBottom: scaleHeight(5),
                             flex: 1
                         }}>
@@ -818,7 +864,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
                     }}>
                         <View style={{
                             flexDirection: 'row',
-                            marginHorizontal: -5,
+                           // marginHorizontal: -5,
                             //  marginBottom: scaleHeight(5),
                             flex: 1
                         }}>
@@ -828,7 +874,11 @@ const UpdateBuddyProfile = ({ navigation }) => {
                             <Text style={styles.locationText}>{"Languages"}</Text>
 
                         </View>
-                        <Button title={"Change"}
+                        <Button
+                            onPress={() => {
+                                handleChangeLocation(SCREENS.UPDATE_LANGUAGES);
+                            }}
+                            title={"Change"}
                             customStyle={{
                                 width: '25%',
                                 height: scaleHeight(25),
@@ -842,10 +892,18 @@ const UpdateBuddyProfile = ({ navigation }) => {
 
                     </View>
 
-                    <Button title={"Update Profile"} customStyle={{
-                        marginTop: 70,
-                        width: '100%'
-                    }} />
+                    {userDetail?.languages != null && <LanguagesItem languages={userDetail?.languages} />}
+
+                    <Button
+                        //loading={loading}
+                        onPress={() => {
+                            handleUpdateProfile()
+                        }}
+                        title={"Update Profile"}
+                        customStyle={{
+                            marginTop: 70,
+                            width: '100%'
+                        }} />
 
                 </CustomLayout>
             </View>

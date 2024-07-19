@@ -3,18 +3,18 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import makeRequest from '../configs/makeRequest';
 
 const initialState = {
-    ratingDetail: null,
+    response: null,
     loading: false,
     error: null,
 };
 
-export const getServiceRating = createAsyncThunk(
-    'getServiceRating/getServiceRating',
-    async (requestId, { getState, rejectWithValue }) => {
+export const getPolicyAndTerms = createAsyncThunk(
+    'getPolicyAndTerms/getPolicyAndTerms',
+    async (type, { getState, rejectWithValue }) => {
         try {
             const { token } = getState().auth
             const bearerToken = `Bearer ${token}`
-            const data = await makeRequest('GET', `/rating/get/${requestId}/service`, null, null, bearerToken);
+            const data = await makeRequest('GET', `/policies/get/${type}`, null, null, bearerToken);
             return data;
         } catch (error) {
             return error
@@ -22,25 +22,25 @@ export const getServiceRating = createAsyncThunk(
     }
 );
 
-const getServiceRatingSlice = createSlice({
-    name: 'getServiceRating',
+const getPolicyTermsSlice = createSlice({
+    name: 'getPolicyAndTerms',
     initialState,
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(getServiceRating.pending, (state) => {
+            .addCase(getPolicyAndTerms.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(getServiceRating.fulfilled, (state, action) => {
+            .addCase(getPolicyAndTerms.fulfilled, (state, action) => {
                 state.loading = false;
-                state.ratingDetail = action.payload?.result;
+                state.response = action.payload?.result;
             })
-            .addCase(getServiceRating.rejected, (state, action) => {
+            .addCase(getPolicyAndTerms.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
     },
 });
 
-export default getServiceRatingSlice.reducer;
+export default getPolicyTermsSlice.reducer;

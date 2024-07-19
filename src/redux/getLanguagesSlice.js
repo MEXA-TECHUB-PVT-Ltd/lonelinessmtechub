@@ -12,9 +12,9 @@ export const getLanguages = createAsyncThunk(
     'getLanguages/getLanguages',
     async (_, { getState, rejectWithValue }) => {
         try {
-            const { bearerToken } = getState().signup
-            const token = `Bearer ${bearerToken}`
-            console.log('bearerToken ----->', token)
+            const { signup } = getState();
+            const { auth } = getState();
+            const token = auth.token ? `Bearer ${auth.token}` : `Bearer ${signup.bearerToken}`;
             const data = await makeRequest('GET', '/universal/languages/getAll', null, null, token);
             return data;
         } catch (error) {

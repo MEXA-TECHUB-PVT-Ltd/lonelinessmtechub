@@ -1,8 +1,8 @@
-import React, { Component, useEffect } from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
+import React, { Component, useEffect, useState } from 'react';
+import { View, FlatList, StyleSheet, SafeAreaView } from 'react-native';
 import { theme } from '../../../assets';
 import ProfileHeader from '../../../components/ProfileHeader';
-import { homeLogo } from '../../../assets/images';
+import { homeLogo, warningImg } from '../../../assets/images';
 import CustomHeader from '../../../components/CustomHeader';
 import ProfileItemContainer from '../../../components/ProfileItemContainer';
 import WalletIcon from '../../../assets/svgs/wallet_icon.svg'
@@ -20,36 +20,40 @@ import { SCREENS } from '../../../constant/constants';
 import { HeartIcon, UpdateBuddyProfile, UpdateInterests, UpdateRate } from '../../../assets/svgs';
 import { useDispatch, useSelector } from 'react-redux';
 import { getUserDetail } from '../../../redux/BuddyDashboard/userLikesDetailSlice';
+import { setRoute } from '../../../redux/appSlice';
+import CustomModal from '../../../components/CustomModal';
+import { logout } from '../../../redux/AuthModule/signInSlice';
 
 
 const userList = [
-    { id: '1', icon: WalletIcon, text: 'My Wallet', route: SCREENS.MY_WALLET },
-    { id: '2', icon: PremiumIcon, text: 'Go Premium' },
-    { id: '3', icon: ProfileIcon, text: 'Update Profile' },
-    { id: '4', icon: PasswordIcon, text: 'Change Password', route: SCREENS.CHANGE_PASSWORD },
-    { id: '5', icon: RateAppIcon, text: 'Rate App' },
-    { id: '6', icon: ShareAppIcon, text: 'Share App' },
-    { id: '7', icon: PrivacyPolicyIcon, text: 'Privacy Policy' },
-    { id: '8', icon: TermsConditionsIcon, text: 'Terms & Conditions' },
-    { id: '9', icon: LogoutIcon, text: 'Logout' },
-    { id: '10', icon: DeleteAccountIcon, text: 'Delete Account' },
+    { id: '1', icon: WalletIcon, text: 'My Wallet', route: SCREENS.MY_WALLET, isRoute: false },
+    { id: '2', icon: PremiumIcon, text: 'Go Premium', route: SCREENS.PREMIUM, isRoute: false },
+    { id: '3', icon: ProfileIcon, text: 'Update Profile', route: SCREENS.UPDATE_USER_PROFILE, isRoute: true },
+    { id: '4', icon: PasswordIcon, text: 'Change Password', route: SCREENS.CHANGE_PASSWORD, isRoute: false },
+    { id: '5', icon: RateAppIcon, text: 'Rate App', isRoute: false },
+    { id: '6', icon: ShareAppIcon, text: 'Share App', isRoute: false },
+    { id: '7', icon: PrivacyPolicyIcon, text: 'Privacy Policy', route: SCREENS.POLICY_TERMS, isRoute: true },
+    { id: '8', icon: TermsConditionsIcon, text: 'Terms & Conditions', route: SCREENS.POLICY_TERMS, isRoute: true },
+    { id: '9', icon: LogoutIcon, text: 'Logout', isRoute: false },
+    { id: '10', icon: DeleteAccountIcon, text: 'Delete Account', route: SCREENS.DELETE_ACCOUNT, isRoute: false },
 ];
 
 const buddyList = [
-    { id: '1', icon: WalletIcon, text: 'My Wallet', route: SCREENS.MY_WALLET },
-    { id: '2', icon: HeartIcon, text: 'My Likes', route: SCREENS.MY_LIKES },
-    { id: '3', icon: RateAppIcon, text: 'My Ratings', route: SCREENS.RATING },
-    { id: '4', icon: UpdateRate, text: 'Update Rate' },
-    { id: '5', icon: UpdateInterests, text: 'Update Intersets' },
-    { id: '6', icon: UpdateBuddyProfile, text: 'Update Profile' },
-    { id: '4', icon: PasswordIcon, text: 'Change Password', route: SCREENS.CHANGE_PASSWORD },
-    { id: '7', icon: RateAppIcon, text: 'Rate App' },
-    { id: '8', icon: ShareAppIcon, text: 'Share App' },
-    { id: '9', icon: PrivacyPolicyIcon, text: 'Privacy Policy' },
-    { id: '10', icon: TermsConditionsIcon, text: 'Terms & Conditions' },
-    { id: '11', icon: LogoutIcon, text: 'Logout' },
-    { id: '12', icon: DeleteAccountIcon, text: 'Delete Account' },
+    { id: '1', icon: WalletIcon, text: 'My Wallet', route: SCREENS.MY_WALLET, isRoute: false },
+    { id: '2', icon: HeartIcon, text: 'My Likes', route: SCREENS.MY_LIKES, isRoute: false },
+    { id: '3', icon: RateAppIcon, text: 'My Ratings', route: SCREENS.RATING, isRoute: false },
+    { id: '4', icon: UpdateRate, text: 'Update Rate', route: SCREENS.UPDATE_RATE, isRoute: false },
+    { id: '5', icon: UpdateInterests, text: 'Update Interests', route: SCREENS.UPDATE_INTERESTS, isRoute: true },
+    { id: '6', icon: UpdateBuddyProfile, text: 'Update Profile', route: SCREENS.UPDATE_BUDDY_PROFILE, isRoute: true },
+    { id: '4', icon: PasswordIcon, text: 'Change Password', route: SCREENS.CHANGE_PASSWORD, isRoute: false },
+    { id: '7', icon: RateAppIcon, text: 'Rate App', isRoute: false },
+    { id: '8', icon: ShareAppIcon, text: 'Share App', isRoute: false },
+    { id: '9', icon: PrivacyPolicyIcon, text: 'Privacy Policy', route: SCREENS.POLICY_TERMS, isRoute: true },
+    { id: '10', icon: TermsConditionsIcon, text: 'Terms & Conditions', route: SCREENS.POLICY_TERMS, isRoute: true },
+    { id: '11', icon: LogoutIcon, text: 'Logout', isRoute: false },
+    { id: '12', icon: DeleteAccountIcon, text: 'Delete Account', route: SCREENS.DELETE_ACCOUNT, isRoute: false },
 ];
+
 
 
 const Profile = ({ navigation }) => {
@@ -59,6 +63,7 @@ const Profile = ({ navigation }) => {
     const profileList = role === "USER" ? userList : buddyList
     const profileNav = role === "USER" ? SCREENS.USER_PROFILE_DETAIL : SCREENS.BUDDY_PROFILE_DETAIL;
     const user_id = userLoginInfo?.user?.id
+    const [modalVisible, setModalVisible] = useState(false);
 
 
 
@@ -67,14 +72,38 @@ const Profile = ({ navigation }) => {
     }, [dispatch, user_id])
 
 
-    const handleNavigation = (route) => {
+    const handleNavigation = (route, isRoute, text) => {
+        const type = text === "Privacy Policy" ? "privacy" : "terms"
+        if (text === "Logout") {
+            handleOpenModal();
+            return
+        }
+        if (isRoute) {
+            dispatch(setRoute({
+                route: SCREENS.MAIN_DASHBOARD,
+                type: type
+            }))
+        }
         resetNavigation(navigation, route)
+    }
+
+    const handleOpenModal = () => {
+        setModalVisible(true);
+    };
+
+    const handleCloseModal = () => {
+        setModalVisible(false);
+    };
+
+    const handleLogout = () => {
+        dispatch(logout())
+        handleCloseModal();
     }
 
 
     const renderItem = ({ item, index }) => (
         <ProfileItemContainer
-            onPress={() => { handleNavigation(item?.route) }}
+            onPress={() => { handleNavigation(item?.route, item?.isRoute, item?.text) }}
             IconComponent={item.icon}
             text={item.text}
             index={index}
@@ -82,7 +111,7 @@ const Profile = ({ navigation }) => {
     );
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <CustomHeader
                 homeLogo={homeLogo}
                 title="Profile"
@@ -111,7 +140,24 @@ const Profile = ({ navigation }) => {
                 />
             </View>
 
-        </View>
+            <CustomModal
+                isVisible={modalVisible}
+                onClose={handleCloseModal}
+                headerTitle={"Logout?"}
+                imageSource={warningImg}
+                isParallelButton={true}
+                text={`Do you really want to log out and leave the fun behind? 🤔🎉`}
+                parallelButtonText1={"Cancel"}
+                parallelButtonText2={"Yes, Logout"}
+                parallelButtonPress1={() => {
+                    handleCloseModal()
+                }}
+                parallelButtonPress2={() => {
+                    handleLogout()
+                }}
+            />
+
+        </SafeAreaView>
     );
 };
 

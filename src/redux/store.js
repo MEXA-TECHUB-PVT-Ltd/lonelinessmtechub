@@ -51,6 +51,8 @@ import withdrawAmountReducer from './PaymentSlices/withdrawAmountSlice';
 import getLikesReducer from './BuddyDashboard/getLikesSlice';
 import userLikesDetailReducer from './BuddyDashboard/userLikesDetailSlice';
 import changePasswordReducer from './AuthModule/changePasswordSlice';
+import getPolicyTermsReducer from './getPolicyTermsSlice';
+import deleteAccountReducer from './deleteAccountSlice';
 
 const persistConfig = {
     key: 'root',
@@ -106,6 +108,8 @@ const rootReducer = combineReducers({
     getLikes: getLikesReducer,
     getUserDetail: userLikesDetailReducer,
     changePassword: changePasswordReducer,
+    getPolicyAndTerms: getPolicyTermsReducer,
+    deleteAccount: deleteAccountReducer,
     app: appReducer,
     setLastIndex: setIndexesReducer
 

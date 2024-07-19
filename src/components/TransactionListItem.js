@@ -6,9 +6,11 @@ import { dummyImg } from '../assets/images';
 import fonts from '../styles/fonts';
 import moment from 'moment';
 import * as Animatable from 'react-native-animatable'
+import { useSelector } from 'react-redux';
 
 
 const TransactionListItem = ({ item, index }) => {
+    const { role } = useSelector((state) => state.auth)
     return (
         <Animatable.View
             // animation={'fadeInUpBig'}
@@ -32,7 +34,7 @@ const TransactionListItem = ({ item, index }) => {
                 alignSelf: 'center',
                 marginEnd: 10,
                 fontSize: scaleHeight(15),
-            }]}>{`$${item?.amount}`}</Text>
+            }]}>{`$${role === "BUDDY" ? parseFloat(item?.amount) - parseFloat(item?.admin_fee) : item?.amount}`}</Text>
         </Animatable.View>
     );
 };
