@@ -18,7 +18,7 @@ import { setRoute } from '../redux/appSlice';
 const RequestListItem = ({ item, navigation, onRequestStatusChange }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
-    const dateTime = moment(`${item?.booking_date?.split('T')[0]}T${item?.booking_time}Z`);
+    //const dateTime = moment(`${item?.booking_date?.split('T')[0]}T${item?.booking_time}Z`);
     const [requestStatus, setRequestStatus] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -168,7 +168,8 @@ const RequestListItem = ({ item, navigation, onRequestStatusChange }) => {
                             Date/Time
                         </Text>
                         <Text style={styles.infoText}>
-                            {dateTime?.format('DD/MM/YYYY/hh:mma')}
+                            {/* {dateTime?.format('DD/MM/YYYY/hh:mma')} */}
+                            {`${moment(item?.booking_date, "YYYY-MM-DD").format("DD/MM/YYYY")}/${moment(item?.booking_time, "HH:mm:ss").format("hh:mma")}`}
                         </Text>
                     </View>
                 </View>

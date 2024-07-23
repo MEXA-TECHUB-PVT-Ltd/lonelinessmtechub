@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
     Image, SafeAreaView, StyleSheet, Dimensions,
     View, FlatList, Text, TouchableOpacity,
-    ScrollView, TextInput, Animated, findNodeHandle, UIManager
+    ScrollView, TextInput, Animated, findNodeHandle, UIManager,
+    Keyboard
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import LottieView from 'lottie-react-native';
@@ -55,12 +56,23 @@ import { setIsPremium } from '../../../../redux/accountSubscriptionSlice';
 import { likeDislikeBuddy } from '../../../../redux/UserDashboard/likeDislikeBuddySlice';
 import EmptyListComponent from '../../../../components/EmptyListComponent';
 import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown';
-
+import { calculateAge } from '../../../../utils/calculateAge';
+import { checkChatPayment } from '../../../../redux/PaymentSlices/checkChatPaymentSlice';
+import { attachPaymentMethod } from '../../../../redux/PaymentSlices/attachPaymentMethodSlice';
+import { cardWalletPaymentTransfer } from '../../../../redux/UserDashboard/cardWalletPaymentTransferSlice';
+import { createCustomer } from '../../../../redux/PaymentSlices/createCustomerSlice';
+import { useStripe, CardField } from '@stripe/stripe-react-native';
+import * as Animatable from 'react-native-animatable';
+import CrossIcon from 'react-native-vector-icons/AntDesign'
+import { setCurrentUserIndex } from '../../../../redux/currentUserIndexSlice';
+import io from 'socket.io-client';
+import { SOCKET_URL } from '../../../../configs/apiUrl';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
     const dispatch = useDispatch();
+    const { createPaymentMethod } = useStripe();
     const { response, loading } = useSelector((state) => state.nearByBuddy)
     const { filteredData, filterLoader } = useSelector((state) => state.applyFilter)
     const blockUserLoader = useSelector((state) => state.userBuddyAction)
@@ -68,6 +80,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
     const { address } = useSelector((state) => state.getAddress)
     const { isAppOpened } = useSelector((state) => state.appOpened)
     const { isPremiumPlan } = useSelector((state) => state.accountSubscription)
+    const { loading: paymentTransferLoader } = useSelector((state) => state.cardWalletPaymentTransfer);
     const { showAlert } = useAlert();
     const lottieRef = useRef(null);
     const navigation = useNavigation();
@@ -85,8 +98,10 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
     const [modalVisible2, setModalVisible2] = useState(false);
     const [modalVisible3, setModalVisible3] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
+    const { currentUser } = useSelector((state) => state.currentUserIndex)
     const [userCurrentIndex, setUserCurrentIndex] = useState(0);
-    const [currentUser, setCurrentUser] = useState(response?.data[0]);
+    //const [currentUser, setCurrentUser] = useState(filteredData?.data[userIndex] || response?.data[userIndex]);
+    //const [currentUser, setCurrentUser] = useState({});
     const scrollOffsetY = useRef(0);
     const [scrollDirection, setScrollDirection] = useState(null);
     const [action, setAction] = useState({ index: null, type: null });
@@ -94,8 +109,13 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
     const translateY = useRef(new Animated.Value(0)).current;
     const scaleY = useRef(new Animated.Value(1)).current;
     const rotateZ = useRef(new Animated.Value(0)).current;
-    const { is_subscribed } = userLoginInfo?.user;
+    const { is_subscribed, customer_id, id } = userLoginInfo?.user;
     const [selectedOption, setSelectedOption] = useState('');
+    const [isOverlayOpened, setOverlayOpened] = useState(false);
+    const [paymentLoader, setPaymentLoader] = useState(false);
+    const [cardDetails, setCradDetails] = useState({});
+    const [keyboardStatus, setKeyboardStatus] = useState(false);
+    const [socket, setSocket] = useState(null);
     const [form, setForm] = useState({
         category: '',
         city: '',
@@ -123,6 +143,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
             Geolocation.getCurrentPosition(resolve, reject);
         });
         const { coords: { latitude, longitude } } = await getPosition();
+        setForm({ ...form, latitude, longitude })
         const payload = {
             latitude,
             longitude
@@ -131,31 +152,58 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
     }
 
     useEffect(() => {
-        getAllNearByBuddies();
+        if (!isfilterApplied) {
+            getAllNearByBuddies();
+        }
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dispatch])
 
     useEffect(() => {
-        if (currentUser)
+        if (currentUser) {
             dispatch(getAddressByLatLong({
                 lat: currentUser?.location?.latitude,
                 long: currentUser?.location?.longitude
             }));
+        }
+
     }, [dispatch, currentUser])
 
     useEffect(() => {
-        if (isfilterApplied) {
-            setCurrentUser(filteredData?.data[userCurrentIndex]);
-        } else {
-            setCurrentUser(response?.data[userCurrentIndex]);
+        if (!currentUser) {
+
+            if (isfilterApplied) {
+                //setCurrentUser(filteredData?.data[userCurrentIndex]);
+                dispatch(setCurrentUserIndex(filteredData?.data[0]));
+
+            } else {
+                //setCurrentUser(response?.data[userCurrentIndex]);
+                dispatch(setCurrentUserIndex(response?.data[0]));
+            }
         }
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userCurrentIndex, response, isfilterApplied]);
+    }, [dispatch, response, isfilterApplied]);
+
+
+    useEffect(() => {
+        const newSocket = io(SOCKET_URL);
+        setSocket(newSocket);
+        newSocket.on('connect', () => {
+            console.log('Socket connected');
+        });
+
+        return () => {
+            newSocket.disconnect();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
 
     function updateCurrentUser(updatedUser) {
-        setCurrentUser(updatedUser);
+        //setCurrentUser(updatedUser);
+        dispatch(setCurrentUserIndex(updatedUser));
+
     }
 
     const handleToggleKg = () => {
@@ -191,10 +239,29 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                 translateX.setValue(0);
                 translateY.setValue(0);
                 setAction({ index: null, type: null });
+                // if (isfilterApplied) {
+                //     setUserCurrentIndex((prevIndex) => (prevIndex + 1) % filteredData?.data?.length);
+                // } else {
+                //     setUserCurrentIndex((prevIndex) => (prevIndex + 1) % response?.data?.length);
+                // }
+
+
                 if (isfilterApplied) {
-                    setUserCurrentIndex((prevIndex) => (prevIndex + 1) % filteredData?.data?.length);
+                    // setUserCurrentIndex((prevIndex) => (prevIndex + 1) % filteredData?.data?.length);
+                    setUserCurrentIndex((prevIndex) => {
+                        const newIndex = (prevIndex + 1) % (filteredData?.data?.length || 1);
+                        //setCurrentUser(filteredData?.data[newIndex]);
+                        dispatch(setCurrentUserIndex(filteredData?.data[newIndex])); // Dispatch the action with the new index
+                        return newIndex;
+                    });
                 } else {
-                    setUserCurrentIndex((prevIndex) => (prevIndex + 1) % response?.data?.length);
+                    // setUserCurrentIndex((prevIndex) => (prevIndex + 1) % response?.data?.length);
+                    setUserCurrentIndex((prevIndex) => {
+                        const newIndex = (prevIndex + 1) % (response?.data?.length || 1);
+                        //setCurrentUser(response?.data[newIndex]);
+                        dispatch(setCurrentUserIndex(response?.data[newIndex])); // Dispatch the action with the new index
+                        return newIndex;
+                    });
                 }
 
             });
@@ -228,9 +295,21 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                 translateX.setValue(0); // Reset the translation value for the next use
                 setAction({ index: null, type: null }); // Reset the action
                 if (isfilterApplied) {
-                    setUserCurrentIndex((prevIndex) => (prevIndex + 1) % filteredData?.data?.length);
+                    // setUserCurrentIndex((prevIndex) => (prevIndex + 1) % filteredData?.data?.length);
+                    setUserCurrentIndex((prevIndex) => {
+                        const newIndex = (prevIndex + 1) % (filteredData?.data?.length || 1);
+                        // setCurrentUser(filteredData?.data[newIndex]);
+                        dispatch(setCurrentUserIndex(filteredData?.data[newIndex])); // Dispatch the action with the new index
+                        return newIndex;
+                    });
                 } else {
-                    setUserCurrentIndex((prevIndex) => (prevIndex + 1) % response?.data?.length);
+                    // setUserCurrentIndex((prevIndex) => (prevIndex + 1) % response?.data?.length);
+                    setUserCurrentIndex((prevIndex) => {
+                        const newIndex = (prevIndex + 1) % (response?.data?.length || 1);
+                        //setCurrentUser(response?.data[newIndex]);
+                        dispatch(setCurrentUserIndex(response?.data[newIndex])); // Dispatch the action with the new index
+                        return newIndex;
+                    });
                 }
             });
         }, 500); // Wait for 3 seconds before sliding out
@@ -245,6 +324,27 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
 
     useEffect(() => {
         scrollOffsetY.current = 0;
+    }, []);
+
+    useEffect(() => {
+        const keyboardDidShowListener = Keyboard.addListener(
+            'keyboardDidShow',
+            () => {
+                setKeyboardStatus(true);
+            }
+        );
+        const keyboardDidHideListener = Keyboard.addListener(
+            'keyboardDidHide',
+            () => {
+                setKeyboardStatus(false);
+            }
+        );
+
+        // Cleanup listeners on unmount
+        return () => {
+            keyboardDidShowListener.remove();
+            keyboardDidHideListener.remove();
+        };
     }, []);
 
     const handleOpenModal = () => {
@@ -349,7 +449,14 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
         setFilter(true)
         setFilterApplied(true)
         const filterPayload = { ...form, min_age: min, max_age: max };
-        dispatch(applyFilterTogetBuddies(filterPayload));
+
+        dispatch(applyFilterTogetBuddies(filterPayload)).then((result) => {
+            if (result?.payload?.status === "success") {
+                //setCurrentUser(result?.payload?.result?.data[userCurrentIndex]);
+                dispatch(setCurrentUserIndex(result?.payload?.result?.data[0]));
+            }
+
+        });
     }
 
     const resetFilter = () => {
@@ -909,20 +1016,6 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
         }
     };
 
-    function calculateAge(birthdate) {
-        const today = new Date();
-        const birthDate = new Date(birthdate);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDifference = today.getMonth() - birthDate.getMonth();
-        if (
-            monthDifference < 0 ||
-            (monthDifference === 0 && today.getDate() < birthDate.getDate())
-        ) {
-            age--;
-        }
-
-        return age;
-    }
 
     const convertMetersToKm = (meters) => {
         return (meters / 1000).toFixed(1);
@@ -945,7 +1038,8 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
             dispatch(setRoute({
                 route: SCREENS.MAIN_DASHBOARD,
                 buddy_id: currentUser?.id,
-                hourly_rate: currentUser?.hourly_rate
+                hourly_rate: currentUser?.hourly_rate,
+                categories: currentUser?.categories
             }))
             resetNavigation(navigation, SCREENS.SEND_REQUEST)
         } else {
@@ -996,11 +1090,209 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
             if (result?.payload?.status === "success") {
 
                 let updatedUser = { ...currentUser, is_liked: likeDislikeStatus };
-                setCurrentUser(updatedUser);
+                //setCurrentUser(updatedUser);
+                dispatch(setCurrentUserIndex(updatedUser));
             }
         })
 
     }
+
+    const handleChatNavigation = () => {
+        dispatch(setRoute({
+            route: SCREENS.MAIN_DASHBOARD,
+            receiver_id: currentUser?.id
+        }))
+        resetNavigation(navigation, SCREENS.GENERAL_CHAT)
+    }
+
+    const handleChatPayment = (buddyId) => {
+        const payload = {
+            user_id: buddyId
+        }
+        dispatch(checkChatPayment(payload)).then((result) => {
+            if (result?.payload?.status === "success") {
+                if (socket) {
+                    const userId = parseInt(id)
+                    socket.emit("addContact", { userId, contactId: buddyId });
+                }
+                handleChatNavigation();
+            } else if (result?.payload?.status === "error") {
+                handleOpenModal2();
+            }
+        })
+    }
+
+    const handleWalletPayment = (method, payment_method_id = "pm_xyz-testing-id") => {
+        const payload = {
+            payment_method_id: payment_method_id,
+            buddy_id: currentUser?.id,
+            type: "CHAT",
+            method: method,   //[CARD,WALLET]
+            amount: 1
+        }
+        dispatch(cardWalletPaymentTransfer(payload)).then((result) => {
+            setPaymentLoader(false)
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message);
+                handleCloseModal3();
+                setOverlayOpened(false);
+                setTimeout(() => {
+                    handleChatNavigation()
+                }, 3000);
+
+            } else if (result?.payload?.status === "error") {
+                setPaymentLoader(false)
+                setOverlayOpened(false);
+                handleCloseModal3();
+                setTimeout(() => {
+                    showAlert("Error", "error", result?.payload?.message)
+                }, 1000);
+            }
+        })
+    }
+
+
+    const handleAttachPaymentMethod = (paymentMethodId) => {
+        const payload = {
+            payment_method_id: paymentMethodId
+        }
+        dispatch(attachPaymentMethod(payload)).then((result) => {
+            setPaymentLoader(true)
+            if (result?.payload?.status === "success") {
+                handleWalletPayment("CARD", paymentMethodId)
+                // transfer card payemnt here...
+
+            } else {
+                setPaymentLoader(false)
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const handleCreateCustomer = (paymentMethodId) => {
+        setPaymentLoader(true)
+        dispatch(createCustomer()).then((result) => {
+            if (result?.payload?.status === "success") {
+                handleAttachPaymentMethod(paymentMethodId)
+            } else {
+                setPaymentLoader(false)
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const handleCreatePaymentMethod = async () => {
+        //console.log('cardDetails', cardDetails)
+        try {
+            const { paymentMethod, error } = await createPaymentMethod({
+                type: 'card',
+                card: cardDetails.card,
+                paymentMethodType: 'Card',
+            },);
+
+            if (error) {
+                showAlert("Error", "error", error?.message)
+                console.error('Error creating payment method:', error);
+            } else {
+                console.log('Created payment method:', paymentMethod?.id);
+                //call create customer api here..
+                if (customer_id === null) {
+                    console.log("customer not created")
+                    handleCreateCustomer(paymentMethod?.id)
+                } else {
+                    console.log("customer already created")
+                    handleAttachPaymentMethod(paymentMethod?.id)
+                }
+            }
+        } catch (error) {
+            console.error('Error creating payment method:', error);
+        }
+    }
+
+    const handleBuddyRatingNav = () => {
+        dispatch(setRoute({
+            route: SCREENS.MAIN_DASHBOARD,
+            buddy_id: currentUser?.id
+        }))
+        resetNavigation(navigation, SCREENS.RATING)
+    }
+
+
+
+    const Overlay = () => {
+        return (
+            <View style={styles.overlayPayment}>
+
+                <Animatable.View
+                    animation="bounceIn"
+                    duration={2000}
+                    style={{
+                        backgroundColor: 'white',
+                        width: '80%',
+                        height: keyboardStatus ? '40%' : '30%',
+                        borderRadius: 16,
+                        margin: 30
+                    }}>
+
+                    <CrossIcon
+                        onPress={() => {
+                            setOverlayOpened(false)
+                        }}
+                        style={{
+                            alignSelf: 'flex-end',
+                            left: 4,
+                            bottom: 4
+                        }}
+                        size={26}
+                        name='closecircle'
+                        color={theme.dark.secondary} />
+
+                    <Text style={styles.cardHeading}>
+                        Enter Card Detail
+                    </Text>
+
+                    <CardField
+                        postalCodeEnabled={false}
+                        // autofocus={true}
+                        placeholder={{
+                            number: '4242 4242 4242 4242',
+                        }}
+                        cardStyle={{
+                            backgroundColor: '#FFFFFF',
+                            textColor: '#000000',
+                        }}
+                        style={{
+                            width: '80%',
+                            height: '20%',
+                        }}
+                        onCardChange={(cardDetails) => {
+                            setCradDetails({ type: 'card', card: cardDetails });
+                        }}
+                    />
+
+                    <Button
+                        loading={paymentLoader}
+                        isBgTransparent={true}
+                        onPress={() => {
+                            handleCreatePaymentMethod();
+                        }}
+                        title={"Pay"}
+                        customStyle={{
+                            backgroundColor: theme.dark.primary,
+                            width: '80%',
+                            marginBottom: 0,
+                            marginTop: 40
+                        }}
+                        textCustomStyle={{
+                            color: theme.dark.secondary
+                        }}
+                    />
+
+                </Animatable.View>
+            </View >
+        );
+    };
+
 
     return (
         <LinearGradient
@@ -1015,7 +1307,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                     width: scaleWidth(150),
                     height: scaleHeight(150),
                 }}
-            /> : (response?.data?.length > 0) ? <SafeAreaView style={styles.container}>
+            /> : (response?.data?.length > 0 || filteredData?.data?.length > 0) ? <SafeAreaView style={styles.container}>
 
                 {!isAppOpened ? (
                     <>
@@ -1032,7 +1324,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                             <Image
                                 style={styles.imageStyle}
                                 resizeMode='cover'
-                                source={dummyImg}
+                                source={{ uri: userLoginInfo?.image_url }}
                             />
                         </View>
 
@@ -1086,7 +1378,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                                     {`${currentUser?.full_name} (${calculateAge(currentUser?.dob)})`}
                                 </Text>
                                 <TouchableOpacity onPress={() => {
-                                    handleOpenModal2();
+                                    handleChatPayment(currentUser?.id)
                                 }}>
                                     <Image source={chatHome} style={{
                                         width: scaleWidth(60),
@@ -1186,7 +1478,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
 
                                 <TouchableOpacity
                                     onPress={() => {
-                                        resetNavigation(navigation, SCREENS.RATING)
+                                        handleBuddyRatingNav()
                                     }}
                                     style={{
                                         flexDirection: 'row',
@@ -1392,6 +1684,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                     text={`Want to meet more amazing friends? Unlock additional profiles with our premium access. Discover endless possibilities and connections!`}
                     buttonText="Go Premium"
                     isParallelButton={false}
+                    isCross={true}
                     buttonAction={() => {
                         handlePremium();
                     }}
@@ -1420,15 +1713,17 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                     onClose={handleCloseModal3}
                     headerTitle={"Payment Method"}
                     imageSource={warningImg}
+                    secondaryLoader={paymentTransferLoader}
                     isParallelButton={true}
                     text={`Do you want to pay through your wallet?`}
-                    parallelButtonText1={"No"}
-                    parallelButtonText2={"Yes, Pay"}
+                    parallelButtonText1={"Wallet"}
+                    parallelButtonText2={"Card Payment"}
                     parallelButtonPress1={() => {
-                        handleCloseModal3()
+                        handleWalletPayment("WALLET");
                     }}
                     parallelButtonPress2={() => {
-
+                        setOverlayOpened(true);
+                        handleCloseModal3();
                     }}
                 />
 
@@ -1450,12 +1745,13 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                     }}
                 />
 
-
+                {isOverlayOpened && Overlay()}
 
             </SafeAreaView> : <EmptyListComponent title={"Buddies not found."} />
 
             }
             {renderFilterModal()}
+
         </LinearGradient>
     );
 };
@@ -1649,6 +1945,20 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         height: '30%', // Adjust this value as needed
+    },
+    overlayPayment: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        zIndex: 100,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    cardHeading: {
+        fontFamily: fonts.fontsType.semiBold,
+        fontSize: 16,
+        color: theme.dark.primary,
+        alignSelf: 'center',
+        marginBottom: 20
     },
 });
 

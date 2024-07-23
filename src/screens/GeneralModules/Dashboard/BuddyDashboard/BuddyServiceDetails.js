@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Icon } from 'react-native-elements';
-import {  locationPin } from '../../../../assets/images';
+import { locationPin } from '../../../../assets/images';
 import { theme } from '../../../../assets';
 import DetailItem from '../../../../components/DetailItem';
 import Button from '../../../../components/ButtonComponent';
@@ -39,6 +39,10 @@ const BuddyServiceDetails = ({ navigation }) => {
     const categories = userDetail?.category;
     const [requestLoader, setRequestLoader] = useState(false);
     const [requestStatus, setRequestStatus] = useState('');
+
+    const isPaymentRequested = userDetail?.release_payment_requests === "REQUESTED";
+    const buttonTitle = isPaymentRequested ? "Requested for Payment" : "Request for Payment";
+    const buttonBackgroundColor = isPaymentRequested ? theme.dark.disableButton : theme.dark.secondary;
 
     const handleBackPress = () => {
         if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
@@ -275,9 +279,9 @@ const BuddyServiceDetails = ({ navigation }) => {
                             <DetailItem label="Time" value={moment(userDetail?.booking_time, 'HH:mm').format('hh:mm A')} />
                             <DetailItem label="Hours For Booking" value={`${userDetail?.hours} HOURS`} />
                             <DetailItem label="Total Price" value={`$${userDetail?.booking_price}`} />
-                            <DetailItem label="Status" value={getNameByStatus(userDetail?.status)} customTextStyle={{
+                            {(userDetail?.status !== "PAID" && userDetail?.status !== "COMPLETED") && <DetailItem label="Status" value={getNameByStatus(userDetail?.status)} customTextStyle={{
                                 color: getColorByStatus(userDetail?.status)
-                            }} />
+                            }} />}
                         </View>
                         <HorizontalDivider />
 
@@ -377,44 +381,79 @@ const BuddyServiceDetails = ({ navigation }) => {
 
                         {/* payment rejected section here... */}
 
-                        {userDetail?.canceled_status === "REJECTED" && <View style={[styles.categorySection, { marginTop: 10 }]}>
-                            <Text style={{
-                                color: theme.dark.secondary,
-                                fontSize: scaleHeight(18),
-                                fontFamily: fonts.fontsType.medium,
-                                marginHorizontal: 10,
-                                marginBottom: 10
+                        {(userDetail?.canceled_status === "REQUESTED" || userDetail?.canceled_status === "REJECTED") &&
+                            <View style={[styles.categorySection, { marginTop: 10, flexDirection: 'row' }]}>
 
-                            }}>
-                                Reason of cancellation
-                            </Text>
+                                <View style={[styles.categorySection, { marginTop: 10, flex:1 }]}>
+                                    <Text style={{
+                                        color: theme.dark.secondary,
+                                        fontSize: scaleHeight(18),
+                                        fontFamily: fonts.fontsType.medium,
+                                        marginHorizontal: 10,
+                                        marginBottom: 10,
 
-                            <Text style={{
-                                color: theme.dark.inputLabel,
-                                fontSize: scaleHeight(16),
-                                fontFamily: fonts.fontsType.light,
-                                marginHorizontal: 10
+                                    }}>
+                                        Reason of cancellation
+                                    </Text>
 
-                            }}>
-                                {userDetail?.canceled_reason}
-                            </Text>
+                                    <Text style={{
+                                        color: theme.dark.inputLabel,
+                                        fontSize: scaleHeight(16),
+                                        fontFamily: fonts.fontsType.light,
+                                        marginHorizontal: 10
 
-                        </View>}
+                                    }}>
+                                        {userDetail?.canceled_reason}
+                                    </Text>
+
+                                </View>
+
+                                {userDetail?.canceled_status === "REJECTED" && <View style={[styles.statusContainer, { backgroundColor: getColorByStatus(userDetail?.canceled_status), marginTop:10 },]}>
+                                    <Text style={styles.statusText}>
+                                        {getNameByStatus(userDetail?.canceled_status)}
+                                    </Text>
+                                </View>}
+
+                            </View>
+
+
+
+                        }
 
                         <View style={styles.buttonSection}>
-                            {userDetail?.status === "PAID" && <Button
-                                onPress={() => {
-                                    handleRequestForPayment();
-                                }}
-                                title={"Request for Payment"}
+                            {userDetail?.status === "PAID" && userDetail?.canceled_status == null && <Button
+                                disabled={isPaymentRequested}
+                                onPress={handleRequestForPayment}
+                                title={buttonTitle}
                                 loading={requestPaymentLoader}
                                 customStyle={{
                                     width: '95%',
-                                    top: scaleHeight(30)
+                                    top: scaleHeight(30),
+                                    backgroundColor: buttonBackgroundColor
                                 }}
-                                textCustomStyle={{
-                                }}
-                            />}
+                                textCustomStyle={{}}
+                            />
+
+                                // <Button
+                                //     disabled={userDetail?.release_payment_requests === "REQUESTED" ? true : false}
+                                //     onPress={() => {
+                                //         handleRequestForPayment();
+                                //     }}
+                                //     title={userDetail?.release_payment_requests === "REQUESTED" ? "Requested for Payment" : "Request for Payment"}
+                                //     loading={requestPaymentLoader}
+                                //     //disabled={userDetail?.is_released}
+                                //     customStyle={{
+                                //         width: '95%',
+                                //         top: scaleHeight(30),
+                                //         backgroundColor: userDetail?.release_payment_requests !== "REQUESTED" ?
+                                //             theme.dark.secondary :
+                                //             theme.dark.disableButton
+                                //     }}
+                                //     textCustomStyle={{
+                                //     }}
+                                // />
+
+                            }
 
 
                             {(userDetail?.status === "REQUESTED" &&
@@ -494,7 +533,7 @@ const BuddyServiceDetails = ({ navigation }) => {
 
                             {/* these button show here if status cancelled and paid... */}
 
-                            {userDetail?.canceled_status === "REJECTED" && userDetail?.status === "PAID" && <View style={{
+                            {userDetail?.canceled_status === "REQUESTED" && userDetail?.status === "PAID" && <View style={{
                                 flexDirection: 'row',
                                 justifyContent: 'space-between',
                                 //marginBottom: scaleHeight(-160)

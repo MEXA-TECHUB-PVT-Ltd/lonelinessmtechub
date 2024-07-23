@@ -14,6 +14,7 @@ import { scaleHeight } from '../../../../../styles/responsive';
 import fonts from '../../../../../styles/fonts';
 import { updateProfile } from '../../../../../redux/AuthModule/updateProfileSlice';
 import Header from '../../../../../components/Header';
+import { setRoute } from '../../../../../redux/appSlice';
 
 
 const UpdateLanguages = ({ navigation }) => {
@@ -43,6 +44,9 @@ const UpdateLanguages = ({ navigation }) => {
         if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
             resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.PROFILE })
         } else {
+            dispatch(setRoute({
+                route: SCREENS.BUDDY_PROFILE_DETAIL
+            }))
             resetNavigation(navigation, currentRoute?.route)
         }
 
@@ -130,18 +134,18 @@ const UpdateLanguages = ({ navigation }) => {
                         keyboardShouldPersistTaps='always'
                     />
                 </View>
-               
+
             </View>
             <View style={styles.buttonContainer}>
-                    <Button
-                        loading={loading}
-                        onPress={() => {
-                            handleUpdateLanguages()
-                        }}
-                        title={'Change'}
-                        customStyle={styles.continueButton}
-                    />
-                </View>
+                <Button
+                    loading={loading}
+                    onPress={() => {
+                        handleUpdateLanguages()
+                    }}
+                    title={'Change'}
+                    customStyle={styles.continueButton}
+                />
+            </View>
         </SafeAreaView>
     );
 };
@@ -199,11 +203,11 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-       // marginTop: scaleHeight(10),
+        // marginTop: scaleHeight(10),
     },
     continueButton: {
         width: '100%',
-        marginTop:30
+        marginTop: 30
     },
     languageContainer: {},
     languageRow: {

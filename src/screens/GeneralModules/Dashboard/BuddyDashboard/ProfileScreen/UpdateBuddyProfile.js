@@ -58,8 +58,17 @@ const UpdateBuddyProfile = ({ navigation }) => {
     const dayRef = useRef(null);
     const monthRef = useRef(null);
     const yearRef = useRef(null);
+    const hasRendered = useRef(false);
+
+    useEffect(() => {
+        hasRendered.current = true;
+    }, []);
+
+
 
     const handleChange = (name, value) => {
+
+        if (!hasRendered.current) return;
 
         if (name === 'day' && parseInt(value) > 31) {
             value = '31'; // Reset to max valid value if greater than 31
@@ -711,6 +720,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
                                 placeholder='MM'
                                 placeholderTextColor={theme.dark.inputLabel}
                                 maxLength={2}
+                                autoFocus={false}
                                 keyboardType='number-pad'
                                 style={styles.inputStyle}
                                 value={form.month}
@@ -813,7 +823,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
                     }}>
                         <View style={{
                             flexDirection: 'row',
-                          //  marginHorizontal: -5,
+                            //  marginHorizontal: -5,
                             //  marginBottom: scaleHeight(5),
                             flex: 1
                         }}>
@@ -864,7 +874,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
                     }}>
                         <View style={{
                             flexDirection: 'row',
-                           // marginHorizontal: -5,
+                            // marginHorizontal: -5,
                             //  marginBottom: scaleHeight(5),
                             flex: 1
                         }}>

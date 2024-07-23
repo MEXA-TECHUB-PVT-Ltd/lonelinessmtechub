@@ -1,36 +1,53 @@
 //import liraries
-import React from 'react';
-import { View, StyleSheet, SafeAreaView, FlatList } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, SafeAreaView, FlatList, ScrollView, RefreshControl, Text } from 'react-native';
 import { theme } from '../../../../assets';
-import { notiImg } from '../../../../assets/images';
 import NotificationItem from '../../../../components/NotificationItem';
 import Header from '../../../../components/Header';
 import { resetNavigation } from '../../../../utils/resetNavigation';
 import { SCREENS } from '../../../../constant/constants';
 import useBackHandler from '../../../../utils/useBackHandler';
+import FullScreenLoader from '../../../../components/FullScreenLoader';
+import EmptyListComponent from '../../../../components/EmptyListComponent';
+import { scaleHeight, scaleWidth } from '../../../../styles/responsive';
+import { useDispatch, useSelector } from 'react-redux';
+import { getNotifications } from '../../../../redux/notificationsSlice';
+import moment from 'moment';
+import fonts from '../../../../styles/fonts';
+import HorizontalDivider from '../../../../components/HorizontalDivider';
 
-// Sample data for notifications
-const notifications = [
-    {
-        id: 1,
-        image: notiImg,
-        title: 'Notification Title 1',
-        description: 'Notification Description 1',
-        time: '10:00 AM',
-    },
-    {
-        id: 2,
-        image: notiImg,
-        title: 'Notification Title 2',
-        description: 'Notification Description 2',
-        time: '11:30 AM',
-    },
-    // Add more sample data as needed
-];
+const NotificationSection = ({ date, notifications }) => {
+    return (
+        <View style={styles.sectionContainer}>
+            <View style={styles.dateContainer}>
+                <Text style={styles.date}>{moment(date).format('MMMM D, YYYY')}</Text>
+                <HorizontalDivider customStyle={{ width: '60%' }} />
+            </View>
+            {notifications.map(notification => (
+                <NotificationItem key={notification.id} item={notification} />
+            ))}
+        </View>
+    );
+};
 
-// create a component
+const groupNotificationsByDate = (notifications) => {
+    return notifications.reduce((acc, notification) => {
+        const date = moment(notification.created_at).format('YYYY-MM-DD');
+        if (!acc[date]) {
+            acc[date] = [];
+        }
+        acc[date].push(notification);
+        return acc;
+    }, {});
+};
+
+
 const Notification = ({ navigation }) => {
-
+    const dispatch = useDispatch();
+    const { notifications, loading, currentPage, totalPages } = useSelector((state) => state.notifications);
+    const [refreshing, setRefreshing] = useState(false);
+    const [loader, setLoader] = useState(true);
+    const [page, setPage] = useState(1);
 
     const handleBackPress = () => {
         resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
@@ -38,47 +55,133 @@ const Notification = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoader(false);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    useEffect(() => {
+        dispatch(getNotifications({ page, limit: 10 }));
+    }, [dispatch, page]);
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        setPage(1); // Reset to first page
+        dispatch(getNotifications({ page, limit: 10 }))
+            .then(() => setRefreshing(false))
+            .catch(() => setRefreshing(false));
+    };
+
+
+    const handleLoadMore = () => {
+        if (currentPage < totalPages && !loading) {
+            setPage((prevPage) => prevPage + 1);
+        }
+    };
+
+    const showLoader = () => {
+        return <FullScreenLoader
+            title={"Please wait..."}
+            loading={loader} />;
+    };
+
+    const showFooterSpinner = () => {
+        return <FullScreenLoader
+            spinnerStyle={styles.footerSpinner}
+            loading={loading} />;
+    };
+
+    const groupedNotifications = groupNotificationsByDate(notifications);
+
+    const renderSection = ({ item }) => (
+        <NotificationSection date={item} notifications={groupedNotifications[item]} />
+    );
+
+    // const renderItem = ({ item, index }) => (
+    //     <NotificationItem item={item} />
+    // );
+
     return (
         <SafeAreaView style={styles.container}>
             <Header
-                onPress={() => {
-                    resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
-                }}
-                icon={"settings"}
-                title={"Notifications"} 
-                iconPress={()=>{
-                    resetNavigation(navigation, SCREENS.NOTIFICATION_SETTING)
-                }}
-                />
-            <View style={{
-                padding: 25
-            }}>
-
-                <FlatList
-                    data={notifications}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item }) => (
-                        <NotificationItem
-                            image={item.image}
-                            title={item.title}
-                            description={item.description}
-                            time={item.time}
-                        />
-                    )}
-                />
-
-            </View>
+                onPress={() => { handleBackPress(); }}
+                title={"Notifications"}
+            // icon={"settings"}
+            // iconPress={() => {resetNavigation(navigation, SCREENS.NOTIFICATION_SETTING)}}
+            />
+            {loader && !refreshing ? showLoader() :
+                notifications?.length > 0 ? (
+                    <FlatList
+                        data={Object.keys(groupedNotifications)}
+                        renderItem={renderSection}
+                        keyExtractor={(item, index) => item?.id + index.toString()}
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={0.5}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={styles.list}
+                        ListFooterComponent={loading && !refreshing && showFooterSpinner}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={refreshing}
+                                onRefresh={onRefresh}
+                                colors={[theme.dark.primary]}
+                                progressBackgroundColor={theme.dark.secondary}
+                            />
+                        }
+                    />
+                ) : (
+                    <ScrollView
+                        contentContainerStyle={styles.scrollViewContent}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={refreshing}
+                                onRefresh={onRefresh}
+                                colors={[theme.dark.primary]}
+                                progressBackgroundColor={theme.dark.secondary}
+                            />
+                        }
+                    >
+                        <EmptyListComponent title={"No notification yet."} />
+                    </ScrollView>
+                )
+            }
         </SafeAreaView>
     );
 };
 
-// define your styles
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.dark.background,
     },
+    footerSpinner: {
+        width: scaleWidth(120),
+        height: scaleHeight(120),
+    },
+    scrollViewContent: {
+        flex: 1,
+    },
+    list: {
+        paddingHorizontal: 20,
+    },
+    sectionContainer: {
+        //marginBottom: 10,
+    },
+    date: {
+        fontSize: scaleHeight(17),
+        fontFamily: fonts.fontsType.regular,
+        //marginBottom: 10,
+        color: theme.dark.white,
+        marginHorizontal: scaleWidth(15)
+    },
+    dateContainer: {
+        flexDirection: 'row',
+        marginTop: scaleHeight(10)
+    }
 });
 
-//make this component available to the app
 export default Notification;

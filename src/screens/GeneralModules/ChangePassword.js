@@ -62,7 +62,7 @@ const ChangePassword = ({ navigation }) => {
     const handleResetPassword = () => {
         const { newPassword, confirmPassword, oldPassword } = form;
         let valid = true;
-        let newErrors = { newPassword: '', confirmPassword: '', oldPassword };
+        let newErrors = { newPassword: '', confirmPassword: '', oldPassword:'' };
 
         if (oldPassword === '') {
             newErrors.oldPassword = 'Old Password is required.';

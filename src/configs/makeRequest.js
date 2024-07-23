@@ -12,7 +12,7 @@ const apiService = axios.create({
 const makeRequest = (method, endpoint, data = null, params = null, accessToken) => {
     return new Promise((resolve, reject) => {
         const unsubscribe = NetInfo.addEventListener(async (state) => {
-            console.log('state.isConnected', state.isConnected)
+            //console.log('state.isConnected', state.isConnected)
             console.log(endpoint)
             if (state.isConnected) {
                 try {

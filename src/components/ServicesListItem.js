@@ -19,7 +19,6 @@ import { setRoute } from '../redux/appSlice';
 const ServicesListItem = ({ item, navigation, index }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
-    const dateTime = moment(`${item?.booking_date?.split('T')[0]}T${item?.booking_time}Z`);
 
 
     const upComingStatus = () => {
@@ -183,7 +182,8 @@ const ServicesListItem = ({ item, navigation, index }) => {
                             Date/Time
                         </Text>
                         <Text style={styles.infoText}>
-                            {dateTime?.format('DD/MM/YYYY/hh:mma')}
+                            {/* {dateTime?.format('DD/MM/YYYY/hh:mma')} */}
+                            {`${moment(item?.booking_date, "YYYY-MM-DD").format("DD/MM/YYYY")}/${moment(item?.booking_time, "HH:mm:ss").format("hh:mma")}`}
                         </Text>
                     </View>
                 </View>
@@ -319,8 +319,7 @@ const styles = StyleSheet.create({
         fontFamily: fonts.fontsType.regular,
         fontSize: scaleHeight(14),
         alignSelf: 'center',
-
-
+        width: '92%',
     },
 });
 

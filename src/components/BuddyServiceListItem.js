@@ -23,7 +23,7 @@ const BuddyServiceListItem = ({ item, navigation, index, onRequestStatusChange }
     const { showAlert } = useAlert();
     const [requestStatus, setRequestStatus] = useState('');
     const [loading, setLoading] = useState(false);
-    const dateTime = moment(`${item?.booking_date?.split('T')[0]}T${item?.booking_time}Z`);
+    //const dateTime = moment(`${item?.booking_date?.split('T')[0]}T${item?.booking_time}Z`);
 
     const upComingStatus = () => {
         return <View style={[styles.statusContainer, { backgroundColor: getColorByStatus2(item?.canceled_status) },]}>
@@ -229,13 +229,14 @@ const BuddyServiceListItem = ({ item, navigation, index, onRequestStatusChange }
                             Date/Time
                         </Text>
                         <Text style={styles.infoText}>
-                            {dateTime?.format('DD/MM/YYYY/hh:mma')}
+                            {/* {dateTime?.format('DD/MM/YYYY/hh:mma')} */}
+                            {`${moment(item?.booking_date, "YYYY-MM-DD").format("DD/MM/YYYY")}/${moment(item?.booking_time, "HH:mm:ss").format("hh:mma")}`}
                         </Text>
                     </View>
                 </View>
             </View>
 
-            <HorizontalDivider customStyle={{ top: 10 }} />
+           {item?.status !== 'REQUESTED' && index !== 2 && <HorizontalDivider customStyle={{ top: 10 }} />}
 
             {index !== 2 && <View style={styles.locationSection}>
                 <Icon name="location-on" type="material" color={theme.dark.secondary} />
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
         fontFamily: fonts.fontsType.regular,
         fontSize: scaleHeight(14),
         alignSelf: 'center',
-
+        width: '92%',
 
     },
 });

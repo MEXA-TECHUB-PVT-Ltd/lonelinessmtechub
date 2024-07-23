@@ -20,6 +20,7 @@ export const getAllBuddyRequest = createAsyncThunk(
             const data = await makeRequest('GET', `${baseEndpoint}?page=${page}&limit=${limit}`, null, null, bearerToken);
             return data;
         } catch (error) {
+            console.log('error',error)
             return error
         }
     }

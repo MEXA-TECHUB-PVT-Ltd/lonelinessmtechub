@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     SafeAreaView,
     StyleSheet,
@@ -10,329 +10,372 @@ import {
     TouchableOpacity,
     Image,
     ImageBackground,
+    TextInput,
 } from 'react-native';
 
 import SwipeableFlatList from 'react-native-swipeable-list';
-import { blockUserChat, deleteChat, homeLogo, reportChat, searchServices } from '../../../assets/images';
+import { blockUser, blockUserChat, deleteChat, deleteUser, homeLogo, reportChat, searchServices } from '../../../assets/images';
 import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import { theme } from '../../../assets';
 import fonts from '../../../styles/fonts';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
-
-
-
-const darkColors = {
-    background: '#121212',
-    primary: '#BB86FC',
-    primary2: '#3700b3',
-    secondary: '#03DAC6',
-    onBackground: '#FFFFFF',
-    error: '#CF6679',
-};
-
-const colorEmphasis = {
-    high: 0.87,
-    medium: 0.6,
-    disabled: 0.38,
-};
+import io from 'socket.io-client';
+import { SOCKET_URL } from '../../../configs/apiUrl';
+import { useDispatch, useSelector } from 'react-redux';
+import { setRoute } from '../../../redux/appSlice';
+import moment from 'moment';
+import CustomModal from '../../../components/CustomModal';
+import { userBuddyAction } from '../../../redux/userBuddyActionSlice';
+import { useAlert } from '../../../providers/AlertContext';
+import HorizontalDivider from '../../../components/HorizontalDivider';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import FullScreenLoader from '../../../components/FullScreenLoader';
+import { Icon } from 'react-native-elements';
+import * as Animatable from 'react-native-animatable';
 
 const extractItemKey = item => {
-    return item.id.toString();
+    return item?.userId?.toString();
 };
 
-
-
-function renderItemSeparator() {
-    return <View style={styles.itemSeparator} />;
-}
-
-const contacts = [
-    {
-        name: 'Raphael',
-        subject: 'amet lorem semper auctor. Mauris vel turpis.',
-        date: 'Sun, 17th, 2019',
-        text: 'How are you today?',
-        id: 1,
-        time: '2 min ago',
-        count: 3,
-        avatarUrl: 'https://i.pravatar.cc/300'
-    },
-    {
-        name: 'Aquila',
-        subject: 'quis, pede. Praesent',
-        date: 'Thu, 11th, 2019',
-        text: 'Don’t miss to attend the meeting.',
-        id: 11,
-        time: "2 min ago",
-        count: 0,
-        avatarUrl: 'https://i.pravatar.cc/400'
-    },
-    {
-        name: 'Geraldine',
-        subject: 'purus sapien, gravida non,',
-        date: 'Tue, 24th, 2019',
-        text: 'Hey! Can you join the meeting?',
-        id: 21,
-        time: "2 min ago",
-        count: 0,
-        avatarUrl: 'https://i.pravatar.cc/500'
-    },
-    {
-        name: 'Geraldine',
-        subject: 'nec enim. Nunc ut erat. Sed nunc',
-        date: 'Thu, 5th, 2020',
-        text: 'How are you today?',
-        id: 31,
-        time: "2 min ago",
-        count: 0,
-        avatarUrl: 'https://i.pravatar.cc/700'
-    },
-    {
-        name: 'Mariko',
-        subject: 'lobortis mauris. Suspendisse',
-        date: 'Sat, 25th, 2019',
-        text: 'Have a good day 🌸',
-        id: 41,
-        time: "2 min ago",
-        count: 0,
-        avatarUrl: 'https://i.pravatar.cc/900'
-    },
-    {
-        name: 'Nicole',
-        subject: 'egestas.',
-        date: 'Tue, 8th, 2020',
-        text: 'How are you today?',
-        id: 51,
-        time: "2 min ago",
-        count: 0,
-        avatarUrl: 'https://i.pravatar.cc/800'
-    },
-    {
-        name: 'Solomon',
-        subject: 'ac mattis ornare, lectus',
-        date: 'Fri, 10th, 2019',
-        text: 'How are you today?',
-        id: 61,
-        time: "2 min ago",
-        count: 0,
-        avatarUrl: 'https://i.pravatar.cc/10'
-    },
-    {
-        name: 'Diana',
-        subject: 'Suspendisse',
-        date: 'Sun, 16th, 2018',
-        text: 'How are you today?',
-        id: 71,
-        time: "2 min ago",
-        count: 0,
-        avatarUrl: 'https://i.pravatar.cc/250'
-    },
-    {
-        name: 'Hammett',
-        subject: 'eu enim. Etiam imperdiet dictum',
-        date: 'Mon, 11th, 2019',
-        text: 'How are you today?',
-        id: 81,
-        time: "2 min ago",
-        count: 0,
-        avatarUrl: 'https://i.pravatar.cc/88'
-    },
-    {
-        name: 'Brenna',
-        subject: 'neque. Sed eget lacus. Mauris non',
-        date: 'Wed, 22nd, 2019',
-        text: 'How are you today?',
-        id: 91,
-        time: "2 min ago",
-        count: 0,
-        avatarUrl: 'https://i.pravatar.cc/55'
-    },
-    {
-        name: 'Zelda',
-        subject: 'enim non nisi.',
-        date: 'Sat, 27th, 2020',
-        text: 'How are you today?',
-        id: 101,
-        time: "2 min ago",
-        count: 0,
-        avatarUrl: 'https://i.pravatar.cc/66'
-    },
-    {
-        name: 'Irene',
-        subject: 'aptent taciti sociosqu ad litora torquent per',
-        date: 'Wed, 8th, 2020',
-        text: 'Have a good day 🌸',
-        id: 111,
-        time: "2 min ago",
-        count: 0,
-        avatarUrl: 'https://i.pravatar.cc/77'
-    },
-];
-
-
 const Chat = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const { showAlert } = useAlert();
+    const [socket, setSocket] = useState(null);
+    const [filteredContacts, setFilteredContacts] = useState([]);
+    const { userLoginInfo, role } = useSelector((state) => state.auth);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [deleteModal, setDeleteModal] = useState(false);
+    const [contactLoader, setContactLoader] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [allContacts, setAllContacts] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [selectedUser, setSelectedUser] = useState({
+        user_name: '',
+        user_id: ''
+    });
+    const user_id = userLoginInfo?.user?.id;
+    const blockTitle = role === "USER" ? "Block Buddy?" : "Block User?";
 
+    useEffect(() => {
+        const newSocket = io(SOCKET_URL);
+        setSocket(newSocket);
+        newSocket.on('connect', () => {
+            console.log('Socket connected');
+        });
 
-    const archiveItem = itemId => {
-        Alert.alert(
-            'DISHONESTY ALERT',
-            "Not gonna Archive it. We're actually are gonna just delete it.",
-            [
-                {
-                    text: 'Just delete it?',
-                    //onPress: () => deleteItem(itemId),
-                    style: 'destructive',
-                },
-                {
-                    text: 'Cancel',
-                    onPress: () => console.log('Cancel Pressed'),
-                    style: 'cancel',
-                },
-            ],
-        );
+        return () => {
+            newSocket.disconnect();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
+        if (socket) {
+            const userId = parseInt(user_id);
+            socket.emit("registerUser", userId);
+            socket.on('contacts', (contactList) => {
+                const filteredContacts = contactList?.filter(contact => contact?.userId !== userId);
+                setAllContacts(filteredContacts);
+                setFilteredContacts(filteredContacts);
+                setContactLoader(false)
+            });
+        }
+
+        return () => {
+            if (socket) {
+                socket.off("contacts");
+            }
+        };
+    }, [socket, user_id, dispatch]);
+
+    const handleSearchChange = (query) => {
+        setSearchQuery(query);
+        if (query.trim() === '') {
+            setFilteredContacts(allContacts);
+        } else {
+            const filtered = allContacts.filter(contact =>
+                contact.fullName && contact.fullName.toLowerCase().includes(query.toLowerCase())
+            );
+            setFilteredContacts(filtered);
+        }
     };
 
-    const snoozeItem = itemId => {
-        Alert.alert(
-            'DISHONESTY ALERT',
-            "Not gonna Snooze it. We're actually are gonna just delete it.",
-            [
-                {
-                    text: 'Just delete it?',
-                    //onPress: () => deleteItem(itemId),
-                    style: 'destructive',
-                },
-                {
-                    text: 'Cancel',
-                    onPress: () => console.log('Cancel Pressed'),
-                    style: 'cancel',
-                },
-            ],
-        );
+    const handleChatNavigation = (item) => {
+        const userId = parseInt(user_id);
+        if (socket) {
+            socket.emit("markMessagesAsRead", {
+                userId: userId,
+                contactId: item?.userId,
+            });
+        }
+        dispatch(setRoute({
+            route: SCREENS.MAIN_DASHBOARD,
+            receiver_id: item?.userId,
+            user_name: item?.fullName,
+            status: item?.status,
+            image_url: item?.images[0]?.image_url,
+            blockStatus: item?.blockStatus
+        }));
+        resetNavigation(navigation, SCREENS.GENERAL_CHAT);
     };
 
-    const QuickActions = (index, qaItem) => {
+    const handleBlockOpenModal = () => {
+        setModalVisible(true);
+    };
+
+    const handleDeleteOpenModal = () => {
+        setDeleteModal(true);
+    };
+
+    const handleBlockCloseModal = () => {
+        setModalVisible(false);
+    };
+
+    const handleDeleteCloseModal = () => {
+        setDeleteModal(false);
+    };
+
+    const handleBlockUser = (userId) => {
+        const userPayload = {
+            user_id: userId,
+            type: "BLOCK"
+        };
+
+        const buddyPayload = {
+            buddy_id: userId,
+            type: "BLOCK"
+        };
+        const finalPayload = role === "USER" ? buddyPayload : userPayload;
+        dispatch(userBuddyAction(finalPayload)).then((result) => {
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message);
+                handleBlockCloseModal();
+            } else if (result?.payload?.status === "error") {
+                showAlert("Error", "error", result?.payload?.message);
+            }
+        });
+    };
+
+    const handleReportNavigation = (user) => {
+        const updatedRoute = {
+            buddy_name: user?.user_name,
+            route: SCREENS.CHAT,
+            ...(role === "USER" ? { buddy_id: user?.user_id } : { user_id: user?.user_id })
+        };
+
+        dispatch(setRoute(updatedRoute));
+        resetNavigation(navigation, SCREENS.REPORT_BUDDY);
+    };
+
+    const handleDeleteChat = () => {
+        console.log('hello')
+    }
+
+    const clearSearch = () => {
+        setIsSearching(false)
+        setSearchQuery('');
+        setFilteredContacts(allContacts);
+    };
+
+
+    const QuickActions = (index, item) => {
         return (
             <View style={styles.qaContainer}>
                 <TouchableOpacity
                     style={styles.swiperButton}
                     onPress={() => {
-
+                        setSelectedUser({ ...selectedUser, user_name: item?.fullName, user_id: item?.userId });
+                        handleBlockOpenModal();
                     }}>
                     <Image
-                        style={{ width: 36, height: 36, marginTop: 25, marginLeft: 20 }}
+                        style={styles.icon}
                         source={blockUserChat} />
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={styles.swiperButton}
                     onPress={() => {
-
-                    }
-                    }>
+                        setSelectedUser(prevState => {
+                            const updatedUser = { ...prevState, user_name: item?.fullName, user_id: item?.userId };
+                            handleReportNavigation(updatedUser);
+                            return updatedUser;
+                        });
+                    }}>
                     <Image
-                        style={{ width: 36, height: 36, marginTop: 25, marginLeft: 20 }}
+                        style={styles.icon}
                         source={reportChat} />
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={styles.swiperButton}
                     onPress={() => {
-
+                        setSelectedUser({ ...selectedUser, user_name: item?.fullName, user_id: item?.userId });
+                        handleDeleteOpenModal();
                     }}>
                     <Image
-                        style={{ width: 36, height: 36, marginTop: 25, marginLeft: 20 }}
+                        style={styles.icon}
                         source={deleteChat} />
                 </TouchableOpacity>
-
             </View>
         );
     };
 
-    const Item = ({ item, backgroundColor, textColor, deleteItem }) => {
-        return (
-            <TouchableOpacity 
-            activeOpacity={1}
+    const renderSkeleton = () => {
+        return <SkeletonPlaceholder speed={900}
+            backgroundColor={theme.dark.inputBg}>
+            <View style={styles.item}>
+                <View style={[styles.avatar]}>
+                    <SkeletonPlaceholder.Item width={50} height={50} borderRadius={25} />
+                    {/* <SkeletonPlaceholder.Item width={10} height={10} borderRadius={5} style={styles.greenDot} /> */}
+                </View>
+                <View style={styles.messageContainer}>
+                    <View style={[styles.nameAndTime, { flex: 1 }]}>
+                        <SkeletonPlaceholder.Item width={120} height={20} borderRadius={4} />
+                        <SkeletonPlaceholder.Item width={50} height={20} borderRadius={4} />
+                    </View>
+                    <View style={styles.textContainer}>
+                        <SkeletonPlaceholder.Item width={200} height={20} borderRadius={4} />
+                        <SkeletonPlaceholder.Item width={30} height={20} borderRadius={4} />
+                    </View>
+                </View>
+            </View>
+        </SkeletonPlaceholder>
 
-            onPress={() => {
-                resetNavigation(navigation, SCREENS.GENERAL_CHAT)
-            }}>
+    }
+
+    const renderSkeletons = () => {
+        return Array.from({ length: 10 }).map((_, index) => (
+            <React.Fragment key={index}>
+                {renderSkeleton()}
+            </React.Fragment>
+        ));
+    };
+
+    const Item = ({ item }) => {
+        return (
+            <TouchableOpacity
+                activeOpacity={1}
+                onPress={() => {
+                    handleChatNavigation(item);
+                }}>
                 <View style={styles.item}>
                     <View style={styles.avatar}>
-                        <Image source={{ uri: item.avatarUrl }} style={styles.avatarImage} />
-                        <View style={styles.greenDot} />
+                        <Image source={{ uri: item?.images[0]?.image_url }} style={styles.avatarImage} />
+                        {item?.status !== "offline" && <View style={styles.greenDot} />}
                     </View>
                     <View style={styles.messageContainer}>
-                        <View style={{ flexDirection: 'row' }}>
+                        <View style={styles.nameAndTime}>
                             <Text style={styles.name} numberOfLines={1}>
-                                {item.name}
+                                {item?.fullName}
                             </Text>
-                            <Text style={styles.time}>
-                                {'2 min ago'}
-                            </Text>
+                            {item?.lastMessageTimestamp != null && <Text style={styles.time}>
+                                {moment(item?.lastMessageTimestamp).fromNow()}
+                            </Text>}
                         </View>
-                        {/* <Text style={styles.subject} numberOfLines={1}>
-                            Subject: {item.subject}
-                        </Text> */}
-                        <View style={{ flexDirection: 'row' }}>
+                        <View style={styles.textContainer}>
                             <Text style={styles.text}>
-                                {item.text}
+                                {item?.lastMessage}
                             </Text>
-                            {item.count > 0 && (
-                                <View style={{
-                                    backgroundColor: theme.dark.secondary,
-                                    height: 20,
-                                    width: 20,
-                                    borderRadius: 10,
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
+                            {item?.unreadCount > 0 && (
+                                <View style={styles.countContainer}>
                                     <Text style={styles.count}>
-                                        {item.count}
+                                        {item?.unreadCount}
                                     </Text>
                                 </View>
                             )}
                         </View>
                     </View>
                 </View>
-                {/* <View /> */}
             </TouchableOpacity>
         );
     };
 
+    const renderLoader = () => {
+        return <FullScreenLoader loading={contactLoader} />
+    }
+
     return (
         <>
-            <StatusBar barStyle="dark-content" />
+            {/* <StatusBar barStyle="dark-content" /> */}
             <SafeAreaView style={styles.container}>
                 <View style={styles.headerContainer}>
-                    <Image style={{
-                        width: scaleWidth(30),
-                        height: scaleHeight(35),
-                        alignSelf: 'center',
-                        left: scaleWidth(30)
-                    }} source={homeLogo} />
-                    <Text style={styles.headerText}>Chat</Text>
-                    <TouchableOpacity onPress={() => {
-                        resetNavigation(navigation, SCREENS.SEARCH_SERVICES)
-                    }}>
-                        <Image style={{
-                            width: scaleWidth(27),
-                            height: scaleHeight(27),
-                            alignSelf: 'center',
-                            right: scaleWidth(30)
-                        }} source={searchServices} />
-                    </TouchableOpacity>
-                </View>
-                <SwipeableFlatList
-                    keyExtractor={extractItemKey}
-                    data={contacts}
-                    renderItem={({ item }) => (
-                        <Item item={item} />
+                    {isSearching ? (
+                        <Animatable.View
+                            animation={'flipInX'}
+                            duration={1000}
+                            style={styles.inputContainer}>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setIsSearching(false)
+                                }} style={styles.backButton}>
+                                <Icon name="arrow-back" type="material" color={theme.dark.secondary} />
+                            </TouchableOpacity>
+                            <TextInput
+                                style={styles.searchInput}
+                                placeholder="Search contacts..."
+                                placeholderTextColor={theme.dark.inputLabel}
+                                value={searchQuery}
+                                onChangeText={handleSearchChange}
+                                autoFocus={true}
+
+                            />
+                        </Animatable.View>
+                    ) : (
+                        <>
+                            <Image style={styles.homeLogo} source={homeLogo} />
+                            <Text style={styles.headerText}>Chat</Text>
+                            <TouchableOpacity onPress={() => setIsSearching(true)}>
+                                <Image style={styles.searchServices} source={searchServices} />
+                            </TouchableOpacity>
+                        </>
                     )}
-                    maxSwipeDistance={240}
-                    renderQuickActions={({ index, item }) => QuickActions(index, item)}
-                    contentContainerStyle={styles.contentContainerStyle}
-                    shouldBounceOnMount={true}
-                //ItemSeparatorComponent={renderItemSeparator}
+                </View>
+                <HorizontalDivider customStyle={{ marginVertical: 5 }} />
+                {
+                    contactLoader ? renderLoader() : <SwipeableFlatList
+                        keyExtractor={extractItemKey}
+                        data={filteredContacts}
+                        renderItem={({ item }) => (
+                            <Item item={item} />
+                        )}
+                        maxSwipeDistance={240}
+                        renderQuickActions={({ index, item }) => QuickActions(index, item)}
+                        contentContainerStyle={styles.contentContainerStyle}
+                        shouldBounceOnMount={true}
+                    />
+                }
+
+                <CustomModal
+                    isVisible={modalVisible}
+                    onClose={handleBlockCloseModal}
+                    headerTitle={blockTitle}
+                    imageSource={blockUser}
+                    isParallelButton={true}
+                    text={`Are you sure you want to Block ${selectedUser?.user_name}?`}
+                    parallelButtonText1={"Cancel"}
+                    parallelButtonText2={"Yes, Block"}
+                    parallelButtonPress1={() => {
+                        handleBlockCloseModal();
+                    }}
+                    parallelButtonPress2={() => {
+                        handleBlockUser(selectedUser?.user_id);
+                    }}
+                />
+
+                <CustomModal
+                    isVisible={deleteModal}
+                    onClose={handleDeleteCloseModal}
+                    headerTitle={"Delete Chat?"}
+                    imageSource={deleteUser}
+                    isParallelButton={true}
+                    text={`Are you sure you want to delete this chat?`}
+                    parallelButtonText1={"Cancel"}
+                    parallelButtonText2={"Yes, Delete"}
+                    parallelButtonPress1={() => {
+                        handleDeleteCloseModal();
+                    }}
+                    parallelButtonPress2={() => {
+                        handleDeleteChat();
+                    }}
                 />
             </SafeAreaView>
         </>
@@ -341,28 +384,42 @@ const Chat = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
         backgroundColor: theme.dark.primary,
     },
     headerContainer: {
-        height: 80,
+        height: 70,
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingTop: 10,
         flexDirection: 'row'
     },
     headerText: {
-        fontSize: 26,
+        fontSize: scaleHeight(26),
         fontFamily: fonts.fontsType.semiBold,
         color: theme.dark.secondary,
     },
+    homeLogo: {
+        width: scaleWidth(30),
+        height: scaleHeight(35),
+        alignSelf: 'center',
+        left: scaleWidth(30)
+    },
+    searchServices: {
+        width: scaleWidth(27),
+        height: scaleHeight(27),
+        alignSelf: 'center',
+        right: scaleWidth(30)
+    },
     item: {
         backgroundColor: theme.dark.primary,
-        // height: 80,
         flexDirection: 'row',
         padding: 10,
     },
     messageContainer: {
-        flex: 1
+        flex: 1,
+    },
+    nameAndTime: {
+        flexDirection: 'row',
     },
     name: {
         fontSize: 16,
@@ -375,20 +432,22 @@ const styles = StyleSheet.create({
         color: theme.dark.inputLabel,
         fontFamily: fonts.fontsType.regular,
     },
-    subject: {
-        fontSize: 14,
-        color: darkColors.onBackground,
-        opacity: colorEmphasis.high,
-        fontWeight: 'bold',
-        textShadowColor: darkColors.secondary,
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 4,
+    textContainer: {
+        flexDirection: 'row'
     },
     text: {
         fontSize: 13,
         color: theme.dark.inputLabel,
         fontFamily: fonts.fontsType.light,
         flex: 1
+    },
+    countContainer: {
+        backgroundColor: theme.dark.secondary,
+        height: 20,
+        width: 20,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     count: {
         fontSize: 11,
@@ -408,11 +467,6 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         alignSelf: 'center'
     },
-    itemSeparator: {
-        height: StyleSheet.hairlineWidth,
-        backgroundColor: darkColors.onBackground,
-        opacity: colorEmphasis.medium,
-    },
     qaContainer: {
         flex: 1,
         flexDirection: 'row',
@@ -423,27 +477,16 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         marginBottom: scaleHeight(15)
     },
-    button: {
-        width: 80,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    buttonText: {
-        fontWeight: 'bold',
-        opacity: colorEmphasis.high,
-    },
-    button1Text: {
-        color: darkColors.primary,
-    },
-    button2Text: {
-        color: darkColors.secondary,
-    },
-    button3Text: {
-        color: darkColors.error,
+    icon: {
+        width: 36,
+        height: 36,
+        marginTop: 25,
+        marginLeft: 20
     },
     contentContainerStyle: {
         flexGrow: 1,
         backgroundColor: theme.dark.primary,
+        marginHorizontal: 20
     },
     greenDot: {
         position: 'absolute',
@@ -453,6 +496,28 @@ const styles = StyleSheet.create({
         width: 8,
         borderRadius: 4,
         backgroundColor: '#00CD46',
+    },
+    searchInput: {
+        width: '85%',
+        height: scaleHeight(45),
+        backgroundColor: theme.dark.inputBg,
+        borderRadius: 30,
+        borderColor: theme.dark.inputLabel,
+        borderWidth: 1,
+        padding: 10,
+        color: theme.dark.inputLabel,
+
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'center',
+
+    },
+    backButton: {
+        marginRight: 10,
+        alignSelf: 'center',
     },
 });
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import { scaleHeight, scaleWidth } from '../styles/responsive';
@@ -7,8 +7,16 @@ import { theme } from '../assets';
 
 const CheckBox = ({ label, labelStyle, checkBoxStyle,
     onStatusChange, mode = 'multiple',
-    selectedOption, setSelectedOption, formField }) => {
-    const [checked, setChecked] = useState(false);
+    selectedOption, setSelectedOption, formField, isRemember = false, isChecked }) => {
+    const [checked, setChecked] = useState(isRemember ? isChecked : false);
+
+    useEffect(() => {
+        if (isRemember) {
+            setChecked(isChecked);
+        }
+    }, [isChecked, isRemember]);
+
+
 
     // const handleToggle = () => {
     //     setChecked(!checked);

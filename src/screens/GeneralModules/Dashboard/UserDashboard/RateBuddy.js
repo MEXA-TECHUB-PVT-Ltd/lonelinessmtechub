@@ -65,10 +65,11 @@ const RateBuddy = ({ navigation }) => {
             // addRate: false
         }
         const newPayload = currentRoute?.addRate === true ? payload : updatePayload;
-        console.log(newPayload)
+        //console.log('newPayloaddddd', newPayload)
+        const message = currentRoute?.addRate === true ? "Rating added successfully." : "Rating updated successfully."
         dispatch(rateToBuddy({ payload: newPayload, addRate: currentRoute?.addRate })).then((result) => {
             if (result?.payload?.status === "success") {
-                showAlert("Success", "success", result?.payload?.message);
+                showAlert("Success", "success", message);
                 setTimeout(() => {
                     handleBackPress();
                 }, 3000);

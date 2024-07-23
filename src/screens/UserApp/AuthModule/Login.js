@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
@@ -20,15 +20,20 @@ import { useAlert } from '../../../providers/AlertContext';
 import { alertLogo, successText } from '../../../assets/images';
 import Spinner from '../../../components/Spinner';
 import Modal from "react-native-modal";
+import { setAsRemember } from '../../../redux/rememberMeSlice';
 
 const Login = ({ navigation }) => {
     const dispatch = useDispatch();
     const { loading } = useSelector((state) => state.auth);
+    const { rememberMe } = useSelector((state) => state.rememberMe)
     const { showAlert } = useAlert();
     const [form, setForm] = useState({ email: '', password: '' });
     const [errors, setErrors] = useState({ email: '', password: '' });
     const [showPassword, setShowPassword] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
+    const [isRemember, setIsRemember] = useState(false);
+
+
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
 
@@ -52,6 +57,13 @@ const Login = ({ navigation }) => {
         return true;
     };
     useBackHandler(handleBackPress);
+
+    useEffect(() => {
+        if (rememberMe) {
+            setForm({ email: rememberMe.email, password: rememberMe.password });
+            setIsRemember(true)
+        }
+    }, [rememberMe]);
 
     const handleForgetPassNavigation = () => {
         resetNavigation(navigation, SCREENS.FORGET_PASSWORD)
@@ -97,6 +109,13 @@ const Login = ({ navigation }) => {
             }
             dispatch(login(credentials)).then((result) => {
                 if (result?.payload?.status === "success") {
+                    if (isRemember) {
+                        const rememberPayload = { email: form.email, password: form.password };
+                        dispatch(setAsRemember(rememberPayload));
+
+                    } else {
+                        dispatch(setAsRemember(null))
+                    }
                     showHideModal();
                     showAlert("Success", "success", result?.payload?.message)
                 } else {
@@ -162,6 +181,11 @@ const Login = ({ navigation }) => {
         </Modal>
     }
 
+    const handleCheckBoxStatusChange = (formField, label, isChecked) => {
+        console.log(`${label} is ${isChecked ? 'checked' : 'unchecked'}`, isChecked);
+        setIsRemember(isChecked)
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <TouchableOpacity
@@ -224,7 +248,13 @@ const Login = ({ navigation }) => {
                     <View style={styles.forgetPassContainer}>
 
                         <View style={{ flex: 1 }}>
-                            <CheckBox label={"Remember Me"} />
+                            <CheckBox
+                                label={"Remember Me"}
+                                onStatusChange={handleCheckBoxStatusChange}
+                                formField={"remember_me"}
+                                isRemember={true}
+                                isChecked={isRemember}
+                            />
                         </View>
 
                         <TouchableOpacity onPress={() => {

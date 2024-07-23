@@ -28,13 +28,14 @@ import { acceptRejectBuddyRequest } from '../../../../redux/UserDashboard/accept
 import { userBuddyAction } from '../../../../redux/userBuddyActionSlice';
 import { setRoute } from '../../../../redux/appSlice';
 import { releasePayment } from '../../../../redux/UserDashboard/releasePaymentSlice';
-import { cardWalletPaymentTransfer } from '../../../../redux/UserDashboard/cardWalletPaymentTransferSlice';
 import * as Animatable from 'react-native-animatable';
 import { useStripe, CardField } from '@stripe/stripe-react-native';
 import { updateUserLoginInfo } from '../../../../redux/AuthModule/signInSlice';
 import { attachPaymentMethod } from '../../../../redux/PaymentSlices/attachPaymentMethodSlice';
 import { createCustomer } from '../../../../redux/PaymentSlices/createCustomerSlice';
 import CrossIcon from 'react-native-vector-icons/AntDesign'
+import { calculateAge } from '../../../../utils/calculateAge';
+import { cardWalletPaymentTransfer } from '../../../../redux/UserDashboard/cardWalletPaymentTransferSlice';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const UserServiceDetails = ({ navigation }) => {
@@ -68,9 +69,10 @@ const UserServiceDetails = ({ navigation }) => {
 
     // requested button show/hide conditions
 
-    const isRequested = buddyDetail?.status === "REQUESTED";
+    //const isRequested = buddyDetail?.status === "REQUESTED";
     const isBuddyRequestBackRequested = buddyDetail?.buddy_request_back?.buddy_status === "REQUESTED";
-    const canRespondToRequest = (isRequested || isBuddyRequestBackRequested) && !loading;
+    const canRespondToRequest = (isBuddyRequestBackRequested) && !loading;
+    // const canRespondToRequest = (isRequested || isBuddyRequestBackRequested) && !loading;
 
     // pay for service section show/hide conditions 
 
@@ -241,21 +243,6 @@ const UserServiceDetails = ({ navigation }) => {
     }
 
 
-    function calculateAge(birthdate) {
-        const today = new Date();
-        const birthDate = new Date(birthdate);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDifference = today.getMonth() - birthDate.getMonth();
-        if (
-            monthDifference < 0 ||
-            (monthDifference === 0 && today.getDate() < birthDate.getDate())
-        ) {
-            age--;
-        }
-
-        return age;
-    }
-
 
     const handleAcceptRejectRequest = (status) => {
         setRequestLoader(true);
@@ -308,6 +295,7 @@ const UserServiceDetails = ({ navigation }) => {
             request_id: buddyDetail?.id
         }
         dispatch(releasePayment(releasePaymentPayload)).then((result) => {
+
             if (result?.payload?.status === "success") {
                 showAlert("Success", "success", result?.payload?.message);
                 handleRelaseCloseModal();
@@ -335,8 +323,9 @@ const UserServiceDetails = ({ navigation }) => {
     }
 
     const handleWalletPayment = (method, payment_method_id = "pm_xyz-testing-id") => {
+
         let amount = parseInt(buddyDetail?.hours * buddyDetail?.user?.hourly_rate)
-        const payload = {
+        const paymentPayload = {
             payment_method_id: payment_method_id,
             buddy_id: buddyDetail?.buddy_id,
             request_id: buddyDetail?.id,
@@ -344,7 +333,8 @@ const UserServiceDetails = ({ navigation }) => {
             method: method,   //[CARD,WALLET]
             amount: amount
         }
-        dispatch(cardWalletPaymentTransfer(payload)).then((result) => {
+        console.log('payload', paymentPayload)
+        dispatch(cardWalletPaymentTransfer(JSON.stringify(paymentPayload))).then((result) => {
             setPaymentLoader(false)
             if (result?.payload?.status === "success") {
                 showAlert("Success", "success", result?.payload?.message);
@@ -354,7 +344,19 @@ const UserServiceDetails = ({ navigation }) => {
                     handleBackPress();
                 }, 3000);
 
-            } else if (result?.payload?.status === "error") {
+            }
+
+            else if (result?.payload?.errors) {
+                setPaymentLoader(false)
+                setOverlayOpened(false);
+                handleServicePayCloseModal();
+                setTimeout(() => {
+                    showAlert("Error", "error", result?.payload?.errors)
+                }, 1000);
+
+            }
+
+            else if (result?.payload?.status === "error") {
                 setPaymentLoader(false)
                 setOverlayOpened(false);
                 handleServicePayCloseModal();
@@ -475,6 +477,16 @@ const UserServiceDetails = ({ navigation }) => {
         } catch (error) {
             console.error('Error creating payment method:', error);
         }
+    }
+
+
+    const handleBuddyRatingNav = () => {
+        dispatch(setRoute({
+            ...currentRoute,
+            route: SCREENS.USER_SERVICE_DETAIL,
+            buddy_id: buddyDetail?.buddy_id
+        }))
+        resetNavigation(navigation, SCREENS.RATING)
     }
 
 
@@ -613,7 +625,7 @@ const UserServiceDetails = ({ navigation }) => {
 
                                 <TouchableOpacity
                                     onPress={() => {
-                                        resetNavigation(navigation, SCREENS.RATING)
+                                        handleBuddyRatingNav();
                                     }}
                                     style={{
                                         flexDirection: 'row',
@@ -743,9 +755,9 @@ const UserServiceDetails = ({ navigation }) => {
                             <DetailItem label="Date" value={moment(buddyDetail?.booking_date?.split('T')[0]).format('DD/MM/YYYY')} />
                             <DetailItem label="Time" value={moment(buddyDetail?.booking_time, 'HH:mm').format('hh:mm A')} />
                             <DetailItem label="Hour" value={`${buddyDetail?.hours} hours`} />
-                            <DetailItem label="Status" value={getNameByStatus(buddyDetail?.status)} customTextStyle={{
+                            {(buddyDetail?.status !== "PAID" && buddyDetail?.status !== "COMPLETED") && <DetailItem label="Status" value={getNameByStatus(buddyDetail?.status)} customTextStyle={{
                                 color: getColorByStatus(buddyDetail?.status)
-                            }} />
+                            }} />}
 
                             {/* requested back section */}
 
@@ -814,7 +826,7 @@ const UserServiceDetails = ({ navigation }) => {
                             {/* rating section */}
                             {buddyDetail?.status === "COMPLETED" &&
                                 buddyDetail?.rating?.id != null && <View style={{
-                                    marginTop: '40%'
+                                    //marginTop: '40%'  i have commited this due to spaces if need uncommit it.
                                 }}>
                                     <HorizontalDivider />
                                     <View style={{
@@ -966,25 +978,52 @@ const UserServiceDetails = ({ navigation }) => {
                         }}
                     />
                     {canReleasePayment && (
+
                         <Button
                             onPress={handleRelaseOpenModal}
-                            disabled={buddyDetail?.is_released}
-                            title={!buddyDetail?.is_released ? "Release Payment" : "Payment Released"}
+                            disabled={buddyDetail?.is_released || buddyDetail?.canceled_status === "REQUESTED" ? true : false}
+                            title={
+                                buddyDetail?.canceled_status === "REQUESTED"
+                                    ? "Cancelled Payment"
+                                    : !buddyDetail?.is_released
+                                        ? "Release Payment"
+                                        : "Payment Released"
+                            }
                             customStyle={{
                                 width: '48%',
                                 marginBottom: scaleHeight(0),
-                                backgroundColor: !buddyDetail?.is_released ?
-                                    theme.dark.secondary :
-                                    theme.dark.disableButton
+                                backgroundColor: buddyDetail?.is_released || buddyDetail?.canceled_status === "REQUESTED"
+                                    ? theme.dark.disableButton
+                                    : theme.dark.secondary
                             }}
                             textCustomStyle={{
                                 fontFamily: fonts.fontsType.bold,
                                 fontSize: scaleHeight(13),
-                                color: !buddyDetail?.is_released ?
-                                    theme.dark.buttonText :
-                                    theme.dark.disableButtonText
+                                color: buddyDetail?.is_released || buddyDetail?.canceled_status === "REQUESTED"
+                                    ? theme.dark.disableButtonText
+                                    : theme.dark.buttonText
                             }}
                         />
+
+                        // <Button
+                        //     onPress={handleRelaseOpenModal}
+                        //     disabled={buddyDetail?.is_released}
+                        //     title={!buddyDetail?.is_released ? "Release Payment" : "Payment Released"}
+                        //     customStyle={{
+                        //         width: '48%',
+                        //         marginBottom: scaleHeight(0),
+                        //         backgroundColor: !buddyDetail?.is_released ?
+                        //             theme.dark.secondary :
+                        //             theme.dark.disableButton
+                        //     }}
+                        //     textCustomStyle={{
+                        //         fontFamily: fonts.fontsType.bold,
+                        //         fontSize: scaleHeight(13),
+                        //         color: !buddyDetail?.is_released ?
+                        //             theme.dark.buttonText :
+                        //             theme.dark.disableButtonText
+                        //     }}
+                        // />
                     )}
                 </View>
             )}
@@ -1150,12 +1189,6 @@ const styles = StyleSheet.create({
         color: theme.dark.inputLabel,
         marginHorizontal: 8,
         top: scaleHeight(20)
-    },
-    labelContainer: {
-        position: 'absolute',
-        top: '40%',
-        left: '40%',
-        transform: [{ translateX: -50 }, { translateY: -50 }],
     },
     indicator: {
         width: 8,

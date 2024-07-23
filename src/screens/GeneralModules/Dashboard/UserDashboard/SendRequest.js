@@ -58,9 +58,9 @@ const SendRequest = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    useEffect(() => {
-        dispatch(getAllCategories())
-    }, [dispatch])
+    // useEffect(() => {
+    //     dispatch(getAllCategories())
+    // }, [dispatch])
 
     const handleCategoryPress = (item) => {
         setCategory(item?.id)
@@ -207,7 +207,7 @@ const SendRequest = ({ navigation }) => {
                         Select Category
                     </Text>
                     <CategoryList
-                        categories={categories}
+                        categories={currentRoute?.categories}
                         onPress={handleCategoryPress} />
 
                     <Text style={styles.label}>{"Date of Services"}</Text>

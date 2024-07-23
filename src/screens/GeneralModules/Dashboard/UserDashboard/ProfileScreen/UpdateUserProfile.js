@@ -100,7 +100,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
 
     const handleChangeLocation = (screen) => {
         dispatch(setRoute({
-            route: SCREENS.UPDATE_BUDDY_PROFILE
+            route: SCREENS.UPDATE_USER_PROFILE
         }))
         resetNavigation(navigation, screen)
     }

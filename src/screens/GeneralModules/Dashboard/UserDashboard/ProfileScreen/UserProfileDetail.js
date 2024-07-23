@@ -24,18 +24,23 @@ const UserProfileDetail = ({ navigation }) => {
     const { showAlert } = useAlert();
     const { userDetail, loading } = useSelector((state) => state.getUserDetail)
     const { address } = useSelector((state) => state.getAddress)
+    const { currentRoute } = useSelector((state) => state.app)
     const { userLoginInfo } = useSelector((state) => state.auth)
     const user_id = userLoginInfo?.user?.id
 
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.PROFILE })
+        if (currentRoute.route === SCREENS.GENERAL_CHAT) {
+            resetNavigation(navigation, SCREENS.GENERAL_CHAT)
+        } else {
+            resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.PROFILE })
+        }
         return true;
     };
     useBackHandler(handleBackPress);
 
     useEffect(() => {
-        dispatch(getUserDetail(user_id))
-    }, [dispatch, user_id])
+        dispatch(getUserDetail(currentRoute?.chat_id || user_id))
+    }, [dispatch, user_id, currentRoute])
 
     useEffect(() => {
         if (userDetail) {
@@ -66,8 +71,8 @@ const UserProfileDetail = ({ navigation }) => {
                 onPress={() => {
                     handleBackPress();
                 }}
-                title={"Profile Details"}
-                icon={"edit"}
+                title={currentRoute?.chat_id ? "User Detail" : "Profile Details"}
+                icon={currentRoute?.chat_id ? null : "edit"}
                 iconPress={() => {
                     handleUpdateProfile();
                 }}

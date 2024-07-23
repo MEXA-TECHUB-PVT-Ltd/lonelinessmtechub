@@ -23,11 +23,14 @@ import { getUserDetail } from '../../../redux/BuddyDashboard/userLikesDetailSlic
 import { setRoute } from '../../../redux/appSlice';
 import CustomModal from '../../../components/CustomModal';
 import { logout } from '../../../redux/AuthModule/signInSlice';
+import { setCurrentUserIndex } from '../../../redux/currentUserIndexSlice';
+import { setLastIndex } from '../../../redux/setIndexesSlice';
+import { setIsAppOpened } from '../../../redux/appOpenedSlice';
 
 
 const userList = [
     { id: '1', icon: WalletIcon, text: 'My Wallet', route: SCREENS.MY_WALLET, isRoute: false },
-    { id: '2', icon: PremiumIcon, text: 'Go Premium', route: SCREENS.PREMIUM, isRoute: false },
+    { id: '2', icon: PremiumIcon, text: 'Go Premium', route: SCREENS.PREMIUM, isRoute: true },
     { id: '3', icon: ProfileIcon, text: 'Update Profile', route: SCREENS.UPDATE_USER_PROFILE, isRoute: true },
     { id: '4', icon: PasswordIcon, text: 'Change Password', route: SCREENS.CHANGE_PASSWORD, isRoute: false },
     { id: '5', icon: RateAppIcon, text: 'Rate App', isRoute: false },
@@ -65,8 +68,6 @@ const Profile = ({ navigation }) => {
     const user_id = userLoginInfo?.user?.id
     const [modalVisible, setModalVisible] = useState(false);
 
-
-
     useEffect(() => {
         dispatch(getUserDetail(user_id));
     }, [dispatch, user_id])
@@ -81,7 +82,8 @@ const Profile = ({ navigation }) => {
         if (isRoute) {
             dispatch(setRoute({
                 route: SCREENS.MAIN_DASHBOARD,
-                type: type
+                type: type,
+                isProfilePremium: true
             }))
         }
         resetNavigation(navigation, route)
@@ -96,7 +98,10 @@ const Profile = ({ navigation }) => {
     };
 
     const handleLogout = () => {
-        dispatch(logout())
+        dispatch(logout());
+        dispatch(setCurrentUserIndex(null));
+        dispatch(setLastIndex(0));
+        dispatch(setIsAppOpened(false))
         handleCloseModal();
     }
 

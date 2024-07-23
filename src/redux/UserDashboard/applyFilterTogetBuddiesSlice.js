@@ -11,7 +11,7 @@ const initialState = {
 
 function buildQueryString(params) {
     return Object.entries(params)
-        .filter(([key, value]) => value !== null && value !== undefined)
+        .filter(([key, value]) => value !== null && value !== undefined && value !== '' && value !== false)
         .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
         .join('&');
 }
