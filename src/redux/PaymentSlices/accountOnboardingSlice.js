@@ -12,8 +12,9 @@ export const accountOnboarding = createAsyncThunk(
     'accountOnboarding/accountOnboarding',
     async (_, { getState, rejectWithValue }) => {
         try {
-            const { bearerToken } = getState().signup;
-            const token = `Bearer ${bearerToken}`;
+            const { signup } = getState();
+            const { auth } = getState();
+            const token = auth.token ? `Bearer ${auth.token}` : `Bearer ${signup.bearerToken}`;
             const data = await makeRequest('POST', '/payments/connected-account/onboarding', null, null, token);
             return data;
         } catch (error) {

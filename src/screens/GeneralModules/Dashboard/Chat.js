@@ -305,7 +305,7 @@ const Chat = ({ navigation }) => {
                             style={styles.inputContainer}>
                             <TouchableOpacity
                                 onPress={() => {
-                                    setIsSearching(false)
+                                    clearSearch();
                                 }} style={styles.backButton}>
                                 <Icon name="arrow-back" type="material" color={theme.dark.secondary} />
                             </TouchableOpacity>

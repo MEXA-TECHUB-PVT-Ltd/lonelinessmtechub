@@ -25,7 +25,7 @@ const filterOptions = [
     { label: "Buddy's Requests", value: "REQUEST_BACK" },
 ];
 
-const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setFilter, setIsFilterApllied }) => {
+const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setFilter, setIsFilterApllied, searchQuery }) => {
     const dispatch = useDispatch();
     const { serviceRequests, loading, currentPage, totalPages } = useSelector((state) => state.getAllServiceRequests);
     const { lastIndex } = useSelector((state) => state.setLastIndex);
@@ -96,6 +96,12 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setF
         setIsFilterApllied(false)
         dispatch(getAllServiceRequests({ page: 1, limit: 10, status: selectedStatus }))
     }
+
+    // Function to filter service requests based on search query
+    const filterServiceRequests = (requests, query) => {
+        if (!query) return requests;
+        return requests?.filter(request => request?.buddy?.full_name.toLowerCase().includes(query.toLowerCase()));
+    };
 
     const renderItem = ({ item }) => (
         <ServicesListItem
@@ -199,6 +205,7 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setF
         );
     };
 
+    const filteredServiceRequests = filterServiceRequests(serviceRequests, searchQuery);
 
     return (
 
@@ -215,10 +222,10 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setF
                     selectedIndex={selectedIndex}
                 />
                 {
-                    loading && !refreshing ? showLoader() : serviceRequests?.length > 0 ? <View>
+                    loading && !refreshing ? showLoader() : filteredServiceRequests?.length > 0 ? <View>
 
                         <FlatList
-                            data={serviceRequests}
+                            data={filteredServiceRequests}
                             renderItem={renderItem}
                             keyExtractor={(item, index) => item + index}
                             onEndReached={handleLoadMore}

@@ -334,22 +334,12 @@ const UpdateBuddyProfile = ({ navigation }) => {
         const imageType = selectedImages[0]?.endsWith('.png') ? 'image/png' : 'image/jpeg';
         const formData = new FormData();
 
-        formData.append('file', {
-            uri: selectedImages[0],
-            type: imageType,
-            name: `image_${Date.now()}.${imageType.split('/')[1]}`,
-        });
-
-        formData.append('file', {
-            uri: selectedImages[1],
-            type: imageType,
-            name: `image_${Date.now()}.${imageType.split('/')[1]}`,
-        });
-
-        formData.append('file', {
-            uri: selectedImages[2],
-            type: imageType,
-            name: `image_${Date.now()}.${imageType.split('/')[1]}`,
+        selectedImages?.forEach((image, index) => {
+            formData.append('files', {
+                uri: image,
+                type: imageType,
+                name: `image_${Date.now()}_${index}.${imageType.split('/')[1]}`,
+            });
         });
         formData.append('full_name', inputValues?.full_name);
         formData.append('about', inputValues?.about);
@@ -361,6 +351,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
         formData.append('dob', birthDate);
         dispatch(updateProfile(formData)).then((result) => {
             if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message)
                 setTimeout(() => {
                     handleBackPress();
                 }, 3000);
@@ -905,7 +896,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
                     {userDetail?.languages != null && <LanguagesItem languages={userDetail?.languages} />}
 
                     <Button
-                        //loading={loading}
+                        loading={loading}
                         onPress={() => {
                             handleUpdateProfile()
                         }}

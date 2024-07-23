@@ -134,9 +134,17 @@ const Premium = ({ navigation }) => {
     }, [subscription, subscription_name]);
 
 
-    const handleUserUpdate = () => {
+    const handleUserUpdate = (subscriptionStatus, selectedPlan) => {
+        const planMap = {
+            "1 Months": "month",
+            "12 Months": "year",
+            "6 Months": "quarter"
+        };
+
+        const plan = planMap[selectedPlan] || 'quarter';
         const updatedInfo = {
-            is_subscribed: true
+            is_subscribed: subscriptionStatus,
+            subscription_name: plan
         };
         dispatch(updateUserLoginInfo(updatedInfo));
     };
@@ -155,7 +163,7 @@ const Premium = ({ navigation }) => {
                 dispatch(payToSubscribe(paymentPayload)).then((result) => {
                     if (result?.payload?.status === "success") {
                         setPaymentLoader(false)
-                        handleUserUpdate();
+                        handleUserUpdate(true, selectedPlan);
                         // console.log("Payment sent--->", result?.payload)
                         showAlert("Success", "success", result?.payload?.message)
                         setTimeout(() => {
@@ -222,9 +230,11 @@ const Premium = ({ navigation }) => {
         dispatch(cancelSubscription()).then((result) => {
             if (result?.payload?.status === "success") {
                 showAlert("Success", "success", result?.payload?.message)
-                // setTimeout(() => {
-                //     handleBackPress();
-                // }, 3000);
+
+                setTimeout(() => {
+                    handleUserUpdate(false, selectedPlan);
+                    dispatch(getAllSubscription())
+                }, 3000);
             } else {
                 setPaymentLoader(false)
                 showAlert("Error", "error", result?.payload?.message)

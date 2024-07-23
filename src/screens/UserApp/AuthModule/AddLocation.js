@@ -25,10 +25,12 @@ import { useAlert } from '../../../providers/AlertContext';
 import { setDataPayload } from '../../../redux/appSlice';
 import { updateProfile } from '../../../redux/AuthModule/updateProfileSlice';
 import { login } from '../../../redux/AuthModule/signInSlice';
+import { setAsRemember } from '../../../redux/rememberMeSlice';
 
 const AddLocation = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
+    const { loading } = useSelector((state) => state.createProfile);
     const { dataPayload } = useSelector((state) => state.app);
     const { credentials } = useSelector((state) => state.tempCredentials);
     const [modalVisible, setModalVisible] = useState(false);
@@ -108,7 +110,7 @@ const AddLocation = ({ navigation }) => {
             const imageType = newPayload?.file?.endsWith('.png') ? 'image/png' : 'image/jpeg';
             const formData = new FormData();
 
-            formData.append('file', {
+            formData.append('files', {
                 uri: newPayload?.file,
                 type: imageType,
                 name: `image_${Date.now()}.${imageType.split('/')[1]}`,
@@ -140,6 +142,7 @@ const AddLocation = ({ navigation }) => {
     };
 
     const showHideModal = () => {
+        dispatch(setAsRemember(null))
         setModalVisible(true);
         setTimeout(() => {
             setModalVisible(false);
@@ -287,6 +290,7 @@ const AddLocation = ({ navigation }) => {
 
             <View style={styles.buttonContainer}>
                 <Button
+                    loading={loading}
                     onPress={() => {
                         handleAddLocation();
                     }}

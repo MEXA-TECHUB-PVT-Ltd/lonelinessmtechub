@@ -23,14 +23,16 @@ import Geolocation from '@react-native-community/geolocation';
 import { setDataPayload } from '../../../redux/appSlice';
 import { updateProfile } from '../../../redux/AuthModule/updateProfileSlice';
 import { login } from '../../../redux/AuthModule/signInSlice';
+import { setAsRemember } from '../../../redux/rememberMeSlice';
 
 const EnableLocation = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
+    const { loading } = useSelector((state) => state.createProfile);
     const { dataPayload } = useSelector((state) => state.app);
     const { credentials } = useSelector((state) => state.tempCredentials);
     const [modalVisible, setModalVisible] = useState(false);
-    // console.log('dataPayload', dataPayload)
+    //console.log('dataPayload', dataPayload)
     // console.log('credentials', credentials)
 
 
@@ -55,7 +57,7 @@ const EnableLocation = ({ navigation }) => {
                 const imageType = newPayload?.file?.endsWith('.png') ? 'image/png' : 'image/jpeg';
                 const formData = new FormData();
 
-                formData.append('file', {
+                formData.append('files', {
                     uri: newPayload?.file,
                     type: imageType,
                     name: `image_${Date.now()}.${imageType.split('/')[1]}`,
@@ -64,16 +66,16 @@ const EnableLocation = ({ navigation }) => {
                 formData.append('about', newPayload?.about);
                 formData.append('gender', newPayload?.gender);
                 formData.append('looking_for_gender', newPayload?.looking_for_gender);
-                formData.append('category_ids', JSON.stringify([8, 7, 6]));
+                formData.append('category_ids', JSON.stringify(newPayload?.category_ids));
                 formData.append('latitude', newPayload?.latitude);
                 formData.append('longitude', newPayload?.longitude);
                 formData.append('dob', newPayload?.dob);
-                formData.append('phone_country_code', newPayload?.phone_country_code);
+                formData.append('phone_country_code', newPayload?.phone_country_code?.replace('+', ''));
                 formData.append('phone_number', newPayload?.phone_number);
-                 //console.log(JSON.stringify(formData))
+                //console.log(JSON.stringify(formData))
                 //dispatch(setDataPayload(newPayload));
                 dispatch(updateProfile(formData)).then((result) => {
-                    console.log('result data', result?.payload)
+                    //console.log('result data', result?.payload)
                     if (result?.payload?.status === "success") {
                         showHideModal();
                     } else if (result?.payload?.status === "error") {
@@ -95,6 +97,7 @@ const EnableLocation = ({ navigation }) => {
     }
 
     const showHideModal = () => {
+        dispatch(setAsRemember(null))
         setModalVisible(true);
         setTimeout(() => {
             setModalVisible(false);
@@ -179,6 +182,7 @@ const EnableLocation = ({ navigation }) => {
                         }} />
 
                     <Button
+                        loading={loading}
                         onPress={() => {
                             handleWithCurrentLocation();
                         }}

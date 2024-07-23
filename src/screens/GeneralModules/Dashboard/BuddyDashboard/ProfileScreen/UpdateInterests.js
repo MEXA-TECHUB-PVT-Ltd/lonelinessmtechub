@@ -72,9 +72,10 @@ const UpdateInterests = ({ navigation }) => {
         const newPayload = { category_ids: categoryIds };
 
         const formData = new FormData();
-        formData.append('category_ids', newPayload?.category_ids);
+        formData.append('category_ids', JSON.stringify(newPayload?.category_ids));
         dispatch(updateProfile(formData)).then((result) => {
             if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message)
                 setTimeout(() => {
                     handleBackPress();
                 }, 3000);

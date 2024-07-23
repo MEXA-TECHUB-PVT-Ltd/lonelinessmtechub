@@ -24,12 +24,11 @@ const BuddySignup = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
     const { dataPayload } = useSelector((state) => state.app)
+    const { loading } = useSelector((state) => state.signup)
     const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' });
     const [errors, setErrors] = useState({ email: '', password: '', confirmPassword: '' });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPass] = useState(false);
-
-    console.log(dataPayload);
 
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
@@ -267,6 +266,7 @@ const BuddySignup = ({ navigation }) => {
             </CustomLayout>
             <View style={styles.buttonContainer}>
                 <Button
+                    loading={loading}
                     onPress={() => {
                         handleSignup();
                     }}
