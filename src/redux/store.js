@@ -53,16 +53,25 @@ import userLikesDetailReducer from './BuddyDashboard/userLikesDetailSlice';
 import changePasswordReducer from './AuthModule/changePasswordSlice';
 import getPolicyTermsReducer from './getPolicyTermsSlice';
 import deleteAccountReducer from './deleteAccountSlice';
+import checkChatPaymentReducer from './PaymentSlices/checkChatPaymentSlice';
+import unReadCountReducer from './unReadCountSlice';
+import currentUserIndexReducer from './currentUserIndexSlice';
+import cancelSubscriptionReducer from './PaymentSlices/cancelSubscriptionSlice';
+import notificationsReducer from './notificationsSlice';
+import rememberMeReducer from './rememberMeSlice';
 
 const persistConfig = {
     key: 'root',
     storage: AsyncStorage,
-    whitelist: ['auth', 'signup']  // Persist 'auth' and 'signup' slices
+    whitelist: ['auth', 'signup', 'rememberMe']  // Persist 'auth' and 'signup' slices
 };
 
 const rootReducer = combineReducers({
     auth: signInReducer,
     signup: signupReducer,
+    app: appReducer,
+    rememberMe: rememberMeReducer,
+    setLastIndex: setIndexesReducer,
     createProfile: updateProfileReducer,
     verifyEmail: verifyEmailReducer,
     verifyEmailCode: verifyEmailCodeReducer,
@@ -110,8 +119,11 @@ const rootReducer = combineReducers({
     changePassword: changePasswordReducer,
     getPolicyAndTerms: getPolicyTermsReducer,
     deleteAccount: deleteAccountReducer,
-    app: appReducer,
-    setLastIndex: setIndexesReducer
+    checkChatPayment: checkChatPaymentReducer,
+    unReadCount: unReadCountReducer,
+    currentUserIndex: currentUserIndexReducer,
+    cancelSubscription: cancelSubscriptionReducer,
+    notifications: notificationsReducer
 
 });
 

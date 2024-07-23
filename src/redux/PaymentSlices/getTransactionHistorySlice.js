@@ -19,6 +19,7 @@ export const getTransactionHistory = createAsyncThunk(
             const { token } = getState().auth;
             const bearerToken = `Bearer ${token}`;
             let url = `${baseEndpoint}?page=${page}&limit=${limit}&is_refunded=${is_refunded}`;
+            console.log(url)
             const data = await makeRequest('GET', url, null, null, bearerToken);
             return data;
         } catch (error) {
@@ -46,7 +47,7 @@ const getTransactionHistorySlice = createSlice({
                 }
                 state.currentPage = action.meta.arg.page;
                 state.totalPages = action.payload.result?.transactions?.totalPages;
-                state.walletAmount = action.payload.result?.wallet_amount
+                state.walletAmount = action.payload.result?.wallet_amount || 0
             })
             .addCase(getTransactionHistory.rejected, (state, action) => {
                 state.loading = false;

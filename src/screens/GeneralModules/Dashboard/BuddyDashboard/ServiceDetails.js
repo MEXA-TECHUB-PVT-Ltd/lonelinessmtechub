@@ -21,11 +21,14 @@ import { acceptRejectUserRequest } from '../../../../redux/BuddyDashboard/accept
 import { useAlert } from '../../../../providers/AlertContext';
 import { color } from '@rneui/base';
 import { setRoute } from '../../../../redux/appSlice';
+import { getUserDetailByService } from '../../../../redux/BuddyDashboard/getUserDetailByServiceSlice';
+import { calculateAge } from '../../../../utils/calculateAge';
 
 const ServiceDetails = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
-    const { requestDetail, loading } = useSelector((state) => state.getRequestById)
+    // const { requestDetail, loading } = useSelector((state) => state.getRequestById)
+    const { userDetail: requestDetail, loading } = useSelector((state) => state.getUserDetailByService)
     const { address } = useSelector((state) => state.getAddress)
     const { currentRoute } = useSelector((state) => state.app)
     const [requestLoader, setRequestLoader] = useState(false);
@@ -38,12 +41,13 @@ const ServiceDetails = ({ navigation }) => {
     useBackHandler(handleBackPress);
 
     useEffect(() => {
-        dispatch(getRequestById(currentRoute?.request_id))
+        // dispatch(getRequestById(currentRoute?.request_id))
+        dispatch(getUserDetailByService(currentRoute?.request_id))
     }, [dispatch, currentRoute])
 
     useEffect(() => {
         if (requestDetail) {
-            const { longitude, latitude } = requestDetail?.result?.user?.location
+            const { longitude, latitude } = requestDetail?.user?.location
             dispatch(getAddressByLatLong({
                 lat: latitude,
                 long: longitude
@@ -52,20 +56,6 @@ const ServiceDetails = ({ navigation }) => {
 
     }, [dispatch, requestDetail])
 
-    function calculateAge(birthdate) {
-        const today = new Date();
-        const birthDate = new Date(birthdate);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDifference = today.getMonth() - birthDate.getMonth();
-        if (
-            monthDifference < 0 ||
-            (monthDifference === 0 && today.getDate() < birthDate.getDate())
-        ) {
-            age--;
-        }
-
-        return age;
-    }
 
     const getNameByStatus = (status) => {
         switch (status) {
@@ -105,16 +95,16 @@ const ServiceDetails = ({ navigation }) => {
         }
     }
 
-    const user = requestDetail?.result?.user;
+    const user = requestDetail?.user;
     const location = user?.location;
-    const booking = requestDetail?.result;
+    const booking = requestDetail;
 
     const country = location?.country || '';
     const city = location?.city || '';
     const category = booking?.category || {};
     const full_name = user?.full_name || '';
     const gender = user?.gender || '';
-    const hourly_rate = user?.hourly_rate || '';
+    const hourly_rate = booking?.booking_price || '';
     const dob = user?.dob || '';
     const images = user?.images || [];
     const bookingDate = booking?.booking_date || '';
@@ -125,9 +115,9 @@ const ServiceDetails = ({ navigation }) => {
     const date = bookingDate ? moment(bookingDate.split('T')[0]).format('DD/MM/YYYY') : '';
     const time = bookingTime ? moment(bookingTime, 'HH:mm').format('hh:mm A') : '';
 
-    const requestedByMeDate = requestDetail?.result?.buddy_request_back?.booking_date ? moment(requestDetail?.result?.buddy_request_back?.booking_date.split('T')[0]).format('DD/MM/YYYY') : '';
-    const requestedByMeTime = requestDetail?.result?.buddy_request_back?.booking_time ? moment(requestDetail?.result?.buddy_request_back?.booking_time, 'HH:mm').format('hh:mm A') : '';
-    const requestedByMeLocation = requestDetail?.result?.buddy_request_back?.buddy_location ? requestDetail?.result?.buddy_request_back?.buddy_location : '';
+    const requestedByMeDate = requestDetail?.buddy_request_back?.booking_date ? moment(requestDetail?.buddy_request_back?.booking_date.split('T')[0]).format('DD/MM/YYYY') : '';
+    const requestedByMeTime = requestDetail?.buddy_request_back?.booking_time ? moment(requestDetail?.buddy_request_back?.booking_time, 'HH:mm').format('hh:mm A') : '';
+    const requestedByMeLocation = requestDetail?.buddy_request_back?.buddy_location ? requestDetail?.buddy_request_back?.buddy_location : '';
 
     const handleAcceptRejectRequest = (status) => {
         setRequestLoader(true);
@@ -242,16 +232,16 @@ const ServiceDetails = ({ navigation }) => {
                         <DetailItem label="Time" value={time} />
                         <DetailItem label="Hours For Booking" value={`${hours} HOURS`} />
                         <DetailItem label="Total Price" value={`$${hourly_rate}`} />
-                        <DetailItem label="Status" value={getNameByStatus(status)} customTextStyle={{
+                        {(status !== "PAID" && status !== "COMPLETED") && <DetailItem label="Status" value={getNameByStatus(status)} customTextStyle={{
                             color: getColorByStatus(status)
-                        }} />
+                        }} />}
                     </View>
 
                     <HorizontalDivider customStyle={{
                         marginTop: scaleHeight(18)
                     }} />
 
-                    {requestDetail?.result?.buddy_request_back?.buddy_status != null && <View>
+                    {requestDetail?.buddy_request_back?.buddy_status != null && <View>
 
                         <View style={styles.statusSection}>
                             <Text style={{
@@ -266,10 +256,10 @@ const ServiceDetails = ({ navigation }) => {
                             </Text>
                             <TouchableOpacity
                                 style={[styles.statusContainer, {
-                                    backgroundColor: getColorByStatus(requestDetail?.result?.buddy_request_back?.buddy_status)
+                                    backgroundColor: getColorByStatus(requestDetail?.buddy_request_back?.buddy_status)
                                 }]}
                             >
-                                <Text style={[styles.text, { fontSize: 12, fontFamily: fonts.fontsType.semiBold }]}>{getNameByStatus(requestDetail?.result?.buddy_request_back?.buddy_status)}</Text>
+                                <Text style={[styles.text, { fontSize: 12, fontFamily: fonts.fontsType.semiBold }]}>{getNameByStatus(requestDetail?.buddy_request_back?.buddy_status)}</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -298,8 +288,8 @@ const ServiceDetails = ({ navigation }) => {
                 {(status === "REQUESTED" &&
                     status !== "ACCEPTED" &&
                     status !== "REJECTED" &&
-                    (requestDetail?.result?.buddy_request_back?.buddy_status !== "ACCEPTED" &&
-                        requestDetail?.result?.buddy_request_back?.buddy_status !== "REJECTED")) &&
+                    (requestDetail?.buddy_request_back?.buddy_status !== "ACCEPTED" &&
+                        requestDetail?.buddy_request_back?.buddy_status !== "REJECTED")) &&
                     <Button
                         onPress={handleRequestBack}
                         title={"Request Back"}

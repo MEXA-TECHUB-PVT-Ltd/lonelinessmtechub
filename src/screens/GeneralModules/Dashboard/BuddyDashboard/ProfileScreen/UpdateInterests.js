@@ -15,6 +15,7 @@ import fonts from '../../../../../styles/fonts';
 import { scaleHeight } from '../../../../../styles/responsive';
 import Header from '../../../../../components/Header';
 import { updateProfile } from '../../../../../redux/AuthModule/updateProfileSlice';
+import { setRoute } from '../../../../../redux/appSlice';
 
 
 const UpdateInterests = ({ navigation }) => {
@@ -30,6 +31,9 @@ const UpdateInterests = ({ navigation }) => {
         if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
             resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.PROFILE })
         } else {
+            dispatch(setRoute({
+                route: SCREENS.USER_PROFILE_DETAIL
+            }))
             resetNavigation(navigation, currentRoute?.route)
         }
 
@@ -116,7 +120,7 @@ const UpdateInterests = ({ navigation }) => {
                     onPress={() => {
                         handleSelectedInterests();
                     }}
-                    title={'Continue'}
+                    title={'Save'}
                 />
             </View>
 

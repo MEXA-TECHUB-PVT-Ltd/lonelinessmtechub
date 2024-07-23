@@ -3,7 +3,8 @@ import { View, Image, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { scaleHeight, scaleWidth } from '../styles/responsive';
 import fonts from '../styles/fonts';
 import { theme } from '../assets';
-import { filterHome } from '../assets/images';
+import { filterHome, filterHomeOff } from '../assets/images';
+import { useSelector } from 'react-redux';
 
 const CustomHeader = ({
     homeLogo,
@@ -16,8 +17,10 @@ const CustomHeader = ({
     textStyle,
     searchButtonStyle,
     searchIconStyle,
-    hideFilterButton
+    hideFilterButton,
+    isFilterApplied
 }) => {
+    const { role } = useSelector((state) => state.auth)
     return (
         <View style={[styles.container, containerStyle]}>
             <Image resizeMode='contain' source={homeLogo} style={[styles.homeLogo, imageStyle]} />
@@ -26,8 +29,8 @@ const CustomHeader = ({
                 <Image source={searchIcon} style={[styles.searchIcon, searchIconStyle]} />
             </TouchableOpacity>
 
-            {hideFilterButton && <TouchableOpacity style={[styles.searchButton, searchButtonStyle]} onPress={onFilterPress}>
-                <Image source={filterHome} style={[styles.searchIcon, searchIconStyle]} />
+            {hideFilterButton && role === "USER" && <TouchableOpacity style={[styles.searchButton, searchButtonStyle]} onPress={onFilterPress}>
+                <Image source={isFilterApplied ? filterHome : filterHomeOff} style={[styles.searchIcon, searchIconStyle]} />
             </TouchableOpacity>}
         </View>
     );

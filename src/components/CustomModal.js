@@ -4,6 +4,7 @@ import Modal from 'react-native-modal';
 import Button from './ButtonComponent';
 import { theme } from '../assets';
 import fonts from '../styles/fonts';
+import Icon from 'react-native-vector-icons/Entypo'
 import { scaleHeight, scaleWidth } from '../styles/responsive';
 
 const CustomModal = ({
@@ -27,7 +28,8 @@ const CustomModal = ({
     parallelButtonPress1,
     parallelButtonPress2,
     loading,
-    secondaryLoader
+    secondaryLoader,
+    isCross = false
 }) => {
     return (
         <Modal
@@ -41,6 +43,17 @@ const CustomModal = ({
             onBackdropPress={onClose}
         >
             <View style={styles.modalContainer}>
+                {isCross && <TouchableOpacity
+                    onPress={() => {
+                        onClose();
+                    }}
+                    style={styles.crossStyle}
+                >
+                    <Icon
+                        name='cross'
+                        size={40}
+                        color={theme.dark.secondary} />
+                </TouchableOpacity>}
                 {imageSource && (
                     <Image
                         resizeMode='contain'
@@ -139,6 +152,12 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: scaleHeight(-15)
     },
+    crossStyle: {
+        alignSelf: 'flex-end',
+        marginTop: scaleHeight(-15),
+        marginBottom: scaleHeight(-10),
+        marginEnd: scaleHeight(-15)
+    }
 });
 
 export default CustomModal;

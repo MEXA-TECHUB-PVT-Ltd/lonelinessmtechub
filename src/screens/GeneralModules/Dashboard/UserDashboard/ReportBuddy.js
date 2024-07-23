@@ -27,23 +27,33 @@ const ReportBuddy = ({ navigation }) => {
         if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
             resetNavigation(navigation, currentRoute?.route, { screen: SCREENS.HOME })
         } else {
-
-            const buddyReturnPayload = {
-                route: SCREENS.MY_LIKES,
-                user_id: currentRoute?.user_id,
+            if (currentRoute?.route === SCREENS.GENERAL_CHAT) {
+                resetNavigation(navigation, SCREENS.GENERAL_CHAT)
             }
 
-            const userReturnPayload = {
-                route: SCREENS.MAIN_DASHBOARD,
-                buddy_id: currentRoute?.buddy_id,
-                request_id: currentRoute?.request_id
-
+            else if (currentRoute?.route === SCREENS.CHAT) {
+                resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.CHAT })
             }
 
-            const returnPayload = role === "USER" ? userReturnPayload : buddyReturnPayload;
+            else {
+                const buddyReturnPayload = {
+                    route: SCREENS.MY_LIKES,
+                    user_id: currentRoute?.user_id,
+                }
 
-            dispatch(setRoute(returnPayload))
-            resetNavigation(navigation, currentRoute?.route)
+                const userReturnPayload = {
+                    route: SCREENS.MAIN_DASHBOARD,
+                    buddy_id: currentRoute?.buddy_id,
+                    request_id: currentRoute?.request_id
+
+                }
+
+                const returnPayload = role === "USER" ? userReturnPayload : buddyReturnPayload;
+
+                dispatch(setRoute(returnPayload))
+                resetNavigation(navigation, currentRoute?.route)
+            }
+
         }
 
         return true;

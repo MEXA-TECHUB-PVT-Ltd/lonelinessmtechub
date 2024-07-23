@@ -22,12 +22,14 @@ import { attachPaymentMethod } from '../../../../redux/PaymentSlices/attachPayme
 import { payToSubscribe } from '../../../../redux/PaymentSlices/payToSubscribeSlice';
 import { updateUserLoginInfo } from '../../../../redux/AuthModule/signInSlice';
 import * as Animatable from 'react-native-animatable';
+import { cancelSubscription } from '../../../../redux/PaymentSlices/cancelSubscriptionSlice';
 
 const Premium = ({ navigation }) => {
     const dispatch = useDispatch();
     const { createPaymentMethod } = useStripe();
     const { showAlert } = useAlert();
     const { subscription, loading } = useSelector((state) => state.getSubscription)
+    const { loading: cancelLoader } = useSelector((state) => state.cancelSubscription)
     const { userLoginInfo } = useSelector((state) => state.auth)
     const [selectedPlan, setSelectedPlan] = useState('1 Months');
     const [planDetail, setPlanDetail] = useState(null);
@@ -35,7 +37,9 @@ const Premium = ({ navigation }) => {
     const [paymentLoader, setPaymentLoader] = useState(false);
     const [keyboardStatus, setKeyboardStatus] = useState(false);
     const [cardDetails, setCradDetails] = useState({});
-    const { customer_id } = userLoginInfo?.user
+    const { currentRoute } = useSelector((state) => state.app)
+    const { customer_id, is_subscribed, subscription_id, subscription_name } = userLoginInfo?.user
+    const buttonTitle = is_subscribed ? "Unsubscribe" : "Pay Now!";
 
     const renderPlanFeatures = () => {
         const featuresByPlan = {
@@ -72,11 +76,10 @@ const Premium = ({ navigation }) => {
         ));
     };
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME });
+        resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: currentRoute?.isProfilePremium ? SCREENS.PROFILE : SCREENS.HOME });
         return true;
     };
     useBackHandler(handleBackPress);
-
 
     useEffect(() => {
         dispatch(getAllSubscription())
@@ -107,6 +110,28 @@ const Premium = ({ navigation }) => {
             keyboardDidHideListener.remove();
         };
     }, []);
+
+
+    useEffect(() => {
+        if (subscription.length > 0) {
+            const userSubscription = subscription.find(plan => plan.interval === subscription_name);
+            if (userSubscription) {
+                let planDuration = "";
+                if (userSubscription.interval === "year") {
+                    planDuration = "12 Months";
+                } else if (userSubscription.interval === "quarter") {
+                    planDuration = "6 Months";
+                } else if (userSubscription.interval === "month") {
+                    planDuration = "1 Months";
+                }
+                setSelectedPlan(planDuration);
+                setPlanDetail(userSubscription);
+            } else {
+                setSelectedPlan("1 Months");
+                setPlanDetail(subscription[0]);
+            }
+        }
+    }, [subscription, subscription_name]);
 
 
     const handleUserUpdate = () => {
@@ -191,6 +216,20 @@ const Premium = ({ navigation }) => {
         } catch (error) {
             console.error('Error creating payment method:', error);
         }
+    }
+
+    const handleCancelSubscription = () => {
+        dispatch(cancelSubscription()).then((result) => {
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message)
+                // setTimeout(() => {
+                //     handleBackPress();
+                // }, 3000);
+            } else {
+                setPaymentLoader(false)
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
     }
 
     if (loading) {
@@ -315,10 +354,11 @@ const Premium = ({ navigation }) => {
                 </View>
 
                 <Button
+                    loading={is_subscribed && cancelLoader}
                     onPress={() => {
-                        setOverlayOpened(true);
+                        is_subscribed ? handleCancelSubscription() : setOverlayOpened(true);
                     }}
-                    title={"Pay Now!"}
+                    title={buttonTitle}
                 />
 
                 {/* {

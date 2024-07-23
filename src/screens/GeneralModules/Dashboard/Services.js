@@ -1,5 +1,5 @@
 //import liraries
-import React, { Component, useState } from 'react';
+import React, { Component, useRef, useState } from 'react';
 import { StyleSheet, SafeAreaView } from 'react-native';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { homeLogo, searchServices } from '../../../assets/images';
@@ -12,7 +12,12 @@ import { useSelector } from 'react-redux';
 
 const Services = ({ navigation }) => {
     const { role } = useSelector((state) => state.auth);
-    const [selectedIndex, setSelectedIndex] = useState(0);
+    const { lastIndex } = useSelector((state) => state.setLastIndex);
+    const [selectedIndex, setSelectedIndex] = useState(lastIndex);
+    const [isFilter, setFilter] = useState(false);
+    const [isFilterApplied, setIsFilterApllied] = useState(false);
+    // const [selectedIndex, setSelectedIndex] = useState(0);
+
     const handleSearchPress = () => {
         resetNavigation(navigation, SCREENS.SEARCH_SERVICES);
     };
@@ -28,10 +33,17 @@ const Services = ({ navigation }) => {
                 searchIcon={searchServices}
                 onSearchPress={handleSearchPress}
                 hideFilterButton={hideFilterButton}
+                isFilterApplied={isFilterApplied}
+                onFilterPress={() => {
+                    setFilter(true)
+                }}
             />
             {role === 'USER' ? <UserServicesContent
                 initialIndex={selectedIndex}
                 setCurrentIndex={setSelectedIndex}
+                isFilter={isFilter}
+                setFilter={setFilter}
+                setIsFilterApllied={setIsFilterApllied}
             /> : <BuddyServicesContent
                 initialIndex={selectedIndex}
                 setCurrentIndex={setSelectedIndex} />}

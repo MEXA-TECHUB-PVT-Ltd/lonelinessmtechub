@@ -15,7 +15,7 @@ export const getAllNearbyBuddy = createAsyncThunk(
         try {
             const { token } = getState().auth
             const bearerToken = `Bearer ${token}`
-            const data = await makeRequest('GET', `${baseEndpoint}?latitude=${payload?.latitude}&longitude=${payload?.longitude}&distance=500000000&page=1&limit=10`, null, null, bearerToken);
+            const data = await makeRequest('GET', `${baseEndpoint}?latitude=${payload?.latitude}&longitude=${payload?.longitude}&distance=500000000&page=1&limit=50`, null, null, bearerToken);
             return data;
         } catch (error) {
             return error

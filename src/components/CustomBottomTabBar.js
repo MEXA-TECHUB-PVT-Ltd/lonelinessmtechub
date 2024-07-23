@@ -1,13 +1,54 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text, Image, Platform } from 'react-native';
 import fonts from '../styles/fonts';
 import { theme } from '../assets';
 import { scaleHeight } from '../styles/responsive';
 import { useSelector } from 'react-redux';
+import { SOCKET_URL } from '../configs/apiUrl';
+import io from 'socket.io-client';
 
-const CustomBottomTabBar = ({ state, descriptors, navigation, icons, chatBadgeCount }) => {
+const CustomBottomTabBar = ({ state, descriptors, navigation, icons }) => {
+    const [socket, setSocket] = useState(null);
+    const [unreadCount, setUnreadCount] = useState(0);
     const { routes } = state;
-    const { role } = useSelector((state) => state.auth);
+    const { role, userLoginInfo } = useSelector((state) => state.auth);
+    const { id } = userLoginInfo?.user
+
+    useEffect(() => {
+        const newSocket = io(SOCKET_URL);
+        setSocket(newSocket);
+        newSocket.on('connect', () => {
+            console.log(' bottom Socket connected');
+        });
+        return () => {
+            newSocket.disconnect();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
+
+        if (socket) {
+            const userId = parseInt(id)
+            console.log('userId', userId)
+            socket.emit('getUnreadChatsCount', userId);
+            socket.on('unreadChatsCount', (data) => {
+                console.log('Unread chats count:', data.count);
+                setUnreadCount(data.count);
+            });
+
+        }
+
+        return () => {
+            if (socket) {
+                socket.off("unreadChatsCount");
+            }
+
+        };
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket])
+
     return (
         <View style={[styles.tabContainer, { backgroundColor: role === 'USER' ? '#4C4615' : theme.dark.primary, }]}>
             {routes.map((route, index) => {
@@ -15,7 +56,7 @@ const CustomBottomTabBar = ({ state, descriptors, navigation, icons, chatBadgeCo
                 const label = options.title !== undefined ? options.title : route.name;
                 const Icon = options.icon; // Extract icon from options
                 const isFocused = state.index === index;
-
+                const isChatScreen = route.name === 'ChatScreen';
                 const onPress = () => {
                     const event = navigation.emit({
                         type: 'tabPress',
@@ -45,6 +86,12 @@ const CustomBottomTabBar = ({ state, descriptors, navigation, icons, chatBadgeCo
                                     : theme.dark.inActiveColor,
                             }}
                                 source={icons[index]} />
+
+                            {isChatScreen && unreadCount > 0 && (
+                                <View style={styles.badge}>
+                                    <Text style={styles.badgeText}>{unreadCount}</Text>
+                                </View>
+                            )}
                         </View>
                         <Text style={[styles.tabText, {
                             color: isFocused
@@ -84,18 +131,18 @@ const styles = StyleSheet.create({
     badge: {
         position: 'absolute',
         top: -5,
-        right: -5,
-        backgroundColor: 'red', // Adjust badge background color
+        right: -3,
+        backgroundColor: theme.dark.primary,
         borderRadius: 10,
-        minWidth: 15,
-        height: 15,
+        minWidth: 20,
+        height: 20,
         justifyContent: 'center',
         alignItems: 'center',
     },
     badgeText: {
-        color: 'white', // Adjust badge text color
+        color: theme.dark.secondary,
         fontSize: 10,
-        fontFamily: fonts.fontsType.medium,
+        fontFamily: fonts.fontsType.semiBold,
         alignSelf: 'center'
     },
 });

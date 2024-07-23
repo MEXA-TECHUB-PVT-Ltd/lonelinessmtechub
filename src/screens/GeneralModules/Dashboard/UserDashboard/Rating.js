@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, FlatList, StyleSheet, SafeAreaView, ScrollView, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, FlatList, StyleSheet, SafeAreaView, ScrollView, Image, RefreshControl } from 'react-native';
 import { Text } from 'react-native-elements';
 import fonts from '../../../../styles/fonts';
 import { Rating } from 'react-native-ratings';
@@ -18,37 +18,78 @@ import { getAllRating } from '../../../../redux/UserDashboard/getRatingSlice';
 import FullScreenLoader from '../../../../components/FullScreenLoader';
 import EmptyListComponent from '../../../../components/EmptyListComponent';
 import { current } from '@reduxjs/toolkit';
+import { setRoute } from '../../../../redux/appSlice';
 
-
-const data = Array(10).fill({
-    id: Math.random().toString(), // Ensure each item has a unique id
-    profilePic: 'https://placebeard.it/250/250',
-    name: 'John Doe',
-    rating: 4.5,
-    comment: 'Having good time with you.',
-});
 
 const MyReviewScreen = ({ navigation }) => {
     const dispatch = useDispatch();
-    const { ratings, loading } = useSelector((state) => state.getRating);
+    const { ratings, loading, currentPage, totalPages, avg_rating } = useSelector((state) => state.getRating);
+    const { currentRoute } = useSelector((state) => state.app);
+    const [page, setPage] = useState(1);
+    const [refreshing, setRefreshing] = useState(false);
+    const [loader, setLoader] = useState(true);
 
     const handleBackPress = () => {
-        resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
+        if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
+            resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
+        } else {
+            dispatch(setRoute({
+                ...currentRoute,
+                route: SCREENS.MAIN_DASHBOARD
+            }))
+            resetNavigation(navigation, currentRoute?.route, { screen: SCREENS.HOME })
+        }
+
         return true;
     };
     useBackHandler(handleBackPress);
 
     useEffect(() => {
-        dispatch(getAllRating({
-            page: 1,
-            limit: 10,
-            buddy_id: 37
-        }))
-    }, [dispatch])
+        const timer = setTimeout(() => {
+            setLoader(false);
+        }, 3000);
 
-    if (loading) {
-        return <FullScreenLoader loading={loading} title={"Please wait..."} />
-    }
+        return () => clearTimeout(timer);
+    }, []);
+
+    useEffect(() => {
+        dispatch(getAllRating({
+            page,
+            limit: 10,
+            buddy_id: currentRoute?.buddy_id
+        }))
+    }, [dispatch, page, currentRoute])
+
+
+    const handleLoadMore = () => {
+        if (currentPage < totalPages && !loading) {
+            setPage((prevPage) => prevPage + 1);
+        }
+    };
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        setPage(1);
+        dispatch(getAllRating({
+            page,
+            limit: 10,
+            buddy_id: currentRoute?.buddy_id
+        })).then(() => setRefreshing(false))
+            .catch(() => setRefreshing(false));
+
+    };
+
+    const showLoader = () => {
+        return <FullScreenLoader
+            title={"Please wait..."}
+            loading={loader} />;
+    };
+
+    const showFooterSpinner = () => {
+        return <FullScreenLoader
+            spinnerStyle={styles.footerSpinner}
+            loading={loading} />;
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -60,51 +101,78 @@ const MyReviewScreen = ({ navigation }) => {
                 title={"Ratings"}
                 customTextStyle={styles.headerText} />
 
-            {ratings?.ratings?.data?.length > 0 ? <ScrollView style={styles.scrollView}>
+            {
 
-                <View style={styles.ratingContainer}>
-                    <Text style={styles.avgRating}>
-                        {ratings?.avg_rating}
-                    </Text>
+                loader && !refreshing ? showLoader() :
 
-                    <View style={styles.starRating}>
-                        <StarRatingDisplay
-                            disabled={true}
-                            rating={3}
-                            maxStars={5}
-                            color={theme.dark.secondary}
-                            starSize={28}
-                            StarIconComponent={(props) => <CustomStarIcon {...props} />}
-                        />
-                    </View>
+                    ratings?.length > 0 ? <ScrollView style={styles.scrollView}>
 
-                    <Text style={styles.overallRatings}>
-                        {"Overall Ratings"}
-                    </Text>
+                        <View style={styles.ratingContainer}>
+                            <Text style={styles.avgRating}>
+                                {parseInt(avg_rating).toFixed(1)}
+                            </Text>
 
-                </View>
-                <View style={styles.listContainer}>
-                    <FlatList
-                        showsVerticalScrollIndicator={false}
-                        data={ratings?.ratings?.data}
-                        renderItem={({ item }) => (
-                            <RatingListItem
-                                profilePic={item?.image_url}
-                                name={item?.full_name}
-                                rating={item?.stars}
-                                comment={item?.comment}
+                            <View style={styles.starRating}>
+                                <StarRatingDisplay
+                                    disabled={true}
+                                    rating={avg_rating}
+                                    maxStars={5}
+                                    color={theme.dark.secondary}
+                                    starSize={28}
+                                    StarIconComponent={(props) => <CustomStarIcon {...props} />}
+                                />
+                            </View>
 
+                            <Text style={styles.overallRatings}>
+                                {"Overall Ratings"}
+                            </Text>
+
+                        </View>
+                        <View style={styles.listContainer}>
+                            <FlatList
+                                showsVerticalScrollIndicator={false}
+                                data={ratings}
+                                renderItem={({ item }) => (
+                                    <RatingListItem
+                                        profilePic={item?.image_url}
+                                        name={item?.full_name}
+                                        rating={item?.stars}
+                                        comment={item?.comment}
+
+                                    />
+                                )}
+                                onEndReached={handleLoadMore}
+                                onEndReachedThreshold={0.5}
+                                keyExtractor={(item, index) => item + index}
+                                ListFooterComponent={loading && !refreshing && showFooterSpinner}
+                                refreshControl={
+                                    <RefreshControl
+                                        refreshing={refreshing}
+                                        onRefresh={onRefresh}
+                                        colors={[theme.dark.primary]}
+                                        progressBackgroundColor={theme.dark.secondary}
+                                    />
+                                }
                             />
-                        )}
-                        keyExtractor={(item, index) => item + index}
-                    />
-                </View>
+                        </View>
+                    </ScrollView> :
+                        (
+                            <ScrollView
+                                contentContainerStyle={styles.scrollViewContent}
+                                refreshControl={
+                                    <RefreshControl
+                                        refreshing={refreshing}
+                                        onRefresh={onRefresh}
+                                        colors={[theme.dark.primary]}
+                                        progressBackgroundColor={theme.dark.secondary}
+                                    />
+                                }
+                            >
+                                <EmptyListComponent title={"Rating not avaibale."} />
+                            </ScrollView>
+                        )
 
-
-
-
-            </ScrollView> :
-                <EmptyListComponent title={"Rating not found."} />}
+            }
         </SafeAreaView>
     );
 };
@@ -148,7 +216,14 @@ const styles = StyleSheet.create({
     },
     emptyList: {
         flex: 1,
-    }
+    },
+    footerSpinner: {
+        width: scaleWidth(120),
+        height: scaleHeight(120),
+    },
+    scrollViewContent: {
+        flex: 1,
+    },
 });
 
 export default MyReviewScreen;

@@ -28,7 +28,7 @@ const ReviewListItem = ({ profilePic, name, rating, comment }) => {
                     }}>
                         <StarRatingDisplay
                             disabled={true}
-                            rating={3}
+                            rating={parseInt(rating)}
                             maxStars={5}
                             color={theme.dark.secondary}
                             starSize={20}
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
         padding: 10,
         marginVertical: 5,
         borderColor: theme.dark.inputLabel,
-        marginBottom:10
+        marginBottom: 10
 
     },
     profilePic: {

@@ -5,17 +5,22 @@ import { View, Image, Text, StyleSheet } from 'react-native';
 import fonts from '../styles/fonts';
 import { scaleHeight } from '../styles/responsive';
 import { theme } from '../assets';
+import { notiImg, notiImg2, notiImg3, notiImg4 } from '../assets/images';
+import moment from 'moment';
+import { ArrowForward } from '../assets/svgs';
 
-const NotificationItem = ({ image, title, description, time }) => {
+const NotificationItem = ({ item }) => {
+    const images = [notiImg, notiImg2, notiImg3, notiImg4];
+    const randomImage = images[Math.floor(Math.random() * images.length)];
     return (
         <View style={styles.container}>
-            <Image source={image} style={styles.image} />
+            <Image source={randomImage} style={styles.image} />
             <View style={styles.notificationContent}>
-                <Text style={styles.title}>{title}</Text>
-                <Text style={styles.description}>{description}</Text>
-                <Text style={styles.time}>{time}</Text>
+                <Text style={styles.title}>{item?.title}</Text>
+                <Text style={styles.description}>{item?.body}</Text>
+                <Text style={styles.time}>{moment(item?.created_at, "HH:mm:ss").format('hh:mm A')}</Text>
             </View>
-            {/* <Image source={require('./arrow.png')} style={styles.arrow} /> */}
+            <ArrowForward/>
         </View>
     );
 };
@@ -24,7 +29,7 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
-       // padding: 10,
+        // padding: 10,
         // borderBottomWidth: 1,
         // borderBottomColor: '#ccc',
     },
@@ -42,18 +47,19 @@ const styles = StyleSheet.create({
         fontFamily: fonts.fontsType.medium,
         marginBottom: 5,
         color: theme.dark.white,
-        marginTop:scaleHeight(20)
+        marginTop: scaleHeight(20)
     },
     description: {
-        fontSize: scaleHeight(13),
+        fontSize: scaleHeight(14),
         fontFamily: fonts.fontsType.regular,
         marginBottom: 5,
-        color: theme.dark.inputLabel,
+        color: theme.dark.heading,
     },
     time: {
         fontFamily: fonts.fontsType.light,
-        fontSize: 12,
-        color: '#999',
+        fontSize: scaleHeight(12),
+        color: theme.dark.heading,
+        marginBottom: 10
     },
     arrow: {
         width: 20,

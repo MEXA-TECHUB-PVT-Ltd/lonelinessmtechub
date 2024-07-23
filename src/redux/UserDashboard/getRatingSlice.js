@@ -7,6 +7,9 @@ const initialState = {
     ratings: [],
     loading: false,
     error: null,
+    currentPage: 1,
+    totalPages: 1,
+    avg_rating: 0,
 };
 
 export const getAllRating = createAsyncThunk(
@@ -35,7 +38,14 @@ const getAllRatingSlice = createSlice({
             })
             .addCase(getAllRating.fulfilled, (state, action) => {
                 state.loading = false;
-                state.ratings = action.payload?.result;
+                if (action.meta.arg.page === 1) {
+                    state.ratings = action.payload.result?.ratings?.data;
+                } else {
+                    state.ratings = [...state.ratings, ...action.payload.result?.ratings?.data];
+                }
+                state.currentPage = action.meta.arg.page;
+                state.totalPages = action.payload.result?.ratings?.totalPages;
+                state.avg_rating = action.payload.result?.avg_rating;
             })
             .addCase(getAllRating.rejected, (state, action) => {
                 state.loading = false;

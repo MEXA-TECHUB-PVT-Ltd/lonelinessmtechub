@@ -6,7 +6,7 @@ import { theme } from '../assets';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 
-const ChatHeader = ({ onPress, backPress, profilePress }) => {
+const ChatHeader = ({ onPress, backPress, profilePress, userName, status, image_url }) => {
 
     return (
         <View style={styles.container}>
@@ -18,18 +18,18 @@ const ChatHeader = ({ onPress, backPress, profilePress }) => {
             <TouchableOpacity
                 onPress={profilePress}
                 style={styles.profileContainer}>
-                <Image source={{ uri: 'https://i.pravatar.cc/300' }} style={styles.profilePic} />
+                <Image source={{ uri: image_url }} style={styles.profilePic} />
                 <View style={styles.profileInfo}>
-                    <Text style={styles.profileName}>{"Alexender"}</Text>
+                    <Text style={styles.profileName}>{userName}</Text>
                     <View style={{ flexDirection: 'row' }}>
-                        <Text style={styles.onlineStatus}>{"Active Now"}</Text>
-                        <Badge containerStyle={{
+                        <Text style={styles.onlineStatus}>{status === "offline" ? "Offline" : "Online"}</Text>
+                        {status != "offline" && <Badge containerStyle={{
                             alignSelf: 'center',
                             marginStart: 5,
                             position: 'absolute',
                             bottom: 0,
                             left: -25
-                        }} status="success" />
+                        }} status="success" />}
                     </View>
 
                 </View>

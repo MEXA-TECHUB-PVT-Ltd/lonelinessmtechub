@@ -18,7 +18,11 @@ const BottomTabNavigator = () => {
 
 
     return (
-        <Tab.Navigator tabBar={(props) => <CustomBottomTabBar {...props} icons={icons} />}>
+        <Tab.Navigator
+            screenOptions={{
+                tabBarHideOnKeyboard: true,
+            }}
+            tabBar={(props) => <CustomBottomTabBar {...props} icons={icons} />}>
             <Tab.Screen name={SCREENS.HOME}
                 component={Home}
                 options={{
