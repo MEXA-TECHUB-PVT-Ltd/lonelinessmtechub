@@ -25,7 +25,7 @@ const HeightWeight = ({ navigation }) => {
     height_in: '',
     weight_kg: '',
     weight_lb: '',
-    weight_unit: ''
+    weight_unit: 'KG'
   });
 
   const [hieghtFtSelected, setHeightFtSelected] = useState(true);

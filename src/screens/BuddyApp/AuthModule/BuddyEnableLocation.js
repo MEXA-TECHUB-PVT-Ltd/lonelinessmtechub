@@ -24,6 +24,7 @@ import { updateProfile } from '../../../redux/AuthModule/updateProfileSlice';
 const BuddyEnableLocation = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
+    const { loading } = useSelector((state) => state.createProfile);
     const { credentials } = useSelector((state) => state.tempCredentials);
     const { dataPayload } = useSelector((state) => state.app);
     const [modalVisible, setModalVisible] = useState(false);
@@ -48,11 +49,14 @@ const BuddyEnableLocation = ({ navigation }) => {
                 const imageType = newPayload?.profile_pics[0]?.endsWith('.png') ? 'image/png' : 'image/jpeg';
                 const formData = new FormData();
 
-                formData.append('file', {
-                    uri: newPayload?.profile_pic,
-                    type: imageType,
-                    name: `image_${Date.now()}.${imageType.split('/')[1]}`,
+                newPayload?.profile_pics?.forEach((image, index) => {
+                    formData.append('files', {
+                        uri: image,
+                        type: imageType,
+                        name: `image_${Date.now()}_${index}.${imageType.split('/')[1]}`,
+                    });
                 });
+
                 formData.append('full_name', newPayload?.userName);
                 formData.append('about', newPayload?.about);
                 formData.append('gender', newPayload?.gender);
@@ -62,10 +66,12 @@ const BuddyEnableLocation = ({ navigation }) => {
                 formData.append('height_ft', newPayload?.height_ft);
                 formData.append('height_in', newPayload?.height_in);
                 formData.append('weight', newPayload?.weight);
-                formData.append('weight_unit', newPayload?.weight_unit);
+                // formData.append('weight_unit', newPayload?.weight_unit);
+                formData.append('weight_unit', "KG");
                 formData.append('hourly_rate', newPayload?.hourly_rate);
-                formData.append('languages', JSON.stringify(newPayload?.languages));
+                formData.append('languages', newPayload?.languages);
                 formData.append('dob', newPayload?.birthDate);
+                console.log(JSON.stringify(formData))
                 // dispatch(setDataPayload(newPayload));
                 dispatch(updateProfile(formData)).then((result) => {
                     if (result?.payload?.status === "success") {
@@ -173,9 +179,9 @@ const BuddyEnableLocation = ({ navigation }) => {
                         }} />
 
                     <Button
+                        loading={loading}
                         onPress={() => {
                             handleWithCurrentLocation();
-                            //showHideModal()
                         }}
                         title={'Use My Current Location'}
                         customStyle={{

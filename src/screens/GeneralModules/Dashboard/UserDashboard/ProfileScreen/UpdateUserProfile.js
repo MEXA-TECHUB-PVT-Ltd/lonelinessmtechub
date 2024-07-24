@@ -274,7 +274,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
     const handleProfileUpdate = () => {
         const imageType = selectedImage?.file?.endsWith('.png') ? 'image/png' : 'image/jpeg';
         const formData = new FormData();
-        formData.append('file', {
+        formData.append('files', {
             uri: selectedImage,
             type: imageType,
             name: `image_${Date.now()}.${imageType.split('/')[1]}`,
@@ -284,6 +284,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
         formData.append('gender', selectedOption);
         dispatch(updateProfile(formData)).then((result) => {
             if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message)
                 setTimeout(() => {
                     handleBackPress();
                 }, 3000);

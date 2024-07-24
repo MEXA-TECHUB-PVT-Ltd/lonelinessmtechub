@@ -13,7 +13,7 @@ import FullScreenLoader from '../../../../components/FullScreenLoader';
 import EmptyListComponent from '../../../../components/EmptyListComponent';
 import SkeletonLoader from '../../../../components/SkeletonLoader';
 
-const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0 }) => {
+const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0, searchQuery }) => {
     const dispatch = useDispatch();
     const { serviceRequests, loading, currentPage, totalPages } = useSelector((state) => state.getAllBuddyServices);
     const { lastIndex } = useSelector((state) => state.setLastIndex);
@@ -48,15 +48,25 @@ const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0 }) => {
         dispatch(getAllBuddyServices({ page, limit: 10, status: selectedStatus }))
     }, [dispatch, page, selectedStatus])
 
-    useEffect(() => {
-        setRequestData(serviceRequests);
-    }, [serviceRequests]);
+    // useEffect(() => {
+    //     setRequestData(serviceRequests);
+    // }, [serviceRequests]);
 
     useFocusEffect(
         React.useCallback(() => {
             setSelectedIndex(lastIndex)
         }, [lastIndex])
     );
+
+    useEffect(() => {
+        const filteredServiceRequests = filterServiceRequests(serviceRequests, searchQuery);
+        setRequestData(filteredServiceRequests);
+    }, [serviceRequests, searchQuery]);
+
+    const filterServiceRequests = (requests, query) => {
+        if (!query) return requests;
+        return requests?.filter(request => request?.user?.full_name?.toLowerCase().includes(query.toLowerCase()));
+    };
 
 
     const handleLoadMore = () => {
@@ -103,6 +113,7 @@ const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0 }) => {
         return <SkeletonLoader />
     }
 
+
     return (
         <SafeAreaView style={styles.container}>
 
@@ -117,7 +128,7 @@ const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0 }) => {
                     selectedIndex={selectedIndex}
                 />
                 {
-                    loading && !refreshing ? showLoader() : serviceRequests?.length > 0 ? <View>
+                    loading && !refreshing ? showLoader() : requestData?.length > 0 ? <View>
                         <FlatList
                             data={requestData}
                             renderItem={renderItem}

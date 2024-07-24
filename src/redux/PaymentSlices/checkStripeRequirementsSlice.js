@@ -8,14 +8,14 @@ const initialState = {
     error: null,
 };
 
-export const createConnectedAccount = createAsyncThunk(
-    'connectedAccount/createConnectedAccount',
+export const checkStripeRequirements = createAsyncThunk(
+    'checkStripeRequirements/checkStripeRequirements',
     async (_, { getState, rejectWithValue }) => {
         try {
             const { signup } = getState();
             const { auth } = getState();
             const token = auth.token ? `Bearer ${auth.token}` : `Bearer ${signup.bearerToken}`;
-            const data = await makeRequest('POST', '/payments/connected-account/create', null, null, token);
+            const data = await makeRequest('POST', '/payments/connected-account/check-requirement/status', null, null, token);
             return data;
         } catch (error) {
             return error
@@ -23,25 +23,25 @@ export const createConnectedAccount = createAsyncThunk(
     }
 );
 
-const createConnectedAccountSlice = createSlice({
-    name: 'connectedAccount',
+const checkStripeRequirementsSlice = createSlice({
+    name: 'checkStripeRequirements',
     initialState,
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(createConnectedAccount.pending, (state) => {
+            .addCase(checkStripeRequirements.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(createConnectedAccount.fulfilled, (state, action) => {
+            .addCase(checkStripeRequirements.fulfilled, (state, action) => {
                 state.loading = false;
                 state.response = action.payload?.result;
             })
-            .addCase(createConnectedAccount.rejected, (state, action) => {
+            .addCase(checkStripeRequirements.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
     },
 });
 
-export default createConnectedAccountSlice.reducer;
+export default checkStripeRequirementsSlice.reducer;

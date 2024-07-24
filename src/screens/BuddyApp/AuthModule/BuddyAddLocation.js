@@ -107,15 +107,17 @@ const BuddyAddLocation = ({ navigation }) => {
             const imageType = newPayload?.profile_pics[0]?.endsWith('.png') ? 'image/png' : 'image/jpeg';
             const formData = new FormData();
 
-            formData.append('file', {
-                uri: newPayload?.profile_pic,
-                type: imageType,
-                name: `image_${Date.now()}.${imageType.split('/')[1]}`,
+            newPayload?.profile_pics?.forEach((image, index) => {
+                formData.append('files', {
+                    uri: image,
+                    type: imageType,
+                    name: `image_${Date.now()}_${index}.${imageType.split('/')[1]}`,
+                });
             });
             formData.append('full_name', newPayload?.userName);
             formData.append('about', newPayload?.about);
             formData.append('gender', newPayload?.gender);
-            formData.append('category_ids', newPayload?.category_ids);
+            formData.append('category_ids', JSON.stringify(newPayload?.category_ids));
             formData.append('latitude', newPayload?.latitude);
             formData.append('longitude', newPayload?.longitude);
             formData.append('address', newPayload?.address);
