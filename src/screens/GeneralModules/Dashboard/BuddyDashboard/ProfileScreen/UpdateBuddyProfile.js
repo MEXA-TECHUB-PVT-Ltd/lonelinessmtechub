@@ -48,7 +48,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
         height_in: '',
         weight_kg: '',
         weight_lb: '',
-        weight_unit: '',
+        weight_unit: 'KG',
         full_name: '',
         about: '',
         gender: '',
@@ -179,7 +179,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
             setInputValues(prevValues => ({
                 ...prevValues,
                 weight_lb: weight,
-                weight_unit: weight_unit
+                weight_unit: "LB"
             }));
         } else {
             setWeightKgSelected(true);
@@ -187,7 +187,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
             setInputValues(prevValues => ({
                 ...prevValues,
                 weight_kg: weight,
-                weight_unit: weight_unit
+                weight_unit: "KG"
             }));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -334,19 +334,30 @@ const UpdateBuddyProfile = ({ navigation }) => {
         const imageType = selectedImages[0]?.endsWith('.png') ? 'image/png' : 'image/jpeg';
         const formData = new FormData();
 
+        // selectedImages?.forEach((image, index) => {
+        //     formData.append('files', {
+        //         uri: image,
+        //         type: imageType,
+        //         name: `image_${Date.now()}_${index}.${imageType.split('/')[1]}`,
+        //     });
+        // });
+
         selectedImages?.forEach((image, index) => {
-            formData.append('files', {
-                uri: image,
-                type: imageType,
-                name: `image_${Date.now()}_${index}.${imageType.split('/')[1]}`,
-            });
+            if (image && image.trim()) {
+                formData.append('files', {
+                    uri: image,
+                    type: imageType,
+                    name: `image_${Date.now()}_${index}.${imageType.split('/')[1]}`,
+                });
+            }
         });
+
         formData.append('full_name', inputValues?.full_name);
         formData.append('about', inputValues?.about);
         formData.append('gender', selectedOption);
         formData.append('height_ft', inputValues?.height_ft);
         formData.append('height_in', inputValues?.height_in);
-        formData.append('weight', inputValues?.weight);
+        formData.append('weight', inputValues?.weight_kg);
         formData.append('weight_unit', inputValues?.weight_unit);
         formData.append('dob', birthDate);
         dispatch(updateProfile(formData)).then((result) => {

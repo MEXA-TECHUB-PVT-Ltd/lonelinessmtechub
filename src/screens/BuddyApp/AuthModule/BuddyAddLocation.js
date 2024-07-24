@@ -108,12 +108,22 @@ const BuddyAddLocation = ({ navigation }) => {
             const formData = new FormData();
 
             newPayload?.profile_pics?.forEach((image, index) => {
-                formData.append('files', {
-                    uri: image,
-                    type: imageType,
-                    name: `image_${Date.now()}_${index}.${imageType.split('/')[1]}`,
-                });
+                if (image && image.trim()) {
+                    formData.append('files', {
+                        uri: image,
+                        type: imageType,
+                        name: `image_${Date.now()}_${index}.${imageType.split('/')[1]}`,
+                    });
+                }
             });
+
+            // newPayload?.profile_pics?.forEach((image, index) => {
+            //     formData.append('files', {
+            //         uri: image,
+            //         type: imageType,
+            //         name: `image_${Date.now()}_${index}.${imageType.split('/')[1]}`,
+            //     });
+            // });
             formData.append('full_name', newPayload?.userName);
             formData.append('about', newPayload?.about);
             formData.append('gender', newPayload?.gender);
@@ -130,7 +140,7 @@ const BuddyAddLocation = ({ navigation }) => {
             formData.append('weight', newPayload?.weight);
             formData.append('weight_unit', newPayload?.weight_unit);
             formData.append('hourly_rate', newPayload?.hourly_rate);
-            formData.append('languages', newPayload?.languages);
+            formData.append('languages', JSON.stringify(newPayload?.languages));
             formData.append('dob', newPayload?.birthDate);
             //dispatch(setDataPayload(newPayload));
             dispatch(updateProfile(formData)).then((result) => {

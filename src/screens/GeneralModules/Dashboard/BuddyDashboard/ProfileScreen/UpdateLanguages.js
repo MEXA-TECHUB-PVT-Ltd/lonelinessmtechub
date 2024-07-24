@@ -67,7 +67,7 @@ const UpdateLanguages = ({ navigation }) => {
 
     const handleUpdateLanguages = () => {
         const formData = new FormData();
-        formData.append('languages', selectedLanguages);
+        formData.append('languages', JSON.stringify(selectedLanguages));
         dispatch(updateProfile(formData)).then((result) => {
             if (result?.payload?.status === "success") {
                 setTimeout(() => {

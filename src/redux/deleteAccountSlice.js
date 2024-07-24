@@ -18,7 +18,7 @@ export const deleteAccount = createAsyncThunk(
             const payload = {
                 user_id: user_id
             }
-            const data = await makeRequest('GET', `/users/delete/permanently`, payload, null, bearerToken);
+            const data = await makeRequest('GET', `/users/delete`, payload, null, bearerToken);
             return data;
         } catch (error) {
             return error
