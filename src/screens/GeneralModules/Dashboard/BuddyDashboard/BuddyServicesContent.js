@@ -45,6 +45,7 @@ const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0, searchQuery }
     const selectedStatus = getStatusByIndex(selectedIndex);
 
     useEffect(() => {
+        setRequestData([]);
         dispatch(getAllBuddyServices({ page, limit: 10, status: selectedStatus }))
     }, [dispatch, page, selectedStatus])
 
@@ -59,6 +60,7 @@ const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0, searchQuery }
     );
 
     useEffect(() => {
+        setRequestData([]);
         const filteredServiceRequests = filterServiceRequests(serviceRequests, searchQuery);
         setRequestData(filteredServiceRequests);
     }, [serviceRequests, searchQuery]);
@@ -77,6 +79,7 @@ const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0, searchQuery }
 
 
     const onRefresh = () => {
+        setRequestData([]);
         setRefreshing(true);
         setPage(1); // Reset to first page
         dispatch(getAllBuddyServices({ page: 1, limit: 10, status: selectedStatus }))

@@ -10,7 +10,7 @@ import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
-import { alertLogo, mapImg, successText, success_alert_img } from '../../../assets/images';
+import { accountCreated, alertLogo, mapImg, successText, success_alert_img } from '../../../assets/images';
 import { color } from '@rneui/base';
 import Modal from "react-native-modal";
 import Spinner from '../../../components/Spinner';
@@ -138,7 +138,7 @@ const EnableLocation = ({ navigation }) => {
 
                 <Image
                     resizeMode='contain'
-                    source={successText}
+                    source={accountCreated}
                     style={{
                         width: scaleWidth(130),
                         height: scaleHeight(45),
@@ -147,7 +147,7 @@ const EnableLocation = ({ navigation }) => {
                     }}
                 />
                 <Text style={styles.subTitle}>
-                    {`Please wait...${'\n'}You will be directed to the homepage`}
+                    {`Please wait...${'\n'}You will be directed to the homepage.`}
                 </Text>
                 <Spinner />
             </View>

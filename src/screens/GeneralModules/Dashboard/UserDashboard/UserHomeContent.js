@@ -1067,9 +1067,11 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
             type: "BLOCK" // BLOCK OR REPORT -- 
         })).then((result) => {
             if (result?.payload?.status === "success") {
+                
                 dispatch(setIsAppOpened(false))
                 showAlert("Success", "success", result?.payload?.message);
                 handleCloseModal();
+                dispatch(setCurrentUserIndex(null))
                 // let updatedUser = { ...currentUser, block_status: "BLOCK" };
                 // setCurrentUser(updatedUser);
                 getAllNearByBuddies();
@@ -1102,7 +1104,8 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
             route: SCREENS.MAIN_DASHBOARD,
             receiver_id: currentUser?.id
         }))
-        resetNavigation(navigation, SCREENS.GENERAL_CHAT)
+        //resetNavigation(navigation, SCREENS.GENERAL_CHAT)
+        resetNavigation(navigation, SCREENS.CHAT)
     }
 
     const handleChatPayment = (buddyId) => {

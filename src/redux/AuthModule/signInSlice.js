@@ -14,9 +14,19 @@ const initialState = {
 
 export const login = createAsyncThunk(
     'auth/login',
-    async (credentials, { rejectWithValue }) => {
+    async (credentials, { dispatch, rejectWithValue }) => {
         try {
             const data = await makeRequest('POST', '/auth/sign-in', credentials);
+            if (data?.status === "success") {
+                setTimeout(() => {
+                    dispatch(setUserInfoAndToken({
+                        token: data?.result?.token,
+                        role: data?.result?.role,
+                        response: data?.result,
+                        userLoginInfo: data?.result,
+                    }));
+                }, 3000);
+            }
             return data;
         } catch (error) {
             return error
@@ -47,6 +57,13 @@ const signInSlice = createSlice({
                 };
             }
         },
+
+        setUserInfoAndToken(state, action) {
+            state.token = action.payload.token;
+            state.role = action.payload.role;
+            state.response = action.payload.response;
+            state.userLoginInfo = action.payload.userLoginInfo;
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -56,10 +73,10 @@ const signInSlice = createSlice({
             })
             .addCase(login.fulfilled, (state, action) => {
                 state.loading = false;
-                state.token = action.payload?.result?.token;
-                state.role = action.payload?.result?.role;
-                state.response = action.payload?.result;
-                state.userLoginInfo = action.payload?.result;
+                // state.token = action.payload?.result?.token;
+                // state.role = action.payload?.result?.role;
+                // state.response = action.payload?.result;
+                // state.userLoginInfo = action.payload?.result;
             })
             .addCase(login.rejected, (state, action) => {
                 state.loading = false;
@@ -68,5 +85,5 @@ const signInSlice = createSlice({
     },
 });
 
-export const { logout, updateUserLoginInfo } = signInSlice.actions;
+export const { logout, updateUserLoginInfo, setUserInfoAndToken } = signInSlice.actions;
 export default signInSlice.reducer;

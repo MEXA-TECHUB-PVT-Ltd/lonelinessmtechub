@@ -17,6 +17,13 @@ import RBSheet from 'react-native-raw-bottom-sheet';
 import { CrossWhite } from '../../../../assets/svgs';
 import HorizontalDivider from '../../../../components/HorizontalDivider';
 import Button from '../../../../components/ButtonComponent';
+import { releasePayment } from '../../../../redux/UserDashboard/releasePaymentSlice';
+import { useAlert } from '../../../../providers/AlertContext';
+import CustomModal from '../../../../components/CustomModal';
+import { warningImg } from '../../../../assets/images';
+import { setRoute } from '../../../../redux/appSlice';
+import { SCREENS } from '../../../../constant/constants';
+import { resetNavigation } from '../../../../utils/resetNavigation';
 
 const filterOptions = [
     { label: "Accepted Requests", value: "ACCEPTED" },
@@ -27,12 +34,16 @@ const filterOptions = [
 
 const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setFilter, setIsFilterApllied, searchQuery }) => {
     const dispatch = useDispatch();
+    const { showAlert } = useAlert();
     const { serviceRequests, loading, currentPage, totalPages } = useSelector((state) => state.getAllServiceRequests);
+    const { loading: paymentLoading } = useSelector((state) => state.releasePayment);
     const { lastIndex } = useSelector((state) => state.setLastIndex);
     const [selectedIndex, setSelectedIndex] = useState(initialIndex);
     const [page, setPage] = useState(1);
     const [refreshing, setRefreshing] = useState(false);
     const [selectedOption, setSelectedOption] = useState(null);
+    const [relesePaymentModal, setReleasePaymentModal] = useState(false);
+    const [releasePaymentDetail, setReleasePaymentDetail] = useState(null);
     const navigation = useNavigation();
     const buttons = ['Upcoming', 'Requested', 'Completed'];
     const refRBSheet = useRef();
@@ -103,11 +114,58 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setF
         return requests?.filter(request => request?.buddy?.full_name.toLowerCase().includes(query.toLowerCase()));
     };
 
+    const handleRelaseOpenModal = (item) => {
+        setReleasePaymentDetail(item)
+        setReleasePaymentModal(true);
+    };
+
+    const handleRelaseCloseModal = () => {
+        setReleasePaymentModal(false);
+    };
+
+
+    const handleReleasePayment = (item) => {
+
+        const releasePaymentPayload = {
+            buddy_id: item?.buddy_id,
+            request_id: item?.id
+        }
+        dispatch(releasePayment(releasePaymentPayload)).then((result) => {
+
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message);
+                handleRelaseCloseModal();
+                setTimeout(() => {
+                    dispatch(getAllServiceRequests({ page, limit: 10, status: selectedStatus }))
+                }, 3000);
+
+            } else if (result?.payload?.status === "error") {
+                handleRelaseCloseModal();
+                setTimeout(() => {
+                    showAlert("Error", "error", result?.payload?.message)
+                }, 1000);
+            }
+        })
+    }
+
+    const handleCancelPayment = (item) => {
+        handleRelaseCloseModal();
+        dispatch(setRoute({
+            route: SCREENS.SERVICES,
+            request_id: item?.id,
+        }))
+        resetNavigation(navigation, SCREENS.PAYMENT_CANCELLATION);
+
+    }
+
     const renderItem = ({ item }) => (
         <ServicesListItem
             item={item}
             navigation={navigation}
             index={selectedIndex}
+            upComingPaymentPress={() => {
+                handleRelaseOpenModal(item)
+            }}
         />
     );
 
@@ -205,6 +263,26 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setF
         );
     };
 
+    const renderReleasePaymentModal = () => {
+        return <CustomModal
+            isVisible={relesePaymentModal}
+            onClose={handleRelaseCloseModal}
+            headerTitle={"Release Payment?"}
+            imageSource={warningImg}
+            isParallelButton={true}
+            loading={paymentLoading}
+            text={`Ready to release payment for this service?`}
+            parallelButtonText1={"Cancel Payment"}
+            parallelButtonText2={"Release"}
+            parallelButtonPress1={() => {
+                handleCancelPayment(releasePaymentDetail);
+            }}
+            parallelButtonPress2={() => {
+                handleReleasePayment(releasePaymentDetail);
+            }}
+        />
+    }
+
     const filteredServiceRequests = filterServiceRequests(serviceRequests, searchQuery);
 
     return (
@@ -259,6 +337,7 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setF
                 }
             </View>
             {renderSheet()}
+            {renderReleasePaymentModal()}
         </SafeAreaView>
     );
 };

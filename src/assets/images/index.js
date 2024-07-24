@@ -60,3 +60,4 @@ export const bottomWalletImg = require('../images/bottom_wallet_img.png');
 export const privacyPolicy = require('../images/privacy_policy_img.png');
 export const termsCondition = require('../images/terms_img.png');
 export const deleteAccount = require('../images/delete_account.png');
+export const accountCreated = require('../images/account_created_img.png');

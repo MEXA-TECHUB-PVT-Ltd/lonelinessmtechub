@@ -44,7 +44,7 @@ const userList = [
 const buddyList = [
     { id: '1', icon: WalletIcon, text: 'My Wallet', route: SCREENS.MY_WALLET, isRoute: false },
     { id: '2', icon: HeartIcon, text: 'My Likes', route: SCREENS.MY_LIKES, isRoute: false },
-    { id: '3', icon: RateAppIcon, text: 'My Ratings', route: SCREENS.RATING, isRoute: false },
+    { id: '3', icon: RateAppIcon, text: 'My Ratings', route: SCREENS.RATING, isRoute: true },
     { id: '4', icon: UpdateRate, text: 'Update Rate', route: SCREENS.UPDATE_RATE, isRoute: false },
     { id: '5', icon: UpdateInterests, text: 'Update Interests', route: SCREENS.UPDATE_INTERESTS, isRoute: true },
     { id: '6', icon: UpdateBuddyProfile, text: 'Update Profile', route: SCREENS.UPDATE_BUDDY_PROFILE, isRoute: true },
@@ -81,7 +81,7 @@ const Profile = ({ navigation }) => {
         }
         if (isRoute) {
             dispatch(setRoute({
-                route: SCREENS.MAIN_DASHBOARD,
+                route: text === "My Ratings" ? SCREENS.PROFILE : SCREENS.MAIN_DASHBOARD,
                 type: type,
                 isProfilePremium: true
             }))

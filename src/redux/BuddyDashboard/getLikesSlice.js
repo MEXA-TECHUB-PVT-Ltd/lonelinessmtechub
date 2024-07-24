@@ -14,11 +14,12 @@ const initialState = {
 
 export const getLikes = createAsyncThunk(
     'getLikes/getLikes',
-    async ({ page = 1, limit = 10 }, { getState, rejectWithValue }) => {
+    async ({ page = 1, limit = 10, latLong }, { getState, rejectWithValue }) => {
         try {
+            console.log(latLong)
             const { token } = getState().auth;
             const bearerToken = `Bearer ${token}`;
-            const data = await makeRequest('GET', `${baseEndpoint}?page=${page}&limit=${limit}`, null, null, bearerToken);
+            const data = await makeRequest('GET', `${baseEndpoint}?page=${page}&limit=${limit}&latitude=${latLong?.latitude}&longitude=${latLong?.longitude}`, null, null, bearerToken);
             return data;
         } catch (error) {
             return error

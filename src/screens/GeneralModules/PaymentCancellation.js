@@ -25,6 +25,12 @@ const PaymentCancellation = ({ navigation }) => {
     const [reason, setReason] = useState('');
 
     const handleBackPress = () => {
+
+        if (role === "USER" && currentRoute?.route === SCREENS.SERVICES) {
+            resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.SERVICES })
+            return
+        }
+
         dispatch(setRoute({
             route: SCREENS.MAIN_DASHBOARD,
             request_id: currentRoute?.request_id,

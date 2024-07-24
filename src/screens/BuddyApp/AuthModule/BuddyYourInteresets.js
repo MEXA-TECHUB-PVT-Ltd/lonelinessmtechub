@@ -16,10 +16,11 @@ import { useAlert } from '../../../providers/AlertContext';
 import { setDataPayload } from '../../../redux/appSlice';
 import CategorySelector from '../../../components/CategorySelector';
 import { getAllCategories } from '../../../redux/getAllCategoriesSlice';
+import FullScreenLoader from '../../../components/FullScreenLoader';
 
 const BuddyYourInterests = ({ navigation }) => {
     const dispatch = useDispatch();
-    const { categories } = useSelector((state) => state.getCategories)
+    const { categories, loading } = useSelector((state) => state.getCategories)
     const { showAlert } = useAlert();
     const { dataPayload } = useSelector((state) => state.app);
     const [selectedInterests, setSelectedInterests] = useState([]);
@@ -63,12 +64,17 @@ const BuddyYourInterests = ({ navigation }) => {
         resetNavigation(navigation, SCREENS.AMOUNT)
     }
 
+    const renderLoader = () => {
+        return <FullScreenLoader loading={loading} />
+    }
+
     return (
         <SafeAreaView style={styles.container}>
             <ProfileProgressBar progress={90} onPress={() => {
                 resetNavigation(navigation, SCREENS.SELECT_LANGUAGE)
             }} />
-            <CustomLayout>
+
+            {loading ? renderLoader() : <>
                 <View style={styles.contentContainer}>
                     <Text style={styles.welcomeText}>
                         Select Your Interests
@@ -76,11 +82,6 @@ const BuddyYourInterests = ({ navigation }) => {
                     <Text style={styles.subTitle}>
                         Select Your Interests and Unlock Your Perfect Matches!
                     </Text>
-
-                    {/* <DynamicOptionSelector
-                        items={interests}
-                        onItemSelected={handleItemSelected}
-                    /> */}
 
                     <CategorySelector
                         items={categories}
@@ -90,22 +91,21 @@ const BuddyYourInterests = ({ navigation }) => {
 
                 </View>
 
-            </CustomLayout>
+                <View style={styles.buttonContainer}>
 
-            <View style={styles.buttonContainer}>
+                    <HorizontalDivider
+                        customStyle={{
+                            marginTop: 40
+                        }} />
 
-                <HorizontalDivider
-                    customStyle={{
-                        marginTop: 40
-                    }} />
-
-                <Button
-                    onPress={() => {
-                        handleSelectedInterests();
-                    }}
-                    title={'Continue'}
-                />
-            </View>
+                    <Button
+                        onPress={() => {
+                            handleSelectedInterests();
+                        }}
+                        title={'Continue'}
+                    />
+                </View>
+            </>}
 
         </SafeAreaView>
     );
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         padding: 25,
-        flex: 1
+        flex: 1,
     },
     welcomeText: {
         fontFamily: fonts.fontsType.semiBold,

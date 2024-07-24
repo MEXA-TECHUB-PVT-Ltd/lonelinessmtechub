@@ -47,6 +47,14 @@ const UpdateBuddyProfile = ({ navigation }) => {
         location: ''
     });
 
+    const userLocation = userDetail?.location?.country && userDetail?.location?.city
+        ? `${userDetail.location.country}, ${userDetail.location.city}`
+        : null;
+
+    const addressLocation = (address?.city || address?.town || address?.suburb) && address?.country
+        ? `${address.city || address.town || address.suburb}, ${address.country}`
+        : null;
+
     const handleBackPress = () => {
         if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
             resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.PROFILE })
@@ -79,12 +87,13 @@ const UpdateBuddyProfile = ({ navigation }) => {
             full_name,
             about,
             image_urls,
-            gender
+            gender,
+            looking_for_gender
         } = userDetail || {};
 
 
         setSelectedImage(image_urls[0])
-        setSelectedOption(gender)
+        setSelectedOption(looking_for_gender)
         setInputValues(prevValues => ({
             ...prevValues,
             full_name,
@@ -281,7 +290,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
         });
         formData.append('full_name', inputValues?.full_name);
         formData.append('about', inputValues?.about);
-        formData.append('gender', selectedOption);
+        formData.append('looking_for_gender', selectedOption);
         dispatch(updateProfile(formData)).then((result) => {
             if (result?.payload?.status === "success") {
                 showAlert("Success", "success", result?.payload?.message)
@@ -415,7 +424,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
                             fontSize: scaleHeight(19),
                             color: theme.dark.secondary,
                         }}>
-                            Gender
+                            Looking For
                         </Text>
 
                         <View style={{
@@ -487,12 +496,9 @@ const UpdateBuddyProfile = ({ navigation }) => {
 
                                 }} source={locationPin} />
 
-                            <Text style={styles.locationText}>{userDetail?.location?.country && userDetail?.location?.city ?
-                                `${userDetail?.location?.country}, ${userDetail?.location?.city}` :
-                                (address?.city || address?.town) && address?.country ?
-                                    `${address.city || address.town}, ${address.country}` :
-                                    'Location not available'
-                            }</Text>
+                            <Text style={styles.locationText}>
+                                {userLocation || addressLocation || 'Location not available'}
+                            </Text>
 
                         </View>
                         <Button

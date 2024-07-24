@@ -85,7 +85,7 @@ const BuddyUserName = ({ navigation }) => {
                         placeholder={"User Name"}
                         onValueChange={(value) => handleChange('userName', value)}
                         mainContainer={{ marginTop: 50 }}
-                        customInputStyle={{ textAlign: 'center', marginStart: 0 }}
+                        customInputStyle={{ textAlign: 'left', marginStart: 20 }}
                         customContainerStyle={{ height: scaleHeight(60) }}
                     />
                     {errors.userName ? <Text style={styles.errorText}>{errors.userName}</Text> : null}

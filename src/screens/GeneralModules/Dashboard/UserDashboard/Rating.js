@@ -32,7 +32,10 @@ const MyReviewScreen = ({ navigation }) => {
     const handleBackPress = () => {
         if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
             resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.HOME })
-        } else {
+        } else if (currentRoute?.route === SCREENS.PROFILE) {
+            resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.PROFILE })
+        }
+        else {
             dispatch(setRoute({
                 ...currentRoute,
                 route: SCREENS.MAIN_DASHBOARD

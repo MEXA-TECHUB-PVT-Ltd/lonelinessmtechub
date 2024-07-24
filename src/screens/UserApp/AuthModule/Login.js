@@ -109,6 +109,7 @@ const Login = ({ navigation }) => {
             }
             dispatch(login(credentials)).then((result) => {
                 if (result?.payload?.status === "success") {
+                    showHideModal();
                     if (isRemember) {
                         const rememberPayload = { email: form.email, password: form.password };
                         dispatch(setAsRemember(rememberPayload));
@@ -116,8 +117,7 @@ const Login = ({ navigation }) => {
                     } else {
                         dispatch(setAsRemember(null))
                     }
-                    showHideModal();
-                    showAlert("Success", "success", result?.payload?.message)
+
                 } else {
                     showAlert("Error", "error", result?.payload?.message)
                 }
@@ -173,8 +173,8 @@ const Login = ({ navigation }) => {
                         marginTop: 10
                     }}
                 />
-                <Text style={styles.subTitle}>
-                    {`Please wait...${'\n'}You will be directed to the homepage`}
+                <Text style={[styles.subTitle, { alignSelf: 'center', textAlign: 'center', }]}>
+                    {`Please wait...${'\n'}You will be directed to the homepage.`}
                 </Text>
                 <Spinner />
             </View>
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
         fontFamily: fonts.fontsType.regular,
         fontSize: scaleHeight(14),
         color: theme.dark.white,
-        marginTop: 5
+        marginTop: 5,
     },
     forgetText: {
         fontFamily: fonts.fontsType.semiBold,

@@ -28,6 +28,14 @@ const UserProfileDetail = ({ navigation }) => {
     const { userLoginInfo } = useSelector((state) => state.auth)
     const user_id = userLoginInfo?.user?.id
 
+    const userLocation = userDetail?.location?.country && userDetail?.location?.city
+        ? `${userDetail.location.country}, ${userDetail.location.city}`
+        : null;
+
+    const addressLocation = (address?.city || address?.town || address?.suburb) && address?.country
+        ? `${address.city || address.town || address.suburb}, ${address.country}`
+        : null;
+
     const handleBackPress = () => {
         if (currentRoute.route === SCREENS.GENERAL_CHAT) {
             resetNavigation(navigation, SCREENS.GENERAL_CHAT)
@@ -45,6 +53,7 @@ const UserProfileDetail = ({ navigation }) => {
     useEffect(() => {
         if (userDetail) {
             const { longitude, latitude } = userDetail?.location
+            console.log(longitude, latitude)
             dispatch(getAddressByLatLong({
                 lat: latitude,
                 long: longitude
@@ -110,12 +119,9 @@ const UserProfileDetail = ({ navigation }) => {
 
                     <View style={styles.locationSection}>
                         <Icon style={styles.locationIcon} name="location-on" type="material" color={theme.dark.secondary} />
-                        <Text style={styles.locationText}>{userDetail?.location?.country && userDetail?.location?.city ?
-                            `${userDetail?.location?.country}, ${userDetail?.location?.city}` :
-                            (address?.city || address?.town) && address?.country ?
-                                `${address.city || address.town}, ${address.country}` :
-                                'Location not available'
-                        }</Text>
+                        <Text style={styles.locationText}>
+                            {userLocation || addressLocation || 'Location not available'}
+                        </Text>
                     </View>
 
                     <HorizontalDivider customStyle={styles.dividerMarginTop18} />

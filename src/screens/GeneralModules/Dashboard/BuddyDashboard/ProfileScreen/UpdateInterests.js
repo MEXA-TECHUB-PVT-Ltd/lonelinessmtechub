@@ -16,11 +16,12 @@ import { scaleHeight } from '../../../../../styles/responsive';
 import Header from '../../../../../components/Header';
 import { updateProfile } from '../../../../../redux/AuthModule/updateProfileSlice';
 import { setRoute } from '../../../../../redux/appSlice';
+import FullScreenLoader from '../../../../../components/FullScreenLoader';
 
 
 const UpdateInterests = ({ navigation }) => {
     const dispatch = useDispatch();
-    const { categories } = useSelector((state) => state.getCategories)
+    const { categories, loading: categoryLoader } = useSelector((state) => state.getCategories)
     const { loading } = useSelector((state) => state.createProfile)
     const { showAlert } = useAlert();
     const { dataPayload } = useSelector((state) => state.app);
@@ -85,45 +86,50 @@ const UpdateInterests = ({ navigation }) => {
         })
     }
 
+    const renderLoader = () => {
+        return <FullScreenLoader loading={categoryLoader} />
+    }
+
     return (
         <SafeAreaView style={styles.container}>
             <Header onPress={() => {
                 handleBackPress();
             }} />
-            <CustomLayout>
-                <View style={styles.contentContainer}>
-                    <Text style={styles.welcomeText}>
-                        Select Your Interests
-                    </Text>
-                    <Text style={styles.subTitle}>
-                        Select Your Interests and Unlock Your Perfect Matches!
-                    </Text>
+            {
+                categoryLoader ? renderLoader() : <>
+                    <View style={styles.contentContainer}>
+                        <Text style={styles.welcomeText}>
+                            Select Your Interests
+                        </Text>
+                        <Text style={styles.subTitle}>
+                            Select Your Interests and Unlock Your Perfect Matches!
+                        </Text>
 
-                    <CategorySelector
-                        items={categories}
-                        onItemSelected={handleItemSelected}
-                        selectedItems={selectedInterests}
-                    />
+                        <CategorySelector
+                            items={categories}
+                            onItemSelected={handleItemSelected}
+                            selectedItems={selectedInterests}
+                        />
 
-                </View>
+                    </View>
 
-            </CustomLayout>
+                    <View style={styles.buttonContainer}>
 
-            <View style={styles.buttonContainer}>
+                        <HorizontalDivider
+                            customStyle={{
+                                marginTop: 40
+                            }} />
 
-                <HorizontalDivider
-                    customStyle={{
-                        marginTop: 40
-                    }} />
-
-                <Button
-                    loading={loading}
-                    onPress={() => {
-                        handleSelectedInterests();
-                    }}
-                    title={'Save'}
-                />
-            </View>
+                        <Button
+                            loading={loading}
+                            onPress={() => {
+                                handleSelectedInterests();
+                            }}
+                            title={'Save'}
+                        />
+                    </View>
+                </>
+            }
 
         </SafeAreaView>
     );
