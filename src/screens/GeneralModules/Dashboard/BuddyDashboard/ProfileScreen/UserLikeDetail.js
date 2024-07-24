@@ -247,7 +247,7 @@ const UserLikesDetail = ({ navigation }) => {
                         onPress={() => {
                             handleReportBuddy();
                         }}
-                        title={"Reoprt"}
+                        title={"Report"}
                         customStyle={{
                             width: '40%',
                             borderWidth: 1,

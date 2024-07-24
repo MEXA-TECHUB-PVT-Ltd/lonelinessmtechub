@@ -88,7 +88,7 @@ const Amount = ({ navigation }) => {
                         placeholder={"Enter Amount"}
                         onValueChange={(value) => handleChange('amount', value)}
                         mainContainer={{ marginTop: 50 }}
-                        customInputStyle={{ textAlign: 'center', marginStart: 0 }}
+                        customInputStyle={{ textAlign: 'left', marginStart: 20,  }}
                         customContainerStyle={{ height: scaleHeight(60) }}
                     />
                     {errors.amount ? <Text style={styles.errorText}>{errors.amount}</Text> : null}

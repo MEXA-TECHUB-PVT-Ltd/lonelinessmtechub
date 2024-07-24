@@ -16,10 +16,11 @@ import { useAlert } from '../../../providers/AlertContext';
 import { setDataPayload } from '../../../redux/appSlice';
 import CategorySelector from '../../../components/CategorySelector';
 import { getAllCategories } from '../../../redux/getAllCategoriesSlice';
+import FullScreenLoader from '../../../components/FullScreenLoader';
 
 const YourInteresets = ({ navigation }) => {
     const dispatch = useDispatch();
-    const { categories } = useSelector((state) => state.getCategories)
+    const { categories, loading } = useSelector((state) => state.getCategories)
     const { showAlert } = useAlert();
     const { dataPayload } = useSelector((state) => state.app);
     const [selectedInterests, setSelectedInterests] = useState([]);
@@ -62,49 +63,57 @@ const YourInteresets = ({ navigation }) => {
         resetNavigation(navigation, SCREENS.ENABLE_LOCATION)
     }
 
+    const renderLoader = () => {
+        return <FullScreenLoader loading={loading} />
+    }
+
     return (
         <SafeAreaView style={styles.container}>
             <ProfileProgressBar progress={80} onPress={() => {
                 resetNavigation(navigation, SCREENS.GENDER_LOOKING)
             }} />
-            <CustomLayout>
-                <View style={styles.contentContainer}>
-                    <Text style={styles.welcomeText}>
-                        Select Your Interests
-                    </Text>
-                    <Text style={styles.subTitle}>
-                        Select Your Interests and Unlock Your Perfect Matches!
-                    </Text>
+            {
+                loading ? renderLoader() : <>
+                    <View style={styles.contentContainer}>
+                        <Text style={styles.welcomeText}>
+                            Select Your Interests
+                        </Text>
+                        <Text style={styles.subTitle}>
+                            Select Your Interests and Unlock Your Perfect Matches!
+                        </Text>
 
-                    {/* <DynamicOptionSelector
+                        {/* <DynamicOptionSelector
                         items={interests}
                         onItemSelected={handleItemSelected}
                     /> */}
 
-                    <CategorySelector
-                        items={categories}
-                        onItemSelected={handleItemSelected}
-                        selectedItems={selectedInterests}
-                    />
+                        <CategorySelector
+                            items={categories}
+                            onItemSelected={handleItemSelected}
+                            selectedItems={selectedInterests}
+                        />
 
-                </View>
+                    </View>
 
-                <View style={styles.buttonContainer}>
+                    <View style={styles.buttonContainer}>
 
-                    <HorizontalDivider
-                        customStyle={{
-                            marginTop: 40
-                        }} />
+                        <HorizontalDivider
+                            customStyle={{
+                                marginTop: 40
+                            }} />
 
-                    <Button
-                        onPress={() => {
-                            handleSelectedInterests();
-                        }}
-                        title={'Continue'}
-                    />
-                </View>
+                        <Button
+                            onPress={() => {
+                                handleSelectedInterests();
+                            }}
+                            title={'Continue'}
+                        />
+                    </View>
+                </>
+            }
 
-            </CustomLayout>
+
+
 
         </SafeAreaView>
     );
@@ -134,8 +143,8 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-        marginTop: scaleHeight(130),
-        marginBottom: scaleHeight(20)
+        // marginTop: scaleHeight(130),
+        // marginBottom: scaleHeight(20)
     }
 });
 

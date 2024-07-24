@@ -17,7 +17,7 @@ import queryString from 'query-string';
 import { checkStripeRequirements } from '../../redux/PaymentSlices/checkStripeRequirementsSlice';
 import { setAsRemember } from '../../redux/rememberMeSlice';
 import { login } from '../../redux/AuthModule/signInSlice';
-import { alertLogo, successText } from '../../assets/images';
+import { accountCreated, alertLogo, successText } from '../../assets/images';
 import Spinner from '../../components/Spinner';
 import Modal from "react-native-modal";
 
@@ -174,7 +174,7 @@ const StripeAccountCreation = ({ navigation }) => {
 
                 <Image
                     resizeMode='contain'
-                    source={successText}
+                    source={accountCreated}
                     style={{
                         width: scaleHeight(130),
                         height: scaleHeight(45),
@@ -183,7 +183,7 @@ const StripeAccountCreation = ({ navigation }) => {
                     }}
                 />
                 <Text style={styles.subTitle}>
-                    {`Please wait...${'\n'}You will be directed to the homepage`}
+                    {`Please wait...${'\n'}You will be directed to the homepage.`}
                 </Text>
                 <Spinner />
             </View>

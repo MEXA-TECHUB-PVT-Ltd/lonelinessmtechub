@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
         marginRight: 10,
     },
     detailsContainer: {
-        alignItems: 'center'
+        //alignItems: 'center'
     },
     name: {
         fontSize: 16,
@@ -94,7 +94,8 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         // marginTop: 10,
         color: theme.dark.white,
-        marginLeft: -65
+        marginHorizontal: 8
+        //marginLeft: -25
     },
     comment: {
         fontSize: 14,

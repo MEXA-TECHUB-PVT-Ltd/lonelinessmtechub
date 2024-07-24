@@ -33,6 +33,7 @@ import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import FullScreenLoader from '../../../components/FullScreenLoader';
 import { Icon } from 'react-native-elements';
 import * as Animatable from 'react-native-animatable';
+import EmptyListComponent from '../../../components/EmptyListComponent';
 
 const extractItemKey = item => {
     return item?.userId?.toString();
@@ -74,6 +75,7 @@ const Chat = ({ navigation }) => {
         if (socket) {
             const userId = parseInt(user_id);
             socket.emit("registerUser", userId);
+            socket.emit("addContact", { userId, contactId: 92 });
             socket.on('contacts', (contactList) => {
                 const filteredContacts = contactList?.filter(contact => contact?.userId !== userId);
                 setAllContacts(filteredContacts);
@@ -331,7 +333,7 @@ const Chat = ({ navigation }) => {
                 </View>
                 <HorizontalDivider customStyle={{ marginVertical: 5 }} />
                 {
-                    contactLoader ? renderLoader() : <SwipeableFlatList
+                    contactLoader ? renderLoader() : filteredContacts?.length > 0 ? <SwipeableFlatList
                         keyExtractor={extractItemKey}
                         data={filteredContacts}
                         renderItem={({ item }) => (
@@ -341,7 +343,12 @@ const Chat = ({ navigation }) => {
                         renderQuickActions={({ index, item }) => QuickActions(index, item)}
                         contentContainerStyle={styles.contentContainerStyle}
                         shouldBounceOnMount={true}
-                    />
+                    /> : <EmptyListComponent
+                        customTitleStyle={{
+                            top: 0
+                        }}
+                        isImage={false}
+                        title={"Contact's not available."} />
                 }
 
                 <CustomModal

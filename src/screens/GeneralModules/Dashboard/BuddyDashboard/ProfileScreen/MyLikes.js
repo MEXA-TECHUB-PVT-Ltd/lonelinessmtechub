@@ -19,6 +19,7 @@ import EmptyListComponent from '../../../../../components/EmptyListComponent';
 import { calculateAge } from '../../../../../utils/calculateAge';
 import moment from 'moment';
 import { setRoute } from '../../../../../redux/appSlice';
+import Geolocation from '@react-native-community/geolocation';
 
 const MyLikes = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -27,6 +28,10 @@ const MyLikes = ({ navigation }) => {
     const [allLikes, setAllLikes] = useState(4530);
     const [refreshing, setRefreshing] = useState(false);
     const [loader, setLoader] = useState(true);
+    const [latLong, setLatlong] = useState({
+        latitude: 0,
+        longitude: 0,
+    });
 
 
     const handleBackPress = () => {
@@ -35,22 +40,33 @@ const MyLikes = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
+    const getLatLong = async () => {
+        const getPosition = () => new Promise((resolve, reject) => {
+            Geolocation.getCurrentPosition(resolve, reject);
+        });
+        const { coords: { latitude, longitude } } = await getPosition();
+        setLatlong({ ...latLong, latitude, longitude })
+    }
+
     useEffect(() => {
+        getLatLong()
         const timer = setTimeout(() => {
             setLoader(false);
         }, 3000);
 
         return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
-        dispatch(getLikes({ page, limit: 10 }));
+        dispatch(getLikes({ page, limit: 10, latLong }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dispatch, page]);
 
     const onRefresh = () => {
         setRefreshing(true);
         setPage(1); // Reset to first page
-        dispatch(getLikes({ page, limit: 10 }))
+        dispatch(getLikes({ page, limit: 10, latLong }))
             .then(() => setRefreshing(false))
             .catch(() => setRefreshing(false));
     };
@@ -103,7 +119,7 @@ const MyLikes = ({ navigation }) => {
                     style={styles.gradient}
                 >
                     <Text style={styles.name}>{`${item?.full_name?.split(" ")[0]} (${calculateAge(moment(item?.dob).format("YYYY-MM-DD"))})`}</Text>
-                    <Text style={styles.distance}>{convertMetersToKm(item?.distance != null ? item?.distance : 0)}</Text>
+                    <Text style={styles.distance}>{`${convertMetersToKm(item?.distance != null ? item?.distance : 0)} km`}</Text>
                 </LinearGradient>
             </TouchableOpacity>
         </Animatable.View>

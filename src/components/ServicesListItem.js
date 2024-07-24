@@ -16,20 +16,21 @@ import { useDispatch } from 'react-redux';
 import { setRoute } from '../redux/appSlice';
 
 
-const ServicesListItem = ({ item, navigation, index }) => {
+const ServicesListItem = ({ item, navigation, index, upComingPaymentPress }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
 
-
     const upComingStatus = () => {
-        return <TouchableOpacity style={{
-            width: scaleWidth(46),
-            height: scaleHeight(25),
-            borderRadius: 30,
-            backgroundColor: item?.is_released ? theme.dark.secondary : '#D2D2D2',
-            alignItems: 'center',
-            justifyContent: 'center',
-        }}>
+        return <TouchableOpacity
+            onPress={upComingPaymentPress}
+            style={{
+                width: scaleWidth(46),
+                height: scaleHeight(25),
+                borderRadius: 30,
+                backgroundColor: item?.is_released ? theme.dark.secondary : '#D2D2D2',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
             <Icon name="check" type="material" size={18} color={theme.dark.black} />
         </TouchableOpacity>
     }

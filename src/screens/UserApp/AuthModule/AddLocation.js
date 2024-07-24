@@ -16,7 +16,7 @@ import EmailIcon from 'react-native-vector-icons/Zocial'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import ProfileProgressBar from '../../../components/ProfileProgressBar';
 import Modal from "react-native-modal";
-import { alertLogo, successText } from '../../../assets/images';
+import { accountCreated, alertLogo, successText } from '../../../assets/images';
 import Spinner from '../../../components/Spinner';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../../providers/AuthProvider';
@@ -185,7 +185,7 @@ const AddLocation = ({ navigation }) => {
 
                 <Image
                     resizeMode='contain'
-                    source={successText}
+                    source={accountCreated}
                     style={{
                         width: scaleWidth(130),
                         height: scaleHeight(45),
@@ -194,7 +194,7 @@ const AddLocation = ({ navigation }) => {
                     }}
                 />
                 <Text style={styles.subTitle}>
-                    {`Please wait...${'\n'}You will be directed to the homepage`}
+                    {`Please wait...${'\n'}You will be directed to the homepage.`}
                 </Text>
                 <Spinner />
             </View>
