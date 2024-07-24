@@ -947,19 +947,19 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
 
                     <CustomTextInput
                         label={'Language'}
-                        placeholder={"Select Language"}
+                        placeholder={"Enter Language"}
                         identifier={'language'}
                         value={form.language}
                         onValueChange={(value) => handleChange('language', value)}
                         mainContainer={{ marginTop: 10 }}
-                        iconComponent={
-                            <MaterialIcons
-                                style={{
-                                    marginEnd: 8
+                        // iconComponent={
+                        //     <MaterialIcons
+                        //         style={{
+                        //             marginEnd: 8
 
-                                }} name={"keyboard-arrow-down"} size={24}
-                                color={theme.dark.text} />
-                        }
+                        //         }} name={"keyboard-arrow-down"} size={24}
+                        //         color={theme.dark.text} />
+                        // }
                     />
 
 
@@ -1067,7 +1067,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
             type: "BLOCK" // BLOCK OR REPORT -- 
         })).then((result) => {
             if (result?.payload?.status === "success") {
-                
+
                 dispatch(setIsAppOpened(false))
                 showAlert("Success", "success", result?.payload?.message);
                 handleCloseModal();
@@ -1100,12 +1100,19 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
     }
 
     const handleChatNavigation = () => {
+        if (socket) {
+            const userId = parseInt(id)
+            const newBuddy = parseInt(currentUser?.id)
+            socket.emit("addContact", { userId, contactId: newBuddy });
+        }
         dispatch(setRoute({
             route: SCREENS.MAIN_DASHBOARD,
-            receiver_id: currentUser?.id
+            receiver_id: currentUser?.id,
+            image_url: currentUser?.image_urls[0],
+            user_name: currentUser?.full_name
         }))
-        //resetNavigation(navigation, SCREENS.GENERAL_CHAT)
-        resetNavigation(navigation, SCREENS.CHAT)
+        resetNavigation(navigation, SCREENS.GENERAL_CHAT)
+        //resetNavigation(navigation, SCREENS.CHAT)
     }
 
     const handleChatPayment = (buddyId) => {
@@ -1114,10 +1121,6 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
         }
         dispatch(checkChatPayment(payload)).then((result) => {
             if (result?.payload?.status === "success") {
-                if (socket) {
-                    const userId = parseInt(id)
-                    socket.emit("addContact", { userId, contactId: buddyId });
-                }
                 handleChatNavigation();
             } else if (result?.payload?.status === "error") {
                 handleOpenModal2();
@@ -1134,16 +1137,21 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
             amount: 1
         }
         dispatch(cardWalletPaymentTransfer(payload)).then((result) => {
+            console.log(result?.payload)
             setPaymentLoader(false)
             if (result?.payload?.status === "success") {
                 showAlert("Success", "success", result?.payload?.message);
                 handleCloseModal3();
-                setOverlayOpened(false);
+                setOverlayOpened(false)
                 setTimeout(() => {
                     handleChatNavigation()
                 }, 3000);
 
-            } else if (result?.payload?.status === "error") {
+            }
+            else if (result?.payload?.errors) {
+                showAlert("Error", "error", result?.payload?.errors)
+            }
+            else if (result?.payload?.status === "error") {
                 setPaymentLoader(false)
                 setOverlayOpened(false);
                 handleCloseModal3();

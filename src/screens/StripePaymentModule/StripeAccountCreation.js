@@ -44,19 +44,23 @@ const StripeAccountCreation = ({ navigation }) => {
 
     useBackHandler(handleBackPress);
 
+    const handleOnboarding = async () => {
+        const onboardResult = await dispatch(accountOnboarding());
+        if (onboardResult?.payload?.status === "success") {
+            console.log('onboarding---->', onboardResult?.payload)
+            setWebUrl(onboardResult?.payload?.result?.url);
+        } else {
+            showAlert("Error", "error", onboardResult?.payload?.message);
+        }
+    }
+
     useEffect(() => {
         const createAccountUrl = async () => {
             try {
                 const createResult = await dispatch(createConnectedAccount());
                 if (createResult?.payload?.status === "success") {
                     showAlert("Success", "success", createResult?.payload?.message);
-
-                    const onboardResult = await dispatch(accountOnboarding());
-                    if (onboardResult?.payload?.status === "success") {
-                        setWebUrl(onboardResult?.payload?.result?.url);
-                    } else {
-                        showAlert("Error", "error", onboardResult?.payload?.message);
-                    }
+                    handleOnboarding();
                 } else {
                     showAlert("Error", "error", createResult?.payload?.message);
                 }
@@ -93,7 +97,30 @@ const StripeAccountCreation = ({ navigation }) => {
     const checkRequirements = () => {
         dispatch(checkStripeRequirements()).then((result) => {
             if (result?.payload?.status === "success") {
-                showHideModal();
+                const {
+                    current_deadline,
+                    currently_due,
+                    disabled_reason,
+                    errors,
+                    eventually_due,
+                    past_due,
+                    pending_verification
+                } = result?.payload?.result;
+
+                if (
+                    current_deadline === null &&
+                    currently_due.length === 0 &&
+                    disabled_reason === null &&
+                    errors.length === 0 &&
+                    eventually_due.length === 0 &&
+                    past_due.length === 0 &&
+                    pending_verification.length === 0
+                ) {
+                    showHideModal();
+                } else {
+                    showAlert("Error", "error", "There are pending requirements to be fulfilled.");
+                    handleOnboarding();
+                }
             }
             else if (result?.payload?.status === "error") {
                 showAlert("Error", "error", result?.payload?.message)
@@ -105,12 +132,23 @@ const StripeAccountCreation = ({ navigation }) => {
     const handleNavigationStateChange = (newNavState) => {
         setCanGoBack(newNavState.canGoBack);
         const { url } = newNavState;
+        console.log("urllllllll", url)
         let responseData = {};
 
-        if (url.startsWith('https://connect.stripe.com/setup/s')) {
-            //responseData = parseResponseData(url);
+
+        if (url.startsWith('https://mtechub.com/return')) {
             checkRequirements();
         }
+
+
+
+        // if (url.startsWith('https://connect.stripe.com/setup/s')) {
+        //     responseData = parseResponseData(url);
+        //     console.log('responseData', responseData)
+        //     if (responseData) {
+        //         checkRequirements();
+        //     }
+        // }
     };
 
     const showHideModal = () => {
@@ -119,7 +157,7 @@ const StripeAccountCreation = ({ navigation }) => {
         setTimeout(() => {
             setModalVisible(false);
             dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: 'testing-token-remove-later' }));
-        }, 3000);
+        }, 6000);
     };
 
     const renderWebView = () => {

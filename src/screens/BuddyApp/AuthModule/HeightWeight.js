@@ -57,7 +57,7 @@ const HeightWeight = ({ navigation }) => {
       setInputValues(prevValues => ({
         ...prevValues,
         weight_lb: weight,
-        weight_unit: weight_unit
+        weight_unit: "LB"
       }));
     } else {
       setWeightKgSelected(true);
@@ -65,7 +65,7 @@ const HeightWeight = ({ navigation }) => {
       setInputValues(prevValues => ({
         ...prevValues,
         weight_kg: weight,
-        weight_unit: weight_unit
+        weight_unit: "KG"
       }));
     }
   }, [dataPayload]);

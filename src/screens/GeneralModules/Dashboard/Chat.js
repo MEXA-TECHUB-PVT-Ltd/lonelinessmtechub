@@ -75,7 +75,7 @@ const Chat = ({ navigation }) => {
         if (socket) {
             const userId = parseInt(user_id);
             socket.emit("registerUser", userId);
-            socket.emit("addContact", { userId, contactId: 92 });
+            //socket.emit("addContact", { userId, contactId: 92 });
             socket.on('contacts', (contactList) => {
                 const filteredContacts = contactList?.filter(contact => contact?.userId !== userId);
                 setAllContacts(filteredContacts);
@@ -170,8 +170,18 @@ const Chat = ({ navigation }) => {
         resetNavigation(navigation, SCREENS.REPORT_BUDDY);
     };
 
-    const handleDeleteChat = () => {
-        console.log('hello')
+    const handleDeleteChat = (contactId) => {
+        handleDeleteCloseModal();
+        const userId = parseInt(user_id);
+        const contactToDelete = parseInt(contactId);
+        if (socket) {
+            socket.emit("removeContact", { userId, contactId: contactToDelete });
+            const updatedContacts = allContacts?.filter(contact => contact.userId !== contactId);
+            setAllContacts(updatedContacts);
+            setFilteredContacts(updatedContacts);
+        }
+
+
     }
 
     const clearSearch = () => {
@@ -381,7 +391,7 @@ const Chat = ({ navigation }) => {
                         handleDeleteCloseModal();
                     }}
                     parallelButtonPress2={() => {
-                        handleDeleteChat();
+                        handleDeleteChat(selectedUser?.user_id);
                     }}
                 />
             </SafeAreaView>

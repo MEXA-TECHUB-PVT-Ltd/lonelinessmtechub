@@ -140,7 +140,6 @@ export default function GeneralChat({ navigation }) {
                     contactId: receivedMessage.receiver_id,
                 });
             });
-
         }
         return () => {
             if (socket) {

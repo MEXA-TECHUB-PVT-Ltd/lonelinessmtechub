@@ -26,6 +26,7 @@ import { logout } from '../../../redux/AuthModule/signInSlice';
 import { setCurrentUserIndex } from '../../../redux/currentUserIndexSlice';
 import { setLastIndex } from '../../../redux/setIndexesSlice';
 import { setIsAppOpened } from '../../../redux/appOpenedSlice';
+import { clearState } from '../../../redux/AuthModule/signupSlice';
 
 
 const userList = [
@@ -99,6 +100,7 @@ const Profile = ({ navigation }) => {
 
     const handleLogout = () => {
         dispatch(logout());
+        dispatch(clearState());
         dispatch(setCurrentUserIndex(null));
         dispatch(setLastIndex(0));
         dispatch(setIsAppOpened(false))

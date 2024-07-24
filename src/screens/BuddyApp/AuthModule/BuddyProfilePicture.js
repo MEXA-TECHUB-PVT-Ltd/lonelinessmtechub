@@ -127,7 +127,7 @@ const BuddyProfilePicture = ({ navigation }) => {
     const handleNavigation = () => {
         if (selectedImages.some(image => image)) {
             const newPayload = { ...dataPayload, profile_pics: selectedImages };
-            dispatch(setDataPayload(newPayload))
+            dispatch(setDataPayload(newPayload));
             resetNavigation(navigation, SCREENS.BUDDY_ABOUT);
         } else {
             showAlert("Error", "error", "Add at least 1 photo to continue.");
