@@ -25,6 +25,7 @@ const VerifyEmail = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
     const { dataPayload } = useSelector((state) => state.app)
+    const { loading } = useSelector((state) => state.verifyEmailCode)
     const [value, setValue] = useState('');
     const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
     const [props, getCellOnLayoutHandler] = useClearByFocusCell({
@@ -39,17 +40,10 @@ const VerifyEmail = ({ navigation }) => {
     useBackHandler(handleBackPress);
 
     const handleResetPassNavigation = () => {
-
-
-        resetNavigation(navigation, SCREENS.RESET_PASSWORD)
-
-        return
-
         const payload = {
             email: dataPayload?.email,
             code: value
         }
-
         dispatch(verifyEmailCode(payload)).then((result) => {
             if (result?.payload?.status === "success") {
                 showAlert("Success", "success", result?.payload?.message)
@@ -111,13 +105,14 @@ const VerifyEmail = ({ navigation }) => {
             </CustomLayout>
 
             <View style={styles.buttonContainer}>
-                    <Button
-                        onPress={() => {
-                            handleResetPassNavigation();
-                        }}
-                        title={'Verify'}
-                    />
-                </View>
+                <Button
+                    loading={loading}
+                    onPress={() => {
+                        handleResetPassNavigation();
+                    }}
+                    title={'Verify'}
+                />
+            </View>
 
         </SafeAreaView>
     );
@@ -169,7 +164,7 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: '90%',
         alignSelf: 'center',
-       // marginTop: scaleHeight(170)
+        // marginTop: scaleHeight(170)
     },
     createAccountView: {
         flex: 1

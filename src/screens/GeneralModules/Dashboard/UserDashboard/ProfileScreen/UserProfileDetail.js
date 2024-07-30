@@ -95,7 +95,7 @@ const UserProfileDetail = ({ navigation }) => {
                         <View style={styles.profileView}>
                             <Image
                                 style={styles.profileImage}
-                                source={{ uri: userDetail?.image_urls[0] }}
+                                source={{ uri: userDetail?.image_urls && userDetail?.image_urls[0] }}
                             />
                         </View>
                         <View style={styles.profileInfo}>

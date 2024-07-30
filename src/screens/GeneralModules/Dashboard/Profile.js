@@ -84,7 +84,8 @@ const Profile = ({ navigation }) => {
             dispatch(setRoute({
                 route: text === "My Ratings" ? SCREENS.PROFILE : SCREENS.MAIN_DASHBOARD,
                 type: type,
-                isProfilePremium: true
+                isProfilePremium: true,
+                ...(role === "BUDDY" && text === "My Ratings" && { buddy_id: user_id })
             }))
         }
         resetNavigation(navigation, route)
@@ -132,9 +133,9 @@ const Profile = ({ navigation }) => {
                     onPress={() => {
                         resetNavigation(navigation, profileNav)
                     }}
-                    image_url={userDetail?.image_urls[0]}
-                    full_name={userDetail?.full_name}
-                    gender={userDetail?.gender}
+                    image_url={userDetail?.image_urls && userDetail?.image_urls[0]}
+                    full_name={userDetail?.full_name && userDetail?.full_name}
+                    gender={userDetail?.gender && userDetail?.gender}
                     customHeaderStyle={{
                         marginTop: 20,
                         marginBottom: 10

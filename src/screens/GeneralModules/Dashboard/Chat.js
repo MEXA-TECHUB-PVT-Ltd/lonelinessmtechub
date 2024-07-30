@@ -21,7 +21,7 @@ import fonts from '../../../styles/fonts';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
 import io from 'socket.io-client';
-import { SOCKET_URL } from '../../../configs/apiUrl';
+import { SOCKET_URL } from '@env'
 import { useDispatch, useSelector } from 'react-redux';
 import { setRoute } from '../../../redux/appSlice';
 import moment from 'moment';
@@ -34,6 +34,7 @@ import FullScreenLoader from '../../../components/FullScreenLoader';
 import { Icon } from 'react-native-elements';
 import * as Animatable from 'react-native-animatable';
 import EmptyListComponent from '../../../components/EmptyListComponent';
+import { setWarningContent } from '../../../redux/warningModalSlice';
 
 const extractItemKey = item => {
     return item?.userId?.toString();
@@ -57,6 +58,12 @@ const Chat = ({ navigation }) => {
     });
     const user_id = userLoginInfo?.user?.id;
     const blockTitle = role === "USER" ? "Block Buddy?" : "Block User?";
+
+
+    useEffect(() => {
+        dispatch(setWarningContent(true))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dispatch]);
 
     useEffect(() => {
         const newSocket = io(SOCKET_URL);

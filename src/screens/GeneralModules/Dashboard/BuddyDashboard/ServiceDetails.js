@@ -23,6 +23,7 @@ import { color } from '@rneui/base';
 import { setRoute } from '../../../../redux/appSlice';
 import { getUserDetailByService } from '../../../../redux/BuddyDashboard/getUserDetailByServiceSlice';
 import { calculateAge } from '../../../../utils/calculateAge';
+import { setWarningContent } from '../../../../redux/warningModalSlice';
 
 const ServiceDetails = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -39,6 +40,11 @@ const ServiceDetails = ({ navigation }) => {
         return true;
     };
     useBackHandler(handleBackPress);
+
+    useEffect(() => {
+        dispatch(setWarningContent(true))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dispatch]);
 
     useEffect(() => {
         // dispatch(getRequestById(currentRoute?.request_id))
@@ -154,7 +160,7 @@ const ServiceDetails = ({ navigation }) => {
 
     const renderLoader = () => {
         return <FullScreenLoader
-            title={"Please wait fetching detail..."}
+            title={"Please wait fetching service detail..."}
             loading={loading} />
     }
 

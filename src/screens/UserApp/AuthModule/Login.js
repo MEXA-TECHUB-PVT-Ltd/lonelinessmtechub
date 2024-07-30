@@ -21,6 +21,8 @@ import { alertLogo, successText } from '../../../assets/images';
 import Spinner from '../../../components/Spinner';
 import Modal from "react-native-modal";
 import { setAsRemember } from '../../../redux/rememberMeSlice';
+import { setTempCred } from '../../../redux/setTempCredentialsSlice';
+import { setTempToken } from '../../../redux/AuthModule/signupSlice';
 
 const Login = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -108,7 +110,17 @@ const Login = ({ navigation }) => {
                 device_token: "testingdevicetoken",
             }
             dispatch(login(credentials)).then((result) => {
+                console.log(result?.payload)
                 if (result?.payload?.status === "success") {
+                    const { is_requirements_completed } = result?.payload?.result?.user
+                    const { role, token } = result?.payload?.result
+                    if (!is_requirements_completed && role === "BUDDY") {
+                        dispatch(setAsRemember(null));
+                        dispatch(setTempCred({ email, password }));
+                        dispatch(setTempToken(token))
+                        resetNavigation(navigation, SCREENS.STRIPE_ACCOUNT_CREATION)
+                        return
+                    }
                     showHideModal();
                     if (isRemember) {
                         const rememberPayload = { email: form.email, password: form.password };

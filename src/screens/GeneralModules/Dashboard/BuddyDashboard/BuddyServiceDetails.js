@@ -27,6 +27,7 @@ import { actionCancelPayment } from '../../../../redux/BuddyDashboard/actionCanc
 import { acceptRejectUserRequest } from '../../../../redux/BuddyDashboard/acceptRejectUserRequestSlice';
 import { requestForPayment } from '../../../../redux/BuddyDashboard/requestForPaymentSlice';
 import { color } from '@rneui/base';
+import { setWarningContent } from '../../../../redux/warningModalSlice';
 
 const BuddyServiceDetails = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -53,6 +54,11 @@ const BuddyServiceDetails = ({ navigation }) => {
         return true;
     };
     useBackHandler(handleBackPress);
+
+    useEffect(() => {
+        dispatch(setWarningContent(true))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dispatch]);
 
 
     useEffect(() => {
@@ -195,7 +201,7 @@ const BuddyServiceDetails = ({ navigation }) => {
 
     const renderLoader = () => {
         return <FullScreenLoader
-            title={"Please wait fetching user detail..."}
+            title={"Please wait fetching service detail..."}
             loading={loading} />
     }
 
@@ -384,7 +390,7 @@ const BuddyServiceDetails = ({ navigation }) => {
                         {(userDetail?.canceled_status === "REQUESTED" || userDetail?.canceled_status === "REJECTED") &&
                             <View style={[styles.categorySection, { marginTop: 10, flexDirection: 'row' }]}>
 
-                                <View style={[styles.categorySection, { marginTop: 10, flex:1 }]}>
+                                <View style={[styles.categorySection, { marginTop: 10, flex: 1 }]}>
                                     <Text style={{
                                         color: theme.dark.secondary,
                                         fontSize: scaleHeight(18),
@@ -408,7 +414,7 @@ const BuddyServiceDetails = ({ navigation }) => {
 
                                 </View>
 
-                                {userDetail?.canceled_status === "REJECTED" && <View style={[styles.statusContainer, { backgroundColor: getColorByStatus(userDetail?.canceled_status), marginTop:10 },]}>
+                                {userDetail?.canceled_status === "REJECTED" && <View style={[styles.statusContainer, { backgroundColor: getColorByStatus(userDetail?.canceled_status), marginTop: 10 },]}>
                                     <Text style={styles.statusText}>
                                         {getNameByStatus(userDetail?.canceled_status)}
                                     </Text>

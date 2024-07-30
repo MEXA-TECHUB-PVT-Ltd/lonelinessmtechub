@@ -4,7 +4,7 @@ import fonts from '../styles/fonts';
 import { theme } from '../assets';
 import { scaleHeight } from '../styles/responsive';
 import { useSelector } from 'react-redux';
-import { SOCKET_URL } from '../configs/apiUrl';
+import { SOCKET_URL } from '@env'
 import io from 'socket.io-client';
 
 const CustomBottomTabBar = ({ state, descriptors, navigation, icons }) => {

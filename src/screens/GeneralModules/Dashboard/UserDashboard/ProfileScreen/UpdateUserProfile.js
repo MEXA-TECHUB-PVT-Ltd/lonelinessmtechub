@@ -92,7 +92,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
         } = userDetail || {};
 
 
-        setSelectedImage(image_urls[0])
+        setSelectedImage(image_urls && image_urls[0])
         setSelectedOption(looking_for_gender)
         setInputValues(prevValues => ({
             ...prevValues,

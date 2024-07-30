@@ -81,7 +81,7 @@ const BuddyEnableLocation = ({ navigation }) => {
                 formData.append('languages', JSON.stringify(newPayload?.languages));
                 formData.append('dob', newPayload?.birthDate);
                 // console.log(newPayload)
-                 console.log(JSON.stringify(formData))
+                console.log(JSON.stringify(formData))
                 // dispatch(setDataPayload(newPayload));
                 dispatch(updateProfile(formData)).then((result) => {
                     if (result?.payload?.status === "success") {

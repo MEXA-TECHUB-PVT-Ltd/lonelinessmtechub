@@ -43,6 +43,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
     const [form, setForm] = useState({ day: '', month: '', year: '' });
     const [errors, setErrors] = useState({ birthDate: '' });
     const [selectedOption, setSelectedOption] = useState('');
+    const [loader, setLoader] = useState(false)
     const [inputValues, setInputValues] = useState({
         height_ft: '',
         height_in: '',
@@ -161,7 +162,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
         } = userDetail || {};
 
 
-        updateImages(image_urls)
+        updateImages(image_urls && image_urls)
         setSelectedOption(gender)
         setDob(dob)
         setInputValues(prevValues => ({
@@ -329,48 +330,45 @@ const UpdateBuddyProfile = ({ navigation }) => {
     );
 
     const handleUpdateProfile = () => {
-        const { day, month, year } = form;
-        const birthDate = `${year}-${month}-${day}`;
-        const imageType = selectedImages[0]?.endsWith('.png') ? 'image/png' : 'image/jpeg';
-        const formData = new FormData();
+        setLoader(true)
+        setTimeout(() => {
+            const { day, month, year } = form;
+            const birthDate = `${year}-${month}-${day}`;
+            const imageType = selectedImages[0]?.endsWith('.png') ? 'image/png' : 'image/jpeg';
+            const formData = new FormData();
 
-        // selectedImages?.forEach((image, index) => {
-        //     formData.append('files', {
-        //         uri: image,
-        //         type: imageType,
-        //         name: `image_${Date.now()}_${index}.${imageType.split('/')[1]}`,
-        //     });
-        // });
+            selectedImages?.forEach((image, index) => {
+                if (image && image.trim()) {
+                    formData.append('files', {
+                        uri: image,
+                        type: imageType,
+                        name: `image_${Date.now()}_${index}.${imageType.split('/')[1]}`,
+                    });
+                }
+            });
 
-        selectedImages?.forEach((image, index) => {
-            if (image && image.trim()) {
-                formData.append('files', {
-                    uri: image,
-                    type: imageType,
-                    name: `image_${Date.now()}_${index}.${imageType.split('/')[1]}`,
-                });
-            }
-        });
-
-        formData.append('full_name', inputValues?.full_name);
-        formData.append('about', inputValues?.about);
-        formData.append('gender', selectedOption);
-        formData.append('height_ft', inputValues?.height_ft);
-        formData.append('height_in', inputValues?.height_in);
-        formData.append('weight', inputValues?.weight_kg);
-        formData.append('weight_unit', inputValues?.weight_unit);
-        formData.append('dob', birthDate);
-        dispatch(updateProfile(formData)).then((result) => {
-            if (result?.payload?.status === "success") {
-                showAlert("Success", "success", result?.payload?.message)
-                setTimeout(() => {
-                    handleBackPress();
-                }, 3000);
-            } else if (result?.payload?.status === "error") {
-                showAlert("Error", "error", result?.payload?.message)
-            }
-        })
-
+            formData.append('full_name', inputValues?.full_name);
+            formData.append('about', inputValues?.about);
+            formData.append('gender', selectedOption);
+            formData.append('height_ft', inputValues?.height_ft);
+            formData.append('height_in', inputValues?.height_in);
+            formData.append('weight', inputValues?.weight_kg);
+            formData.append('weight_unit', inputValues?.weight_unit);
+            formData.append('dob', birthDate);
+            console.log(JSON.stringify(formData))
+            dispatch(updateProfile(formData)).then((result) => {
+                setLoader(false)
+                if (result?.payload?.status === "success") {
+                    showAlert("Success", "success", result?.payload?.message)
+                    setTimeout(() => {
+                        handleBackPress();
+                    }, 3000);
+                } else if (result?.payload?.status === "error") {
+                    setLoader(false)
+                    showAlert("Error", "error", result?.payload?.message)
+                }
+            })
+        }, 1000);
     }
 
     return (
@@ -907,7 +905,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
                     {userDetail?.languages != null && <LanguagesItem languages={userDetail?.languages} />}
 
                     <Button
-                        loading={loading}
+                        loading={loader}
                         onPress={() => {
                             handleUpdateProfile()
                         }}
