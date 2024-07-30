@@ -18,6 +18,9 @@ export const login = createAsyncThunk(
         try {
             const data = await makeRequest('POST', '/auth/sign-in', credentials);
             if (data?.status === "success") {
+                if (!data?.result?.user?.is_requirements_completed && data?.result?.role === "BUDDY") {
+                    return data;
+                }
                 setTimeout(() => {
                     dispatch(setUserInfoAndToken({
                         token: data?.result?.token,

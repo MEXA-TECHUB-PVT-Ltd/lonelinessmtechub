@@ -31,6 +31,9 @@ const signupSlice = createSlice({
             state.response = null;
             state.role = null;
         },
+        setTempToken(state, action) {
+            state.bearerToken = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -50,5 +53,5 @@ const signupSlice = createSlice({
             });
     },
 });
-export const { clearState } = signupSlice.actions;
+export const { clearState, setTempToken } = signupSlice.actions;
 export default signupSlice.reducer;

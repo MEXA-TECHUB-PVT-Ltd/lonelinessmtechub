@@ -66,7 +66,8 @@ import * as Animatable from 'react-native-animatable';
 import CrossIcon from 'react-native-vector-icons/AntDesign'
 import { setCurrentUserIndex } from '../../../../redux/currentUserIndexSlice';
 import io from 'socket.io-client';
-import { SOCKET_URL } from '../../../../configs/apiUrl';
+import { SOCKET_URL } from '@env'
+import { requestLocationPermission } from '../../../../utils/cameraPermission';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -139,6 +140,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
     });
 
     const getAllNearByBuddies = async () => {
+        requestLocationPermission();
         const getPosition = () => new Promise((resolve, reject) => {
             Geolocation.getCurrentPosition(resolve, reject);
         });
@@ -952,14 +954,14 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                         value={form.language}
                         onValueChange={(value) => handleChange('language', value)}
                         mainContainer={{ marginTop: 10 }}
-                        // iconComponent={
-                        //     <MaterialIcons
-                        //         style={{
-                        //             marginEnd: 8
+                    // iconComponent={
+                    //     <MaterialIcons
+                    //         style={{
+                    //             marginEnd: 8
 
-                        //         }} name={"keyboard-arrow-down"} size={24}
-                        //         color={theme.dark.text} />
-                        // }
+                    //         }} name={"keyboard-arrow-down"} size={24}
+                    //         color={theme.dark.text} />
+                    // }
                     />
 
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
@@ -26,14 +26,17 @@ import { setDataPayload } from '../../../redux/appSlice';
 import { updateProfile } from '../../../redux/AuthModule/updateProfileSlice';
 import { login } from '../../../redux/AuthModule/signInSlice';
 import { setAsRemember } from '../../../redux/rememberMeSlice';
+import { setWarningContent } from '../../../redux/warningModalSlice';
 
 const AddLocation = ({ navigation }) => {
     const dispatch = useDispatch();
+    const { warningContent } = useSelector((state) => state.warningContent);
     const { showAlert } = useAlert();
     const { loading } = useSelector((state) => state.createProfile);
     const { dataPayload } = useSelector((state) => state.app);
     const { credentials } = useSelector((state) => state.tempCredentials);
     const [modalVisible, setModalVisible] = useState(false);
+    const [isWarning, setIsWarning] = useState(true);
     const [form, setForm] = useState({ address: '', country: '', state: '', postal_code: '', city: '' });
     const [errors, setErrors] = useState({ address: '', country: '', state: '', postal_code: '', city: '' });
 
@@ -120,11 +123,11 @@ const AddLocation = ({ navigation }) => {
             formData.append('gender', newPayload?.gender);
             formData.append('looking_for_gender', newPayload?.looking_for_gender);
             formData.append('category_ids', JSON.stringify(newPayload?.category_ids));
-            formData.append('latitude', newPayload?.latitude);
-            formData.append('longitude', newPayload?.longitude);
+            // formData.append('latitude', newPayload?.latitude);
+            // formData.append('longitude', newPayload?.longitude);
             formData.append('dob', newPayload?.dob);
             formData.append('phone_country_code', newPayload?.phone_country_code);
-            formData.append('phone_number', newPayload?.phone_number);
+            formData.append('phone_number', newPayload?.phone_country_code?.replace('+', ''));
             formData.append('address', newPayload?.address);
             formData.append('country', newPayload?.country);
             formData.append('postal_code', newPayload?.postal_code);
@@ -133,7 +136,9 @@ const AddLocation = ({ navigation }) => {
             //dispatch(setDataPayload(newPayload));
             dispatch(updateProfile(formData)).then((result) => {
                 if (result?.payload?.status === "success") {
-                    showHideModal();
+                    dispatch(setWarningContent(true))
+                    setIsWarning(false)
+                    //showHideModal();
                 } else if (result?.payload?.status === "error") {
                     showAlert("Error", "error", result?.payload?.message)
                 }
@@ -141,13 +146,20 @@ const AddLocation = ({ navigation }) => {
         }
     };
 
+    useEffect(() => {
+        if (!warningContent.modalVisible && !isWarning) {
+            showHideModal();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [warningContent, isWarning])
+
     const showHideModal = () => {
         dispatch(setAsRemember(null))
         setModalVisible(true);
         setTimeout(() => {
             setModalVisible(false);
             dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: 'testing-token-remove-later' }));
-        }, 3000);
+        }, 6000);
     };
 
     const showModalView = () => {
@@ -193,17 +205,13 @@ const AddLocation = ({ navigation }) => {
                         marginTop: 10
                     }}
                 />
-                <Text style={styles.subTitle}>
+                <Text style={[styles.subTitle,{ alignSelf: 'center', textAlign: 'center', }]}>
                     {`Please wait...${'\n'}You will be directed to the homepage.`}
                 </Text>
                 <Spinner />
             </View>
         </Modal>
     }
-
-
-
-
 
     return (
         <SafeAreaView style={styles.container}>

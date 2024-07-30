@@ -20,16 +20,19 @@ import { login } from '../../redux/AuthModule/signInSlice';
 import { accountCreated, alertLogo, successText } from '../../assets/images';
 import Spinner from '../../components/Spinner';
 import Modal from "react-native-modal";
+import { setWarningContent } from '../../redux/warningModalSlice';
 
 const StripeAccountCreation = ({ navigation }) => {
     const dispatch = useDispatch();
     const { loading } = useSelector((state) => state.connectedAccount)
     const onboardingLoader = useSelector((state) => state.accountOnboarding.loading)
     const { credentials } = useSelector((state) => state.tempCredentials);
+    const { warningContent } = useSelector((state) => state.warningContent);
     const { showAlert } = useAlert();
     const webviewRef = useRef(null);
     const [canGoBack, setCanGoBack] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
+    const [isWarning, setIsWarning] = useState(true);
     const [webUrl, setWebUrl] = useState('');
     const timeoutRef = useRef(null);
 
@@ -75,6 +78,14 @@ const StripeAccountCreation = ({ navigation }) => {
     }, [dispatch]);
 
 
+    useEffect(() => {
+        if (!warningContent.modalVisible && !isWarning) {
+            showHideModal();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [warningContent, isWarning])
+
+
     const parseResponseData = (url) => {
         const urlParts = url.split('/');
         const lastPart = urlParts[urlParts.length - 1];
@@ -116,7 +127,9 @@ const StripeAccountCreation = ({ navigation }) => {
                     past_due.length === 0 &&
                     pending_verification.length === 0
                 ) {
-                    showHideModal();
+                    //showHideModal();
+                    dispatch(setWarningContent(true))
+                    setIsWarning(false)
                 } else {
                     showAlert("Error", "error", "There are pending requirements to be fulfilled.");
                     handleOnboarding();
@@ -172,9 +185,6 @@ const StripeAccountCreation = ({ navigation }) => {
                 source={{ uri: webUrl }}
                 style={{ flex: 1 }}
                 onNavigationStateChange={handleNavigationStateChange}
-            // onNavigationStateChange={(navState) => {
-            //     setCanGoBack(navState.canGoBack);
-            // }}
             />
         );
     };

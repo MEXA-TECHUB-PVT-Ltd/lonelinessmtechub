@@ -19,12 +19,13 @@ import { alertLogo, resetText } from '../../../assets/images';
 import Spinner from '../../../components/Spinner';
 import Modal from "react-native-modal";
 import { resetPassword } from '../../../redux/AuthModule/resetPasswordSlice';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useAlert } from '../../../providers/AlertContext';
 
 const ResetPassword = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
+    const { loading } = useSelector((state) => state.resetPassword)
     const [form, setForm] = useState({ newPassword: '', confirmPassword: '' });
     const [errors, setErrors] = useState({ newPassword: '', confirmPassword: '' });
     const [showPassword, setShowPassword] = useState(false);
@@ -106,7 +107,6 @@ const ResetPassword = ({ navigation }) => {
 
     const showHideModal = () => {
         setModalVisible(true);
-        // Hide the modal after 3 seconds
         setTimeout(() => {
             setModalVisible(false);
             resetNavigation(navigation, SCREENS.LOGIN)
@@ -230,6 +230,7 @@ const ResetPassword = ({ navigation }) => {
 
             <View style={styles.buttonContainer}>
                 <Button
+                    loading={loading}
                     onPress={() => {
                         handleResetPassword();
                     }}

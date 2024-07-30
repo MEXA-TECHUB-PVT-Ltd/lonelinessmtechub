@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { BASE_URL } from './apiUrl';
+import { API_BASE_URL } from '@env'
 import NetInfo from "@react-native-community/netinfo";
 
 const apiService = axios.create({
-    baseURL: BASE_URL,
+    baseURL: API_BASE_URL,
     headers: {
         'content-type': 'application/json'
     },

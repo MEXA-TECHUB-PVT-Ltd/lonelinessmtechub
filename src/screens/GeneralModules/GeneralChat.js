@@ -23,7 +23,7 @@ import { useAlert } from '../../providers/AlertContext';
 import { launchImageLibrary } from 'react-native-image-picker';
 import io from 'socket.io-client';
 import { useDispatch, useSelector } from 'react-redux';
-import { SOCKET_URL } from '../../configs/apiUrl';
+import { SOCKET_URL } from '@env'
 import { userBuddyAction } from '../../redux/userBuddyActionSlice';
 import { setRoute } from '../../redux/appSlice';
 import FullScreenLoader from '../../components/FullScreenLoader';

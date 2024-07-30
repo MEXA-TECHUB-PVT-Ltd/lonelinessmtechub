@@ -100,12 +100,12 @@ const styles = StyleSheet.create({
         width: screenWidth,
         justifyContent: 'center',
         alignItems: 'center',
-        height: screenHeight, // Square aspect ratio
+        height: screenHeight, 
+        aspectRatio:1
     },
     image: {
         width: '100%',
         height: screenHeight,
-        resizeMode: 'cover',
         marginTop: scaleHeight(20),
     },
     indicatorContainer: {

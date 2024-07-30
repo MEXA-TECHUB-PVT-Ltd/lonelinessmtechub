@@ -16,6 +16,7 @@ import { useAlert } from '../../../../providers/AlertContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAllCategories } from '../../../../redux/getAllCategoriesSlice';
 import { sendRequest } from '../../../../redux/UserDashboard/sendRequestSlice';
+import { setWarningContent } from '../../../../redux/warningModalSlice';
 
 const SendRequest = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -58,9 +59,11 @@ const SendRequest = ({ navigation }) => {
     };
     useBackHandler(handleBackPress);
 
-    // useEffect(() => {
-    //     dispatch(getAllCategories())
-    // }, [dispatch])
+
+    useEffect(() => {
+        dispatch(setWarningContent(true))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dispatch]);
 
     const handleCategoryPress = (item) => {
         setCategory(item?.id)

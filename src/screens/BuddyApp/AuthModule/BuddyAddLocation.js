@@ -203,7 +203,7 @@ const BuddyAddLocation = ({ navigation }) => {
                         marginTop: 10
                     }}
                 />
-                <Text style={styles.subTitle}>
+                <Text style={[styles.subTitle, { alignSelf: 'center', textAlign: 'center', }]}>
                     {`Please wait...${'\n'}You will be directed to the homepage`}
                 </Text>
 

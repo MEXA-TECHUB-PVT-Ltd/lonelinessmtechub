@@ -22,6 +22,7 @@ import { useAlert } from '../../../providers/AlertContext';
 const ForgetPassword = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
+    const { loading } = useSelector((state) => state.verifyEmail)
     const [form, setForm] = useState({ email: '' });
     const [errors, setErrors] = useState({ userName: '' });
 
@@ -131,6 +132,7 @@ const ForgetPassword = ({ navigation }) => {
 
             <View style={styles.buttonContainer}>
                 <Button
+                    loading={loading}
                     onPress={() => {
                         handleVerifyEmailNavigation();
                     }}

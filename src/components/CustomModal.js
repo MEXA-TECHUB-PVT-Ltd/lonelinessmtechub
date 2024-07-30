@@ -29,7 +29,9 @@ const CustomModal = ({
     parallelButtonPress2,
     loading,
     secondaryLoader,
-    isCross = false
+    isCross = false,
+    modalCustomTextStyle,
+    customModalStyle
 }) => {
     return (
         <Modal
@@ -42,7 +44,7 @@ const CustomModal = ({
             animationOutTiming={animationOutTiming}
             onBackdropPress={onClose}
         >
-            <View style={styles.modalContainer}>
+            <View style={[styles.modalContainer, customModalStyle]}>
                 {isCross && <TouchableOpacity
                     onPress={() => {
                         onClose();
@@ -62,13 +64,13 @@ const CustomModal = ({
                     />
                 )}
                 {headerTitle && <Text style={styles.headerTitle}>{headerTitle}</Text>}
-                {text && <Text style={styles.text}>{text}</Text>}
+                {text && <Text style={[styles.text, modalCustomTextStyle]}>{text}</Text>}
                 {buttonText && buttonAction && !isParallelButton && (
                     <Button
                         title={buttonText}
                         onPress={buttonAction}
                         customStyle={{
-                            width: '80%',
+                            width: '85%',
                             marginTop: scaleHeight(40),
                             marginBottom: scaleHeight(0)
                         }}

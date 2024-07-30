@@ -60,6 +60,8 @@ import cancelSubscriptionReducer from './PaymentSlices/cancelSubscriptionSlice';
 import notificationsReducer from './notificationsSlice';
 import rememberMeReducer from './rememberMeSlice';
 import checkStripeRequirementsReducer from './PaymentSlices/checkStripeRequirementsSlice';
+import refreshTokenReducer from './AuthModule/refreshTokenSlice';
+import warningModalReducer from './warningModalSlice';
 
 const persistConfig = {
     key: 'root',
@@ -125,7 +127,9 @@ const rootReducer = combineReducers({
     currentUserIndex: currentUserIndexReducer,
     cancelSubscription: cancelSubscriptionReducer,
     notifications: notificationsReducer,
-    checkStripeRequirements: checkStripeRequirementsReducer
+    checkStripeRequirements: checkStripeRequirementsReducer,
+    refreshToken: refreshTokenReducer,
+    warningContent: warningModalReducer
 
 });
 

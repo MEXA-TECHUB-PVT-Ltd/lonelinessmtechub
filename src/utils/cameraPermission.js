@@ -84,6 +84,7 @@ export const requestLocationPermission = async () => {
       return true; // Permission granted
     } else {
       console.log('Location permission denied');
+      showPermissionSettingsAlert("Location")
       return false; // Permission denied
     }
   } catch (err) {
