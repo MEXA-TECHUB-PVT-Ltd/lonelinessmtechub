@@ -27,6 +27,7 @@ import { updateProfile } from '../../../redux/AuthModule/updateProfileSlice';
 import { login } from '../../../redux/AuthModule/signInSlice';
 import { setAsRemember } from '../../../redux/rememberMeSlice';
 import { setWarningContent } from '../../../redux/warningModalSlice';
+import { getFcmToken } from '../../../configs/firebaseConfig';
 
 const AddLocation = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -37,6 +38,7 @@ const AddLocation = ({ navigation }) => {
     const { credentials } = useSelector((state) => state.tempCredentials);
     const [modalVisible, setModalVisible] = useState(false);
     const [isWarning, setIsWarning] = useState(true);
+    const [fcmToken, setFcmToken] = useState(null);
     const [form, setForm] = useState({ address: '', country: '', state: '', postal_code: '', city: '' });
     const [errors, setErrors] = useState({ address: '', country: '', state: '', postal_code: '', city: '' });
 
@@ -147,6 +149,12 @@ const AddLocation = ({ navigation }) => {
     };
 
     useEffect(() => {
+        getFcmToken().then(token => {
+            setFcmToken(token);
+        });
+    }, []);
+
+    useEffect(() => {
         if (!warningContent.modalVisible && !isWarning) {
             showHideModal();
         }
@@ -158,7 +166,7 @@ const AddLocation = ({ navigation }) => {
         setModalVisible(true);
         setTimeout(() => {
             setModalVisible(false);
-            dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: 'testing-token-remove-later' }));
+            dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: fcmToken }));
         }, 6000);
     };
 
@@ -205,7 +213,7 @@ const AddLocation = ({ navigation }) => {
                         marginTop: 10
                     }}
                 />
-                <Text style={[styles.subTitle,{ alignSelf: 'center', textAlign: 'center', }]}>
+                <Text style={[styles.subTitle, { alignSelf: 'center', textAlign: 'center', }]}>
                     {`Please wait...${'\n'}You will be directed to the homepage.`}
                 </Text>
                 <Spinner />

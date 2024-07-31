@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Image, SafeAreaView, StyleSheet, View, TouchableOpacity
 } from 'react-native';
@@ -18,6 +18,7 @@ import BuddyHomeContent from './BuddyDashboard/BuddyHomeContent';
 import UserHomeContent from './UserDashboard/UserHomeContent';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../../redux/AuthModule/signInSlice';
+import { getFcmToken, onMessageListener } from '../../../configs/firebaseConfig';
 
 const Home = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -29,7 +30,7 @@ const Home = ({ navigation }) => {
         <SafeAreaView style={styles.container}>
 
             <View style={styles.headerContainer}>
-                <TouchableOpacity onPress={() => {}}>
+                <TouchableOpacity onPress={() => { }}>
                     <Image source={homeLogo} style={[styles.logo, { right: role !== "USER" ? 15 : 0 }]} />
                 </TouchableOpacity>
 

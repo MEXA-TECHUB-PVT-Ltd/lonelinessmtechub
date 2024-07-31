@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "55052199625",
+    "project_id": "loneliness-mtechub",
+    "storage_bucket": "loneliness-mtechub.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:55052199625:android:1b71bb544224086353cf18",
+        "android_client_info": {
+          "package_name": "com.lonelinessmtechub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8HiOSxlsvABB1mk-76DhJBSBqk388jT8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

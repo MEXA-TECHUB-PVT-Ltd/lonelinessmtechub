@@ -14,6 +14,7 @@ import CustomModal from './src/components/CustomModal';
 import { warningImg } from './src/assets/images';
 import { setWarningContent } from './src/redux/warningModalSlice';
 import { scaleHeight } from './src/styles/responsive';
+import { STRIPE_KEY } from '@env'
 
 
 const MainApp = () => {
@@ -102,13 +103,12 @@ const MainApp = () => {
 }
 
 const App = () => {
-  const stripeKey = "pk_test_51OmriNHtA3SK3biQ6qq8s1IrRmnZ08NsSlklyXD9GN8gLPGsR4tGqH08FkxkBDvPrEMIPLEIQMkAc8NrASOByh6E00ayjZlEWe"
   LogBox.ignoreAllLogs();
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <AlertProvider>
-          <StripeProvider publishableKey={stripeKey}>
+          <StripeProvider publishableKey={STRIPE_KEY}>
             <MainApp />
           </StripeProvider>
         </AlertProvider>
