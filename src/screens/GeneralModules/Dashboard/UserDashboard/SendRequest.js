@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, TextInput, Keyboard } from 'react-native';
 import { SCREENS } from '../../../../constant/constants';
 import CustomLayout from '../../../../components/CustomLayout';
 import fonts from '../../../../styles/fonts';
@@ -17,14 +17,37 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getAllCategories } from '../../../../redux/getAllCategoriesSlice';
 import { sendRequest } from '../../../../redux/UserDashboard/sendRequestSlice';
 import { setWarningContent } from '../../../../redux/warningModalSlice';
+import { Dropdown } from 'react-native-element-dropdown';
+import * as Animatable from 'react-native-animatable';
+import { useStripe, CardField } from '@stripe/stripe-react-native';
+import { attachPaymentMethod } from '../../../../redux/PaymentSlices/attachPaymentMethodSlice';
+import { createCustomer } from '../../../../redux/PaymentSlices/createCustomerSlice';
+import { getTransactionHistory } from '../../../../redux/PaymentSlices/getTransactionHistorySlice';
+import AntDesign from 'react-native-vector-icons/AntDesign'
+
+const data = [
+    { label: 'Card', value: 'CARD', description: 'The full amount will be charged to your card.' },
+    { label: 'Wallet', value: 'WALLET', description: 'The total payment will be deducted from your wallet balance.' },
+];
 
 const SendRequest = ({ navigation }) => {
     const dispatch = useDispatch();
+    const { createPaymentMethod } = useStripe();
     const { loading } = useSelector((state) => state.sendRequest)
     const { categories } = useSelector((state) => state.getCategories)
+    const { walletAmount } = useSelector((state) => state.getTransactionHistory);
     const { currentRoute } = useSelector((state) => state.app)
+    const { userLoginInfo } = useSelector((state) => state.auth)
     const { showAlert } = useAlert();
     const [category, setCategory] = useState('');
+    const [selectedValue, setSelectedValue] = useState('');
+    const [description, setDescription] = useState('');
+    const [isFocus, setIsFocus] = useState(false);
+    const [paymentLoader, setPaymentLoader] = useState(false);
+    const [keyboardStatus, setKeyboardStatus] = useState(false);
+    const [isOverlayOpened, setOverlayOpened] = useState(false);
+    const [cardDetails, setCradDetails] = useState({});
+    const { customer_id } = userLoginInfo?.user
     const [form, setForm] = useState({
         day: '',
         month: '',
@@ -133,7 +156,88 @@ const SendRequest = ({ navigation }) => {
         }
     };
 
-    const handleButtonClick = () => {
+    useEffect(() => {
+        const keyboardDidShowListener = Keyboard.addListener(
+            'keyboardDidShow',
+            () => {
+                setKeyboardStatus(true);
+            }
+        );
+        const keyboardDidHideListener = Keyboard.addListener(
+            'keyboardDidHide',
+            () => {
+                setKeyboardStatus(false);
+            }
+        );
+
+        // Cleanup listeners on unmount
+        return () => {
+            keyboardDidShowListener.remove();
+            keyboardDidHideListener.remove();
+        };
+    }, []);
+
+    const handleAttachPaymentMethod = (paymentMethodId) => {
+        setPaymentLoader(true)
+        const payload = {
+            payment_method_id: paymentMethodId
+        }
+        dispatch(attachPaymentMethod(payload)).then((result) => {
+            setPaymentLoader(false)
+            console.log("attachPayment--->", result?.payload)
+            if (result?.payload?.status === "success") {
+                handleSendRequest(paymentMethodId)
+            } else {
+                setPaymentLoader(false)
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const handleCreateCustomer = (paymentMethodId) => {
+        setPaymentLoader(true)
+        dispatch(createCustomer()).then((result) => {
+            if (result?.payload?.status === "success") {
+                handleAttachPaymentMethod(paymentMethodId)
+            } else {
+                setPaymentLoader(false)
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
+
+    const handleCreatePaymentMethod = async () => {
+        setPaymentLoader(true)
+        console.log('cardDetails', cardDetails)
+        try {
+            const { paymentMethod, error } = await createPaymentMethod({
+                type: 'card',
+                card: cardDetails.card,
+                paymentMethodType: 'Card',
+            },);
+
+            if (error) {
+                setPaymentLoader(false)
+                showAlert("Error", "error", error?.message)
+                console.error('Error creating payment method:', error);
+            } else {
+                console.log('Created payment method:', paymentMethod?.id);
+                //call create customer api here..
+                if (customer_id === null) {
+                    console.log("customer not created")
+                    handleCreateCustomer(paymentMethod?.id)
+                } else {
+                    console.log("customer already created")
+                    handleAttachPaymentMethod(paymentMethod?.id)
+                }
+            }
+        } catch (error) {
+            setPaymentLoader(false)
+            console.error('Error creating payment method:', error);
+        }
+    }
+
+    const handleSendRequest = (payment_method_id = 'default_payment_id') => {
         let isValid = true;
         const newErrors = {};
         ['day', 'month', 'year'].forEach(field => {
@@ -159,6 +263,7 @@ const SendRequest = ({ navigation }) => {
             const booking_time = `${hours}:${minutes}:00 ${period}`
             const booking_date = `${year}-${month}-${day}`
             let booking_price = parseInt(number_of_hours * currentRoute?.hourly_rate)
+            const method = (selectedValue === "WALLET" && walletAmount < booking_price) ? "WALLET_CARD" : selectedValue;
 
             const payload = {
                 buddy_id: currentRoute?.buddy_id,
@@ -167,8 +272,14 @@ const SendRequest = ({ navigation }) => {
                 booking_time: booking_time,
                 hours: number_of_hours,
                 location: location,
-                booking_price: booking_price
+                booking_price: booking_price,
+                payment_method_id: payment_method_id,
+                method: method
+                // ...((selectedValue === "CARD" || selectedValue === "WALLET_CARD") && { payment_method_id: payment_method_id }),
+                // ...((selectedValue === "CARD" || selectedValue === "WALLET_CARD") && { method: selectedValue }),
             }
+
+            console.log(payload)
 
             dispatch(sendRequest(payload)).then((result) => {
                 if (result?.payload?.status === "success") {
@@ -188,6 +299,101 @@ const SendRequest = ({ navigation }) => {
             showAlert("Error", "error", "Please fill in all required fields.");
         }
     };
+
+    const handleButtonClick = () => {
+        const booking_price = parseInt(form?.number_of_hours * currentRoute?.hourly_rate);
+        const isWalletInsufficient = selectedValue === "WALLET" && walletAmount < booking_price;
+
+        if (selectedValue === "CARD" || isWalletInsufficient) {
+            setOverlayOpened(true);
+            if (isWalletInsufficient) {
+                setDescription(`Your wallet balance is ${walletAmount}, the remaining amount would be deducted from the card.`);
+            }
+        } else {
+            handleSendRequest();
+        }
+    };
+
+    const fetchWalletAmount = () => {
+        dispatch(getTransactionHistory({ page: 1, limit: 1, is_refunded: false }));
+    }
+
+    const renderItem = item => {
+        return (
+            <View style={styles.item}>
+                <Text style={styles.textItem}>{item.label}</Text>
+                {item.value === selectedValue && (
+                    <Icon
+                        color={theme.dark.secondary}
+                        name="check-circle"
+                        size={20}
+                    />
+                )}
+
+            </View>
+        );
+    };
+
+
+    const Overlay = () => {
+        return (
+            <View style={styles.overlay}>
+
+                <Animatable.View
+                    animation="bounceIn"
+                    duration={2000}
+                    style={[styles.overlayConatiner, { height: keyboardStatus ? '40%' : '25%' }]}>
+
+                    <AntDesign
+                        onPress={() => {
+                            setOverlayOpened(false)
+                        }}
+                        style={styles.overlayIcon}
+                        size={26}
+                        name='closecircle'
+                        color={theme.dark.secondary} />
+
+                    <Text style={styles.cardHeading}>
+                        Enter Card Detail
+                    </Text>
+
+                    <CardField
+                        postalCodeEnabled={false}
+                        // autofocus={true}
+                        placeholder={{
+                            number: '4242 4242 4242 4242',
+                        }}
+                        cardStyle={{
+                            backgroundColor: '#FFFFFF',
+                            textColor: '#000000',
+                        }}
+                        style={{
+                            width: '80%',
+                            height: '20%',
+                        }}
+                        onCardChange={(cardDetails) => {
+                            setCradDetails({ type: 'card', card: cardDetails });
+                        }}
+                    />
+
+                    <Button
+                        loading={paymentLoader}
+                        isBgTransparent={true}
+                        onPress={() => {
+                            handleCreatePaymentMethod();
+                        }}
+                        title={"Pay"}
+                        customStyle={styles.customButton}
+                        textCustomStyle={{
+                            color: theme.dark.secondary
+                        }}
+                    />
+
+                </Animatable.View>
+            </View >
+        );
+    };
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -281,6 +487,7 @@ const SendRequest = ({ navigation }) => {
                         <TextInput
                             ref={periodRef}
                             placeholder='PM'
+                            autoCapitalize='characters'
                             placeholderTextColor={theme.dark.text}
                             maxLength={2}
                             style={styles.inputStyle}
@@ -306,6 +513,42 @@ const SendRequest = ({ navigation }) => {
                         onValueChange={(value) => handleChange('location', value)}
                         mainContainer={{ marginTop: 10 }}
                     />
+
+                    <Dropdown
+                        style={[styles.dropdown]}
+                        placeholderStyle={styles.placeholderStyle}
+                        selectedTextStyle={styles.selectedTextStyle}
+                        iconStyle={styles.iconStyle}
+                        data={data}
+                        maxHeight={250}
+                        dropdownPosition='top'
+                        containerStyle={{
+                            backgroundColor: theme.dark.primary,
+                            borderColor: theme.dark.inputLabel
+                        }}
+                        labelField="label"
+                        valueField="value"
+                        placeholder={'Select Payment Method'}
+                        value={selectedValue}
+                        onChange={item => {
+                            setSelectedValue(item?.value);
+                            setDescription(item?.description)
+                            if (item?.value === "WALLET") {
+                                fetchWalletAmount()
+                            }
+                        }}
+                        renderItem={renderItem}
+                    />
+
+                    <Text style={{
+                        fontFamily: fonts.fontsType.regular,
+                        fontSize: scaleHeight(14),
+                        color: theme.dark.success,
+                        marginTop: 10,
+                        marginHorizontal: 10
+                    }}>{description}</Text>
+
+
                 </View>
 
 
@@ -319,6 +562,7 @@ const SendRequest = ({ navigation }) => {
                     customStyle={{ marginBottom: scaleHeight(20) }}
                 />
             </View>
+            {isOverlayOpened && Overlay()}
         </SafeAreaView>
     );
 };
@@ -388,6 +632,78 @@ const styles = StyleSheet.create({
         color: theme.dark.inputLabel,
         marginHorizontal: 8,
         top: 18
+    },
+
+    dropdown: {
+        backgroundColor: theme.dark.inputBg,
+        marginTop: scaleHeight(30),
+        height: scaleHeight(50),
+        borderRadius: 30,
+        borderWidth: 1,
+        borderColor: theme.dark.text,
+        paddingHorizontal: 8,
+    },
+    iconStyle: {
+        width: 20,
+        height: 20,
+    },
+    placeholderStyle: {
+        fontSize: scaleHeight(16),
+        color: theme.dark.text,
+        marginHorizontal: 10
+    },
+    selectedTextStyle: {
+        fontFamily: fonts.fontsType.medium,
+        fontSize: scaleHeight(18),
+        color: theme.dark.inputLabel,
+        marginHorizontal: 10
+    },
+
+    item: {
+        padding: 17,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: theme.dark.primary,
+
+    },
+    textItem: {
+        flex: 1,
+        fontFamily: fonts.fontsType.medium,
+        fontSize: scaleHeight(16),
+        color: theme.dark.white
+    },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        zIndex: 100,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    cardHeading: {
+        fontFamily: fonts.fontsType.semiBold,
+        fontSize: 16,
+        color: theme.dark.primary,
+        alignSelf: 'center',
+        marginBottom: 20
+    },
+    overlayConatiner: {
+        backgroundColor: 'white',
+        width: '80%',
+        height: '25%',
+        borderRadius: 16,
+        margin: 30
+    },
+    overlayIcon: {
+        alignSelf: 'flex-end',
+        left: 4,
+        bottom: 4
+    },
+    customButton: {
+        backgroundColor: theme.dark.primary,
+        width: '80%',
+        marginBottom: 0,
+        marginTop: 40
     }
 });
 

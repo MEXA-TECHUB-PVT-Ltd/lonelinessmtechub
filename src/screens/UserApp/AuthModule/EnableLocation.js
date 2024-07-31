@@ -25,6 +25,7 @@ import { updateProfile } from '../../../redux/AuthModule/updateProfileSlice';
 import { login } from '../../../redux/AuthModule/signInSlice';
 import { setAsRemember } from '../../../redux/rememberMeSlice';
 import { setWarningContent } from '../../../redux/warningModalSlice';
+import { getFcmToken } from '../../../configs/firebaseConfig';
 
 const EnableLocation = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -35,6 +36,7 @@ const EnableLocation = ({ navigation }) => {
     const { credentials } = useSelector((state) => state.tempCredentials);
     const [modalVisible, setModalVisible] = useState(false);
     const [isWarning, setIsWarning] = useState(true);
+    const [fcmToken, setFcmToken] = useState(null);
     //console.log('dataPayload', dataPayload)
     // console.log('credentials', credentials)
 
@@ -44,6 +46,12 @@ const EnableLocation = ({ navigation }) => {
         return true;
     };
     useBackHandler(handleBackPress);
+
+    useEffect(() => {
+        getFcmToken().then(token => {
+            setFcmToken(token);
+        });
+    }, []);
 
     const handleWithCurrentLocation = async () => {
         try {
@@ -113,7 +121,7 @@ const EnableLocation = ({ navigation }) => {
         setModalVisible(true);
         setTimeout(() => {
             setModalVisible(false);
-            dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: 'testing-token-remove-later' }));
+            dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: fcmToken }));
         }, 6000);
     };
 

@@ -23,6 +23,7 @@ import Modal from "react-native-modal";
 import { setAsRemember } from '../../../redux/rememberMeSlice';
 import { setTempCred } from '../../../redux/setTempCredentialsSlice';
 import { setTempToken } from '../../../redux/AuthModule/signupSlice';
+import { getFcmToken } from '../../../configs/firebaseConfig';
 
 const Login = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -34,6 +35,7 @@ const Login = ({ navigation }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [isRemember, setIsRemember] = useState(false);
+    const [fcmToken, setFcmToken] = useState(null);
 
 
     const handleChange = (name, value) => {
@@ -59,6 +61,13 @@ const Login = ({ navigation }) => {
         return true;
     };
     useBackHandler(handleBackPress);
+
+
+    useEffect(() => {
+        getFcmToken().then(token => {
+            setFcmToken(token);
+        });
+    }, []);
 
     useEffect(() => {
         if (rememberMe) {
@@ -104,13 +113,13 @@ const Login = ({ navigation }) => {
         setErrors(newErrors);
 
         if (valid) {
+
             const credentials = {
                 email: email,
                 password: password,
-                device_token: "testingdevicetoken",
+                device_token: fcmToken,
             }
             dispatch(login(credentials)).then((result) => {
-                console.log(result?.payload)
                 if (result?.payload?.status === "success") {
                     const { is_requirements_completed } = result?.payload?.result?.user
                     const { role, token } = result?.payload?.result

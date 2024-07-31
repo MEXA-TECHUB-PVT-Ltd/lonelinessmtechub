@@ -20,6 +20,7 @@ const darkTheme = {
     inputBg: palette.grayDark,
     inputLabel: palette.gray,
     error: palette.danger,
+    success: palette.success,
     heading: palette.gray,
     inActiveColor: palette.grayLight,
     disableButton: palette.lightGray,

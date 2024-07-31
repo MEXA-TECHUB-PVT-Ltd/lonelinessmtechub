@@ -14,7 +14,7 @@ export const sendRequest = createAsyncThunk(
         try {
             const { token } = getState().auth
             const bearerToken = `Bearer ${token}`
-            const data = await makeRequest('POST', '/requests/send/user', requestPayload, null, bearerToken);
+            const data = await makeRequest('POST', '/requests/sendv2/user', requestPayload, null, bearerToken);
             return data;
         } catch (error) {
             return error

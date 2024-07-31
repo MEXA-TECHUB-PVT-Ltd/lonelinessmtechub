@@ -21,6 +21,7 @@ import { accountCreated, alertLogo, successText } from '../../assets/images';
 import Spinner from '../../components/Spinner';
 import Modal from "react-native-modal";
 import { setWarningContent } from '../../redux/warningModalSlice';
+import { getFcmToken } from '../../configs/firebaseConfig';
 
 const StripeAccountCreation = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -34,6 +35,7 @@ const StripeAccountCreation = ({ navigation }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [isWarning, setIsWarning] = useState(true);
     const [webUrl, setWebUrl] = useState('');
+    const [fcmToken, setFcmToken] = useState(null);
     const timeoutRef = useRef(null);
 
     const handleBackPress = () => {
@@ -79,12 +81,17 @@ const StripeAccountCreation = ({ navigation }) => {
 
 
     useEffect(() => {
+        getFcmToken().then(token => {
+            setFcmToken(token);
+        });
+    }, []);
+
+    useEffect(() => {
         if (!warningContent.modalVisible && !isWarning) {
             showHideModal();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [warningContent, isWarning])
-
 
     const parseResponseData = (url) => {
         const urlParts = url.split('/');
@@ -169,7 +176,7 @@ const StripeAccountCreation = ({ navigation }) => {
         setModalVisible(true);
         setTimeout(() => {
             setModalVisible(false);
-            dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: 'testing-token-remove-later' }));
+            dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: fcmToken }));
         }, 6000);
     };
 
