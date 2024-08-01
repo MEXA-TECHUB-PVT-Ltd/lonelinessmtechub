@@ -64,7 +64,7 @@ export default function GeneralChat({ navigation }) {
     };
 
     const handleBackPress = () => {
-        updateLastMessage();
+        //updateLastMessage();
         resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.CHAT })
         return true;
     };
@@ -75,7 +75,7 @@ export default function GeneralChat({ navigation }) {
         const newSocket = io(SOCKET_URL);
         setSocket(newSocket);
         newSocket.on('connect', () => {
-            console.log('Socket connected');
+            console.log('Socket connected--->chat screen');
         });
 
         if (newSocket && firstLoad) {
@@ -83,7 +83,7 @@ export default function GeneralChat({ navigation }) {
             newSocket.emit("getMessages", { userId, contactId: currentRoute?.receiver_id });
 
             newSocket.on("messages", (data) => {
-                const reConstructedMessages = data?.messages?.map(message => {
+                const reConstructedMessages = data?.map(message => {
                     return {
                         _id: Math.round(Math.random() * 1000000),
                         text: message?.message,
@@ -121,29 +121,29 @@ export default function GeneralChat({ navigation }) {
     useEffect(() => {
 
         if (socket) {
-            socket.emit("registerUser", userId);
-            socket.on("chat message", (receivedMessage) => {
-                console.log('receivedMessage', receivedMessage)
+            //socket.emit("registerUser", userId);
+            socket.on("receiveMessage", (message) => {
+                console.log('receiveMessage', message)
                 const transformedMessage = {
                     _id: Math.round(Math.random() * 1000000),
-                    text: receivedMessage.message,
-                    image: receivedMessage?.image_url,
-                    createdAt: new Date(receivedMessage.timestamp),
+                    text: message.message,
+                    image: message?.image_url,
+                    createdAt: new Date(message.timestamp),
                     user: {
-                        _id: parseInt(receivedMessage.sender_id),
+                        _id: parseInt(message.sender_id),
                     }
                 };
                 setMessages((previousMessages) => GiftedChat.append(previousMessages, transformedMessage));
 
-                socket.emit("updateLastMessage", {
-                    userId: receivedMessage.sender_id,
-                    contactId: receivedMessage.receiver_id,
-                });
+                // socket.emit("updateLastMessage", {
+                //     userId: receivedMessage.sender_id,
+                //     contactId: receivedMessage.receiver_id,
+                // });
             });
         }
         return () => {
             if (socket) {
-                socket.off("chat message");
+                socket.disconnect("receiveMessage");
             }
 
         };
@@ -418,13 +418,13 @@ export default function GeneralChat({ navigation }) {
     const handleSend = () => {
         if (inputText.trim().length > 0 || imageUri) {
             const newMessage = {
-                sender_id: user_id,
-                receiver_id: currentRoute?.receiver_id,
+                senderId: user_id,
+                receiverId: currentRoute?.receiver_id,
                 message: inputText.trim(),
-                image_url: imageUri
+                imageUrl: imageUri
                 //createdAt: new Date(),
             }
-            socket.emit("chat message", newMessage);
+            socket.emit("sendMessage", newMessage);
             console.log("message has been sent", newMessage);
             // const transformedMessage = {
             //     _id: Math.round(Math.random() * 1000000),
@@ -445,6 +445,23 @@ export default function GeneralChat({ navigation }) {
         setMessages([]);
         setMessages(previousMessages => GiftedChat.append(previousMessages, newMessage));
     };
+
+    const handleDeleteChat = () => {
+
+        socket.on("chatDeleted", ({ userId, contactId }) => {
+            // Handle chat deletion on the sender's side
+            setMessages((prevMessages) =>
+              prevMessages.filter(
+                (msg) =>
+                  !(
+                    (msg.sender_id === userId && msg.receiver_id === contactId) ||
+                    (msg.sender_id === contactId && msg.receiver_id === userId)
+                  )
+              )
+            );
+          });
+
+    }
 
     const renderLoader = () => {
         return <FullScreenLoader loading={loadingMessages} />
@@ -540,7 +557,7 @@ export default function GeneralChat({ navigation }) {
                     handleDeleteCloseModal()
                 }}
                 parallelButtonPress2={() => {
-
+                    handleDeleteChat();
                 }}
             />
         </SafeAreaView>

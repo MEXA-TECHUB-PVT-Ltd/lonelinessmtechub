@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, SafeAreaView, Keyboard } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { locationPin } from '../../../../assets/images';
+import { alertLogo, locationPin } from '../../../../assets/images';
 import { theme } from '../../../../assets';
 import DetailItem from '../../../../components/DetailItem';
 import Button from '../../../../components/ButtonComponent';
@@ -26,9 +26,16 @@ import FullScreenLoader from '../../../../components/FullScreenLoader';
 import { actionCancelPayment } from '../../../../redux/BuddyDashboard/actionCancelPaymentSlice';
 import { acceptRejectUserRequest } from '../../../../redux/BuddyDashboard/acceptRejectUserRequestSlice';
 import { requestForPayment } from '../../../../redux/BuddyDashboard/requestForPaymentSlice';
-import { color } from '@rneui/base';
+import Modal from "react-native-modal";
 import { setWarningContent } from '../../../../redux/warningModalSlice';
-
+import {
+    CodeField,
+    Cursor,
+    useBlurOnFulfill,
+    useClearByFocusCell,
+} from "react-native-confirmation-code-field";
+import { verifyMeetingCode } from '../../../../redux/BuddyDashboard/verifyMeetingCodeSlice';
+const CELL_COUNT = 6
 const BuddyServiceDetails = ({ navigation }) => {
     const dispatch = useDispatch();
     const { currentRoute } = useSelector((state) => state.app)
@@ -36,10 +43,19 @@ const BuddyServiceDetails = ({ navigation }) => {
     const { ratingDetail, loading: ratingLoader, error } = useSelector((state) => state.getServiceRating)
     const { loading: acceptPaymentLoader } = useSelector((state) => state.actionCancelPayment)
     const { loading: requestPaymentLoader } = useSelector((state) => state.requestForPayment)
+    const { loading: verifyCodeLoader } = useSelector((state) => state.verifyMeetingCode)
     const { showAlert } = useAlert();
     const categories = userDetail?.category;
     const [requestLoader, setRequestLoader] = useState(false);
     const [requestStatus, setRequestStatus] = useState('');
+    const [modalVisible, setModalVisible] = useState(false);
+    const [keyboardStatus, setKeyboardStatus] = useState(false);
+    const [value, setValue] = useState('');
+    const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
+    const [props, getCellOnLayoutHandler] = useClearByFocusCell({
+        value,
+        setValue,
+    });
 
     const isPaymentRequested = userDetail?.release_payment_requests === "REQUESTED";
     const buttonTitle = isPaymentRequested ? "Requested for Payment" : "Request for Payment";
@@ -60,11 +76,38 @@ const BuddyServiceDetails = ({ navigation }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dispatch]);
 
-
-    useEffect(() => {
+    const getServiceDetail = () => {
         dispatch(getUserDetailByService(currentRoute?.request_id));
         dispatch(getServiceRating(currentRoute?.request_id));
-    }, [dispatch, currentRoute])
+    }
+
+
+    useEffect(() => {
+        getServiceDetail();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentRoute])
+
+
+    useEffect(() => {
+        const keyboardDidShowListener = Keyboard.addListener(
+            'keyboardDidShow',
+            () => {
+                setKeyboardStatus(true);
+            }
+        );
+        const keyboardDidHideListener = Keyboard.addListener(
+            'keyboardDidHide',
+            () => {
+                setKeyboardStatus(false);
+            }
+        );
+
+        // Cleanup listeners on unmount
+        return () => {
+            keyboardDidShowListener.remove();
+            keyboardDidHideListener.remove();
+        };
+    }, []);
 
 
 
@@ -205,6 +248,106 @@ const BuddyServiceDetails = ({ navigation }) => {
             loading={loading} />
     }
 
+
+    const handleVerifyMeetingCode = () => {
+        const payload = {
+            request_id: currentRoute?.request_id,
+            meeting_code: value
+        }
+
+        dispatch(verifyMeetingCode(payload)).then((result) => {
+            setModalVisible(false)
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", result?.payload?.message)
+                const timer = setTimeout(() => {
+                    getServiceDetail();
+                }, 3000);
+
+                return () => clearTimeout(timer);
+            } else if (result?.payload?.status === "error") {
+                showAlert("Success", "success", result?.payload?.message)
+            }
+        })
+    }
+
+
+    const showModalView = () => {
+
+        return <Modal
+            backdropOpacity={0.90}
+            backdropColor={'rgba(85, 85, 85, 0.70)'}
+            isVisible={modalVisible}
+            animationIn={'bounceIn'}
+            animationOut={'bounceOut'}
+            animationInTiming={1000}
+            animationOutTiming={1000}
+            onBackdropPress={() => {
+                setModalVisible(false)
+            }}
+        >
+            <View style={{
+                backgroundColor: '#111111',
+                width: '100%',
+                height: !keyboardStatus ? '50%' : '80%',
+                alignSelf: 'center',
+
+                borderRadius: 20,
+                padding: 20
+            }}>
+
+                <Image
+                    resizeMode='contain'
+                    source={alertLogo}
+                    style={{
+                        width: scaleWidth(100),
+                        height: scaleHeight(100),
+                        alignSelf: 'center'
+                    }}
+                />
+
+                <Text style={styles.textStyle}>{"Enter your meeting code"}</Text>
+
+
+                <CodeField
+                    ref={ref}
+                    {...props}
+                    // Use `caretHidden={false}` when users can't paste a text value, because context menu doesn't appear
+                    value={value}
+                    onChangeText={setValue}
+                    cellCount={CELL_COUNT}
+                    rootStyle={styles.codeFieldRoot}
+                    keyboardType="default"
+                    textContentType="oneTimeCode"
+                    renderCell={({ index, symbol, isFocused }) => (
+                        <Text
+                            key={index}
+                            style={[styles.cell, isFocused && styles.focusCell]}
+                            onLayout={getCellOnLayoutHandler(index)}
+                        >
+                            {symbol || (isFocused ? <Cursor /> : null)}
+                        </Text>
+                    )}
+                />
+
+
+                <Button
+                    loading={verifyCodeLoader}
+                    onPress={() => {
+                        handleVerifyMeetingCode();
+                    }}
+                    title={'Verify code'}
+                    customStyle={{
+                        marginTop: scaleHeight(45),
+                        marginBottom: 0
+                    }}
+                />
+
+
+
+            </View>
+        </Modal>
+    }
+
     return (
         <SafeAreaView style={styles.mianContainer}>
             <Header
@@ -285,7 +428,16 @@ const BuddyServiceDetails = ({ navigation }) => {
                             <DetailItem label="Time" value={moment(userDetail?.booking_time, 'HH:mm').format('hh:mm A')} />
                             <DetailItem label="Hours For Booking" value={`${userDetail?.hours} HOURS`} />
                             <DetailItem label="Total Price" value={`$${userDetail?.booking_price}`} />
-                            {(userDetail?.status !== "PAID" && userDetail?.status !== "COMPLETED") && <DetailItem label="Status" value={getNameByStatus(userDetail?.status)} customTextStyle={{
+                            {userDetail?.status == "ACCEPTED" &&
+                                <DetailItem label="Meeting Code" value={`${userDetail?.meeting_code}`} customTextStyle={{
+                                    color: theme.dark.secondary,
+                                    fontFamily: fonts.fontsType.bold,
+                                    fontSize: scaleHeight(17),
+                                }} />}
+                            {/* {(userDetail?.status !== "PAID" && userDetail?.status !== "COMPLETED") && <DetailItem label="Status" value={getNameByStatus(userDetail?.status)} customTextStyle={{
+                                color: getColorByStatus(userDetail?.status)
+                            }} />} */}
+                            {(userDetail?.status !== "ACCEPTED" && userDetail?.status !== "COMPLETED") && <DetailItem label="Status" value={getNameByStatus(userDetail?.status)} customTextStyle={{
                                 color: getColorByStatus(userDetail?.status)
                             }} />}
                         </View>
@@ -427,7 +579,23 @@ const BuddyServiceDetails = ({ navigation }) => {
                         }
 
                         <View style={styles.buttonSection}>
-                            {userDetail?.status === "PAID" && userDetail?.canceled_status == null && <Button
+                            {
+                                userDetail?.status === "ACCEPTED" && !userDetail?.meeting_code_verified && <Button
+                                    onPress={() => {
+                                        setModalVisible(true)
+                                    }}
+                                    title={"Enter Code"}
+                                    customStyle={{
+                                        width: '95%',
+                                        top: scaleHeight(30)
+                                    }}
+                                    textCustomStyle={{}}
+                                />
+                            }
+
+
+                            {/* {userDetail?.status === "PAID" && userDetail?.canceled_status == null && <Button */}
+                            {userDetail?.status === "ACCEPTED" && userDetail?.canceled_status == null && userDetail?.meeting_code_verified && <Button
                                 disabled={isPaymentRequested}
                                 onPress={handleRequestForPayment}
                                 title={buttonTitle}
@@ -539,7 +707,8 @@ const BuddyServiceDetails = ({ navigation }) => {
 
                             {/* these button show here if status cancelled and paid... */}
 
-                            {userDetail?.canceled_status === "REQUESTED" && userDetail?.status === "PAID" && <View style={{
+                            {/* {userDetail?.canceled_status === "REQUESTED" && userDetail?.status === "PAID" && <View style={{ */}
+                            {userDetail?.canceled_status === "REQUESTED" && userDetail?.status === "ACCEPTED" && <View style={{
                                 flexDirection: 'row',
                                 justifyContent: 'space-between',
                                 //marginBottom: scaleHeight(-160)
@@ -580,6 +749,7 @@ const BuddyServiceDetails = ({ navigation }) => {
                         </View>
                     </View>
                 </ScrollView>}
+            {showModalView()}
         </SafeAreaView>
     );
 };
@@ -726,6 +896,36 @@ const styles = StyleSheet.create({
         fontSize: scaleHeight(12),
         color: theme.dark.white,
         alignSelf: 'center'
+    },
+    codeFieldRoot: { marginTop: 50 },
+    cell: {
+        color: theme.dark.secondary,
+        width: scaleWidth(40),
+        height: scaleHeight(50),
+        lineHeight: 45,
+        fontSize: 24,
+        backgroundColor: theme.dark.inputBackground,
+        borderColor: theme.dark.text,
+        borderWidth: 1,
+        textAlign: "center",
+        borderRadius: 25,
+
+    },
+    focusCell: {
+        backgroundColor: 'rgba(252, 226, 32, 0.13)',
+        //opacity: 0.13,
+        borderWidth: 1,
+        lineHeight: 45,
+        borderRadius: 25,
+        borderColor: theme.dark.secondary,
+    },
+    textStyle: {
+        color: theme.dark.white,
+        fontFamily: fonts.fontsType.semiBold,
+        fontSize: scaleHeight(20),
+        alignSelf: 'center',
+        textAlign: 'center',
+        marginTop: scaleHeight(15)
     },
 });
 

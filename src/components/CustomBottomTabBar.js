@@ -30,18 +30,20 @@ const CustomBottomTabBar = ({ state, descriptors, navigation, icons }) => {
 
         if (socket) {
             const userId = parseInt(id)
-            console.log('userId', userId)
-            socket.emit('getUnreadChatsCount', userId);
-            socket.on('unreadChatsCount', (data) => {
-                console.log('Unread chats count:', data.count);
-                setUnreadCount(data.count);
-            });
+            socket.emit("registerUser", userId);
+            socket.on("unreadChatsCount", ({userId,count}) => {
+                setUnreadCount(count);
+              });
+               socket.on('getUnreadChatsCount', ({ userId }) => {
+                socket.emit("userChatCountget",  userId );
+              });
 
         }
 
         return () => {
             if (socket) {
-                socket.off("unreadChatsCount");
+                socket.disconnect("unreadChatsCount");
+                socket.disconnect("getUnreadChatsCount");
             }
 
         };

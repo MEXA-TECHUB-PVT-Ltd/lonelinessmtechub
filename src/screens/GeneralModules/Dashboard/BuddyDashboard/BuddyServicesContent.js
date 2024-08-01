@@ -32,7 +32,8 @@ const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0, searchQuery }
     const getStatusByIndex = (index) => {
         switch (index) {
             case 0:
-                return 'PAID';
+                return 'ACCEPTED';
+                // return 'PAID';
             case 1:
                 return 'COMPLETED';
             case 2:

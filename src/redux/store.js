@@ -62,6 +62,7 @@ import rememberMeReducer from './rememberMeSlice';
 import checkStripeRequirementsReducer from './PaymentSlices/checkStripeRequirementsSlice';
 import refreshTokenReducer from './AuthModule/refreshTokenSlice';
 import warningModalReducer from './warningModalSlice';
+import verifyMeetingCodeReducer from './BuddyDashboard/verifyMeetingCodeSlice';
 
 const persistConfig = {
     key: 'root',
@@ -129,7 +130,8 @@ const rootReducer = combineReducers({
     notifications: notificationsReducer,
     checkStripeRequirements: checkStripeRequirementsReducer,
     refreshToken: refreshTokenReducer,
-    warningContent: warningModalReducer
+    warningContent: warningModalReducer,
+    verifyMeetingCode: verifyMeetingCodeReducer
 
 });
 
