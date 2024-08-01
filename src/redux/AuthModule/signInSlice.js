@@ -61,6 +61,15 @@ const signInSlice = createSlice({
             }
         },
 
+        updateToken(state, action) {
+            if (state.userLoginInfo) {
+                state.userLoginInfo = {
+                    ...state.userLoginInfo,
+                    ...action.payload
+                };
+            }
+        },
+
         setUserInfoAndToken(state, action) {
             state.token = action.payload.token;
             state.role = action.payload.role;
@@ -88,5 +97,5 @@ const signInSlice = createSlice({
     },
 });
 
-export const { logout, updateUserLoginInfo, setUserInfoAndToken } = signInSlice.actions;
+export const { logout, updateUserLoginInfo, setUserInfoAndToken, updateToken } = signInSlice.actions;
 export default signInSlice.reducer;

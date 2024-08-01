@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Image } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
@@ -13,74 +13,119 @@ import Button from '../../components/ButtonComponent';
 import HorizontalDivider from '../../components/HorizontalDivider';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { scaleHeight, scaleWidth } from '../../styles/responsive';
-import { changeLocationImg } from '../../assets/images';
+import { changeLocationImg, changeLocationImgUser } from '../../assets/images';
 import fonts from '../../styles/fonts';
 import { requestLocationPermission } from '../../utils/cameraPermission';
-import { MAP_API_KEY } from '@env'
+import { MAP_API_KEY } from '@env';
+import { updateProfile } from '../../redux/AuthModule/updateProfileSlice';
+import { useAlert } from '../../providers/AlertContext';
+import { MapMarker } from '../../assets/svgs';
 
 const MapScreen = ({ navigation }) => {
-
     const dispatch = useDispatch();
-    const { currentRoute } = useSelector((state) => state.app)
+    const { showAlert } = useAlert();
+    const { currentRoute } = useSelector((state) => state.app);
+    const { role } = useSelector((state) => state.auth);
+    const { loading } = useSelector((state) => state.createProfile);
     const [region, setRegion] = useState({
         latitude: 37.78825,
         longitude: -122.4324,
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
     });
-    const [selectedLocation, setSelectedLocation] = useState(null)
+    const [selectedLocation, setSelectedLocation] = useState({
+        name: null,
+        latitude: 0,
+        longitude: 0,
+    });
+    const mapRef = useRef(null);
 
     const handleBackPress = () => {
-        dispatch(setRoute({
-            route: SCREENS.BUDDY_PROFILE_DETAIL
-        }))
-        resetNavigation(navigation, currentRoute?.route)
+        if (currentRoute?.route === SCREENS.UPDATE_USER_PROFILE) {
+            dispatch(setRoute({ route: SCREENS.USER_PROFILE_DETAIL }));
+        } else if (currentRoute?.route === SCREENS.UPDATE_BUDDY_PROFILE) {
+            dispatch(setRoute({ route: SCREENS.BUDDY_PROFILE_DETAIL }));
+        }
+        resetNavigation(navigation, currentRoute?.route);
         return true;
     };
     useBackHandler(handleBackPress);
 
     useEffect(() => {
-        requestLocationPermission();
-        Geolocation.getCurrentPosition(
-            (position) => {
-                setRegion({
-                    ...region,
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
+        const getCurrentLocation = async () => {
+            const hasLocationPermission = await requestLocationPermission();
+            if (hasLocationPermission) {
+                const getPosition = () => new Promise((resolve, reject) => {
+                    Geolocation.getCurrentPosition(resolve, reject);
                 });
-            },
-            (error) => {
-                console.error(error);
-            },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-        );
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
+                const { coords: { latitude, longitude } } = await getPosition();
+                const newRegion = {
+                    latitude,
+                    longitude,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421,
+                };
+                const placeName = await reverseGeocode(latitude, longitude);
+                setSelectedLocation({ name: placeName, latitude, longitude });
+                setRegion(newRegion);
+                mapRef.current?.animateToRegion(newRegion, 1000);
+            }
+        };
+        getCurrentLocation();
     }, []);
 
-    const handleSelectLocation = (event) => {
-        setSelectedLocation({
-            name: null,
-            latitude: event.nativeEvent.coordinate.latitude,
-            longitude: event.nativeEvent.coordinate.longitude,
-        });
+    const reverseGeocode = async (latitude, longitude) => {
+        try {
+            const response = await fetch(
+                `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${MAP_API_KEY}`
+            );
+            const data = await response.json();
+            if (data.results.length > 0) {
+                return data.results[0].formatted_address;
+            } else {
+                return null;
+            }
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
+    };
+
+    const handleSelectLocation = async (event) => {
+        const { latitude, longitude } = event.nativeEvent.coordinate;
+        const placeName = await reverseGeocode(latitude, longitude);
+        setSelectedLocation({ name: placeName, latitude, longitude });
+        const newRegion = { latitude, longitude, latitudeDelta: 0.0922, longitudeDelta: 0.0421 };
+        mapRef.current?.animateToRegion(newRegion, 1000);
     };
 
     const handlePlaceSelected = (data, details) => {
         if (details) {
             const { lat, lng } = details.geometry.location;
             const placeName = details.formatted_address;
-            setSelectedLocation({
-                name: placeName,
-                latitude: lat,
-                longitude: lng,
-            });
-            setRegion({
-                ...region,
-                latitude: lat,
-                longitude: lng,
-            });
+            setSelectedLocation({ name: placeName, latitude: lat, longitude: lng });
+            const newRegion = { latitude: lat, longitude: lng, latitudeDelta: 0.0922, longitudeDelta: 0.0421 };
+            mapRef.current?.animateToRegion(newRegion, 1000);
         }
     };
+
+    const addLocation = () => {
+
+        const formData = new FormData();
+        formData.append('latitude', selectedLocation?.latitude);
+        formData.append('longitude', selectedLocation?.longitude);
+        dispatch(updateProfile(formData)).then((result) => {
+            if (result?.payload?.status === "success") {
+                showAlert("Success", "success", "Location added successfully.")
+                setTimeout(() => {
+                    handleBackPress();
+                }, 3000);
+            } else if (result?.payload?.status === "error") {
+                showAlert("Error", "error", result?.payload?.message)
+            }
+        })
+    }
 
     return (
         <View style={styles.container}>
@@ -91,58 +136,41 @@ const MapScreen = ({ navigation }) => {
                 <GooglePlacesAutocomplete
                     placeholder="Search here"
                     onPress={handlePlaceSelected}
-                    query={{
-                        key: MAP_API_KEY,
-                        language: 'en',
-                    }}
+                    query={{ key: MAP_API_KEY, language: 'en' }}
                     fetchDetails
-                    onFail={error => console.log(error)}
+                    onFail={(error) => console.log(error)}
                     onNotFound={() => console.log('no results')}
-                    styles={{
-                        textInput: styles.searchBar,
-                        container: {
-                            flex: 1,
-                            zIndex: 1,
-                        },
-                    }}
-                    textInputProps={{
-                        placeholderTextColor: theme.dark.inputLabel,
-                    }}
+                    styles={{ textInput: styles.searchBar, container: styles.autoCompleteContainer }}
+                    textInputProps={{ placeholderTextColor: theme.dark.inputLabel }}
                 />
             </View>
             <MapView
+                ref={mapRef}
                 provider={PROVIDER_GOOGLE}
                 style={styles.map}
                 region={region}
                 onPress={handleSelectLocation}
-            // showsUserLocation
-            // followsUserLocation
             >
-                {selectedLocation && (
-                    <Marker coordinate={selectedLocation} />
+                {selectedLocation.latitude !== 0 && selectedLocation.longitude !== 0 && (
+                    <Marker coordinate={selectedLocation} >
+                        <MapMarker />
+                    </Marker>
                 )}
             </MapView>
-            {selectedLocation && (
-                <View style={styles.locationInfo}>
-                    <View style={{
-                        flexDirection: 'row',
-                    }}>
-                        <Image
-                            resizeMode='contain'
-                            style={{
-                                width: scaleWidth(45),
-                                height: scaleHeight(45)
-                            }} source={changeLocationImg} />
-                        <Text style={styles.locationText}>
-                            {selectedLocation.name ? selectedLocation.name : `${selectedLocation.latitude.toFixed(4)}, ${selectedLocation.longitude.toFixed(4)}`}
+            {selectedLocation.latitude !== 0 && selectedLocation.longitude !== 0 && (
+                <View style={[styles.locationInfo, { backgroundColor: role === "USER" ? theme.dark.primary : theme.dark.white }]}>
+                    <View style={styles.locationDetails}>
+                        <Image resizeMode='contain' style={styles.locationImage} source={role === "USER" ? changeLocationImgUser : changeLocationImg} />
+                        <Text style={[styles.locationText, { color: role === "USER" ? theme.dark.white : theme.dark.primary }]}>
+                            {selectedLocation.name ?? `${selectedLocation.latitude.toFixed(4)}, ${selectedLocation.longitude.toFixed(4)}`}
                         </Text>
                     </View>
-                    <HorizontalDivider customStyle={{
-                        backgroundColor: theme.dark.inputLabel,
-                    }} />
-                    <Button title={'Add this Location'} customStyle={{
-                        marginBottom: 0
-                    }} />
+                    <HorizontalDivider customStyle={styles.divider} />
+                    <Button
+                        onPress={addLocation}
+                        loading={loading}
+                        title="Add this Location"
+                        customStyle={styles.addButton} />
                 </View>
             )}
         </View>
@@ -161,8 +189,6 @@ const styles = StyleSheet.create({
         color: theme.dark.heading,
         padding: 10,
         borderRadius: 30,
-
-
     },
     map: {
         ...StyleSheet.absoluteFillObject,
@@ -176,9 +202,8 @@ const styles = StyleSheet.create({
         backgroundColor: theme.dark.white,
         padding: 20,
         borderRadius: 10,
-
         borderTopEndRadius: 30,
-        borderTopStartRadius: 30
+        borderTopStartRadius: 30,
     },
     locationText: {
         fontSize: scaleHeight(16),
@@ -186,29 +211,38 @@ const styles = StyleSheet.create({
         color: theme.dark.primary,
         marginBottom: 10,
         alignSelf: 'center',
-        marginHorizontal: 10
-    },
-    button: {
-        backgroundColor: 'yellow',
-        padding: 10,
-        borderRadius: 5,
-    },
-    buttonText: {
-        fontSize: 16,
-        color: '#000',
+        marginHorizontal: 10,
+        width: '85%',
     },
     searchContainer: {
         flexDirection: 'row',
         position: 'absolute',
         top: 30,
-        left: '10%',
+        left: '8%',
         right: 10,
         zIndex: 1,
         width: '80%',
-        alignSelf: 'center'
+        alignSelf: 'center',
     },
     backButton: {
         padding: 10,
+    },
+    autoCompleteContainer: {
+        flex: 1,
+        zIndex: 1,
+    },
+    locationDetails: {
+        flexDirection: 'row',
+    },
+    locationImage: {
+        width: scaleWidth(45),
+        height: scaleHeight(45),
+    },
+    divider: {
+        backgroundColor: theme.dark.inputLabel,
+    },
+    addButton: {
+        marginBottom: 0,
     },
 });
 

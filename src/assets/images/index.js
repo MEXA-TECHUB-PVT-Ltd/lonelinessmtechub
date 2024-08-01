@@ -62,3 +62,4 @@ export const termsCondition = require('../images/terms_img.png');
 export const deleteAccount = require('../images/delete_account.png');
 export const accountCreated = require('../images/account_created_img.png');
 export const changeLocationImg = require('../images/location_img.png');
+export const changeLocationImgUser = require('../images/location_img_user.png');

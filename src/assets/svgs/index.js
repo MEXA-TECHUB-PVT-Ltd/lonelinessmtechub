@@ -6,3 +6,4 @@ export { default as UpdateBuddyProfile } from '../svgs/buddy_update_profile.svg'
 export { default as UpdateInterests } from '../svgs/update_interesets.svg';
 export { default as LanguagesIcon } from '../svgs/language_icon.svg';
 export { default as ArrowForward } from '../svgs/arrow_forward_white.svg';
+export { default as MapMarker } from '../svgs/map_marker.svg';

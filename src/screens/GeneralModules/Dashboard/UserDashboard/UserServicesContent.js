@@ -58,7 +58,8 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setF
     const getStatusByIndex = (index) => {
         switch (index) {
             case 0:
-                return 'PAID';
+                return 'ACCEPTED';
+                // return 'PAID';
             case 1:
                 return '';
             case 2:

@@ -1,11 +1,9 @@
 // ImageCarousel.js
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Image, StyleSheet, Dimensions, StatusBar, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
-import Carousel from 'react-native-reanimated-carousel';
+import { View, Image, StyleSheet, Dimensions, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { resetNavigation } from '../../../../utils/resetNavigation';
 import useBackHandler from '../../../../utils/useBackHandler';
 import { SCREENS } from '../../../../constant/constants';
-import { dummy1, dummy2, dummyImg } from '../../../../assets/images';
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import { theme } from '../../../../assets';
 import { scaleHeight } from '../../../../styles/responsive';

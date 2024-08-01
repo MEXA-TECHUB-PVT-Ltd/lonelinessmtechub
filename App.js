@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, StyleSheet, StatusBar, LogBox } from 'react-native';
 import { AlertProvider } from './src/providers/AlertContext';
 import DynamicAlert from './src/components/DynamicAlert';
@@ -9,12 +9,13 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store } from './src/redux/store';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { refreshToken } from './src/redux/AuthModule/refreshTokenSlice';
-import { updateUserLoginInfo } from './src/redux/AuthModule/signInSlice';
+import { updateToken, updateUserLoginInfo } from './src/redux/AuthModule/signInSlice';
 import CustomModal from './src/components/CustomModal';
 import { warningImg } from './src/assets/images';
 import { setWarningContent } from './src/redux/warningModalSlice';
 import { scaleHeight } from './src/styles/responsive';
 import { STRIPE_KEY } from '@env'
+import { foregroundNotificationListener } from './src/configs/NotificationHandler';
 
 
 const MainApp = () => {
@@ -23,45 +24,40 @@ const MainApp = () => {
   const { warningContent } = useSelector((state) => state.warningContent);
   const { expires_at } = userLoginInfo || {};
 
+  useEffect(() => {
+    const TOKEN_REFRESH_PERIOD = 1; // days
 
+    const checkTokenExpiry = async () => {
+      const currentTime = new Date().getTime();
+      const expiresAt = parseInt(expires_at, 10);
 
-  // useEffect(() => {
-  //   const TOKEN_REFRESH_PERIOD = 1; // days
+      if (currentTime >= expiresAt) {
+        console.log('Token expired..');
+        dispatch(refreshToken()).then((result) => {
+          const { status, message, result: refreshResult } = result?.payload;
+          var { token, tokenExpiresIn, refreshToken } = refreshResult;
+          if (status === "success") {
+            // Update expiry date to 1 days from now
+            const newExpiryDate = new Date();
+            newExpiryDate.setDate(newExpiryDate.getDate() + TOKEN_REFRESH_PERIOD);
 
-  //   const checkTokenExpiry = async () => {
-  //     const currentTime = new Date().getTime();
-  //     const expiresAt = parseInt(expires_at, 10);
+            const updatedRefreshToken = {
+              token: token,
+              refreshToken: refreshToken?.refreshToken,
+              tokenExpiresIn: `${tokenExpiresIn}`,
+              expires_at: newExpiryDate.getTime()
+            };
+            dispatch(updateToken(updatedRefreshToken));
+          }
+        });
+      } else {
+        console.log('Token not expired yet..');
+      }
+    };
 
-  //     if (currentTime >= expiresAt) {
-  //       console.log('Token expired..');
-  //       dispatch(refreshToken()).then((result) => {
-  //         const { status, message, result: refreshResult } = result?.payload;
-  //         var { token, tokenExpiresIn } = refreshResult;
-
-  //         if (status === "success") {
-  //           console.log("success", message);
-
-  //           // Update expiry date to 30 days from now
-  //           const newExpiryDate = new Date();
-  //           newExpiryDate.setDate(newExpiryDate.getDate() + TOKEN_REFRESH_PERIOD);
-
-  //           const updatedRefreshToken = {
-  //             token: token,
-  //             tokenExpiresIn: `${tokenExpiresIn}`,
-  //             expires_at: newExpiryDate.getTime()
-  //           };
-
-  //           dispatch(updateUserLoginInfo(updatedRefreshToken));
-  //         }
-  //       });
-  //     } else {
-  //       console.log('Token not expired yet..');
-  //     }
-  //   };
-
-  //   checkTokenExpiry();
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [dispatch]);
+    checkTokenExpiry();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch]);
 
   const handleResetModalContent = () => {
     dispatch(setWarningContent(false))
@@ -89,6 +85,13 @@ const MainApp = () => {
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [warningContent]);
+
+  useEffect(() => {
+    const unsubscribe = foregroundNotificationListener();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
 
 
   return (

@@ -69,7 +69,7 @@ const Chat = ({ navigation }) => {
         const newSocket = io(SOCKET_URL);
         setSocket(newSocket);
         newSocket.on('connect', () => {
-            console.log('Socket connected');
+            console.log('Socket connectedddd');
         });
 
         return () => {
@@ -81,19 +81,30 @@ const Chat = ({ navigation }) => {
     useEffect(() => {
         if (socket) {
             const userId = parseInt(user_id);
+            socket.emit("userOnline", userId);
             socket.emit("registerUser", userId);
             //socket.emit("addContact", { userId, contactId: 92 });
-            socket.on('contacts', (contactList) => {
-                const filteredContacts = contactList?.filter(contact => contact?.userId !== userId);
+            socket.on("contactsUsers", (contacts) => {
+                const filteredContacts = contacts?.filter(contact => contact?.userId !== userId);
                 setAllContacts(filteredContacts);
                 setFilteredContacts(filteredContacts);
                 setContactLoader(false)
+
             });
+            socket.on("contactStatusChange", ({ userId, status }) => {
+                console.log('status--->', status)
+            });
+            // socket.on('contacts', (contactList) => {
+            //     const filteredContacts = contactList?.filter(contact => contact?.userId !== userId);
+            //     setAllContacts(filteredContacts);
+            //     setFilteredContacts(filteredContacts);
+            //     setContactLoader(false)
+            // });
         }
 
         return () => {
             if (socket) {
-                socket.off("contacts");
+                socket.off("contactsUsers");
             }
         };
     }, [socket, user_id, dispatch]);

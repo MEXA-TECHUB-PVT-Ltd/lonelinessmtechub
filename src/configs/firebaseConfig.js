@@ -46,4 +46,5 @@ function onMessageListener() {
 export {
     getFcmToken,
     onMessageListener,
+    requestUserPermission
 };
