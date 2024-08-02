@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Keyboard, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Keyboard, ScrollView, Image } from 'react-native';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
 import useBackHandler from '../../../utils/useBackHandler';
@@ -7,7 +7,7 @@ import { theme } from '../../../assets';
 import CustomTextInput from '../../../components/TextInputComponent';
 import CustomLayout from '../../../components/CustomLayout';
 import fonts from '../../../styles/fonts';
-import { scaleHeight } from '../../../styles/responsive';
+import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import CheckBox from '../../../components/CheckboxComponent';
 import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
@@ -19,6 +19,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { signupUser } from '../../../redux/AuthModule/signupSlice';
 import { useAlert } from '../../../providers/AlertContext';
 import { setTempCred } from '../../../redux/setTempCredentialsSlice';
+import { configureGoogleSignin, onGoogleButtonPress } from '../../../configs/googleAuth';
+import { googleIcon } from '../../../assets/images';
 
 const BuddySignup = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -67,6 +69,10 @@ const BuddySignup = ({ navigation }) => {
         return true;
     };
     useBackHandler(handleBackPress);
+
+    useEffect(() => {
+        configureGoogleSignin();
+    }, []);
 
     const handleLoginNavigation = () => {
         resetNavigation(navigation, SCREENS.LOGIN)
@@ -118,10 +124,11 @@ const BuddySignup = ({ navigation }) => {
                 password: form?.password,
                 confirm_password: form?.confirmPassword,
                 role: "BUDDY",
+                signup_type: "EMAIL",
             }
             dispatch(signupUser(credentials)).then((result) => {
                 if (result?.payload?.status === "success") {
-                    dispatch(setTempCred({ email, password }));
+                    dispatch(setTempCred({ email, password, isGoogleAuth: false }));
                     handleSuccessNavigation(result?.payload?.message)
                 } else if (result?.payload?.errors) {
                     showAlert("Error", "error", result?.payload?.errors)
@@ -131,6 +138,38 @@ const BuddySignup = ({ navigation }) => {
                     showAlert("Error", "error", result?.payload?.message)
                 }
             })
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        try {
+            const result = await onGoogleButtonPress();
+            if (result.user && result.idToken) {
+                const credentials = {
+                    email: result.user?.email,
+                    role: "BUDDY",
+                    signup_type: "GOOGLE",
+                    token_google: result.idToken
+                }
+                var googleToken = result?.idToken;
+                dispatch(signupUser(credentials)).then((result) => {
+                    if (result?.payload?.status === "success") {
+                        dispatch(setTempCred({ email: result.user?.email, isGoogleAuth: true, token_google: googleToken }));
+                        handleSuccessNavigation(result?.payload?.message)
+                    } else if (result?.payload?.errors) {
+                        showAlert("Error", "error", result?.payload?.errors)
+                    }
+
+                    else if (result?.payload?.status === "error") {
+                        showAlert("Error", "error", result?.payload?.message)
+                    }
+                })
+
+            }
+
+
+        } catch (error) {
+            console.error('Sign in failed:', error);
         }
     };
 
@@ -259,7 +298,29 @@ const BuddySignup = ({ navigation }) => {
 
                     </View>
 
-
+                    <Button
+                        onPress={() => {
+                            handleGoogleSignIn();
+                        }}
+                        title={'Signup with Google'}
+                        icon={<Image
+                            resizeMode='contain'
+                            style={{
+                                width: scaleWidth(26),
+                                height: scaleHeight(26)
+                            }}
+                            source={googleIcon} />}
+                        customStyle={{
+                            backgroundColor: theme.dark.transparentBg,
+                            borderWidth: 0.5,
+                            borderColor: theme.dark.secondary,
+                            marginTop: scaleHeight(70),
+                        }}
+                        textCustomStyle={{
+                            color: theme.dark.secondary,
+                            fontSize: scaleHeight(16),
+                        }}
+                    />
 
                 </View>
 

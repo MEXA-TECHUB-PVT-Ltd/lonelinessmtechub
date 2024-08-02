@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
 import useBackHandler from '../../../utils/useBackHandler';
@@ -7,7 +7,7 @@ import { theme } from '../../../assets';
 import CustomTextInput from '../../../components/TextInputComponent';
 import CustomLayout from '../../../components/CustomLayout';
 import fonts from '../../../styles/fonts';
-import { scaleHeight } from '../../../styles/responsive';
+import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import CheckBox from '../../../components/CheckboxComponent';
 import HorizontalDivider from '../../../components/HorizontalDivider';
 import Button from '../../../components/ButtonComponent';
@@ -19,6 +19,8 @@ import { signupUser } from '../../../redux/AuthModule/signupSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAlert } from '../../../providers/AlertContext';
 import { setTempCred } from '../../../redux/setTempCredentialsSlice';
+import { googleIcon } from '../../../assets/images';
+import { configureGoogleSignin, onGoogleButtonPress } from '../../../configs/googleAuth';
 
 const Signup = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -72,6 +74,11 @@ const Signup = ({ navigation }) => {
         resetNavigation(navigation, SCREENS.LOGIN)
     }
 
+    useEffect(() => {
+        configureGoogleSignin();
+    }, []);
+
+
     const validateEmail = (email) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
@@ -119,10 +126,11 @@ const Signup = ({ navigation }) => {
                 password: password,
                 confirm_password: confirmPassword,
                 role: "USER",
+                signup_type: "EMAIL"
             }
             dispatch(signupUser(credentials)).then((result) => {
                 if (result?.payload?.status === "success") {
-                    dispatch(setTempCred({email, password}));
+                    dispatch(setTempCred({ email, password, isGoogleAuth: false }));
                     handleSuccessNavigation(result?.payload?.message)
                 } else if (result?.payload?.errors) {
                     showAlert("Error", "error", result?.payload?.errors)
@@ -134,6 +142,40 @@ const Signup = ({ navigation }) => {
             })
         }
     };
+
+    const handleGoogleSignIn = async () => {
+        try {
+            const result = await onGoogleButtonPress();
+            if (result.user && result.idToken) {
+
+                const credentials = {
+                    email: result.user?.email,
+                    role: "USER",
+                    signup_type: "GOOGLE",
+                    token_google: result.idToken
+                }
+                var googleToken = result?.idToken;
+                dispatch(signupUser(credentials)).then((result) => {
+                    if (result?.payload?.status === "success") {
+                        dispatch(setTempCred({ email: result.user?.email, isGoogleAuth: true, token_google: googleToken }));
+                        handleSuccessNavigation(result?.payload?.message)
+                    } else if (result?.payload?.errors) {
+                        showAlert("Error", "error", result?.payload?.errors)
+                    }
+
+                    else if (result?.payload?.status === "error") {
+                        showAlert("Error", "error", result?.payload?.message)
+                    }
+                })
+
+            }
+
+
+        } catch (error) {
+            console.error('Sign in failed:', error);
+        }
+    };
+
 
     const handleSuccessNavigation = (message) => {
         showAlert("Success", "success", message)
@@ -260,6 +302,29 @@ const Signup = ({ navigation }) => {
 
                     </View>
 
+                    <Button
+                        onPress={() => {
+                            handleGoogleSignIn();
+                        }}
+                        title={'Signup with Google'}
+                        icon={<Image
+                            resizeMode='contain'
+                            style={{
+                                width: scaleWidth(26),
+                                height: scaleHeight(26)
+                            }}
+                            source={googleIcon} />}
+                        customStyle={{
+                            backgroundColor: theme.dark.transparentBg,
+                            borderWidth: 0.5,
+                            borderColor: theme.dark.secondary,
+                            marginTop: scaleHeight(70),
+                        }}
+                        textCustomStyle={{
+                            color: theme.dark.secondary,
+                            fontSize: scaleHeight(16),
+                        }}
+                    />
 
 
                 </View>
@@ -347,6 +412,10 @@ const styles = StyleSheet.create({
         marginTop: 5,
         marginHorizontal: 8
     },
+    buttonContainer2: {
+        width: '90%',
+        alignSelf: 'center',
+    }
 });
 
 

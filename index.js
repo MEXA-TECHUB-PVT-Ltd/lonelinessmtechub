@@ -39,7 +39,7 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
 
     PushNotification.localNotification({
         id: generateUniqueId(),
-        channelId: "testing-channal-id", // (required for Android)
+        // channelId: "testing-channal-id", // (required for Android)
         title: remoteMessage.notification?.title,
         message: remoteMessage.notification?.body,
         // You can add other options here as per your needs

@@ -152,11 +152,9 @@ const StripeAccountCreation = ({ navigation }) => {
     const handleNavigationStateChange = (newNavState) => {
         setCanGoBack(newNavState.canGoBack);
         const { url } = newNavState;
-        console.log("urllllllll", url)
+        //console.log("urllllllll", url)
         let responseData = {};
-
-
-        if (url.startsWith('https://mtechub.com/return')) {
+        if (url.startsWith('https://lone-be.mtechub.com/api/onboarding-success?success=true')) {
             checkRequirements();
         }
 
@@ -176,7 +174,13 @@ const StripeAccountCreation = ({ navigation }) => {
         setModalVisible(true);
         setTimeout(() => {
             setModalVisible(false);
-            dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: fcmToken }));
+            dispatch(login({
+                email: credentials?.email,
+                ...(!credentials?.isGoogleAuth && { password: credentials?.password }),
+                device_token: fcmToken,
+                signup_type: credentials?.isGoogleAuth ? "GOOGLE" : "EMAIL",
+                ...(credentials?.isGoogleAuth && { token_google: credentials?.token_google }),
+            }));
         }, 6000);
     };
 
