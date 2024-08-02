@@ -61,6 +61,10 @@
       </service>
 
       <meta-data
+        android:name="com.google.android.gms.auth.api.signin.APP_ID"
+        android:value="55052199625-vc17lav922f1ejtkmn2op958euv3ojcd.apps.googleusercontent.com" />
+
+      <meta-data
           android:name="com.google.android.geo.API_KEY"
           android:value="AIzaSyADloZIRinOmI_UpKfRK5skpEO8RYImouI"/>
     </application>

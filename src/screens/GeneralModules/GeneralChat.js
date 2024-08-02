@@ -27,18 +27,21 @@ import { SOCKET_URL } from '@env'
 import { userBuddyAction } from '../../redux/userBuddyActionSlice';
 import { setRoute } from '../../redux/appSlice';
 import FullScreenLoader from '../../components/FullScreenLoader';
+import { clearResponse, uploadChatImage } from '../../redux/uploadChatImageSlice';
 
 export default function GeneralChat({ navigation }) {
     const dispatch = useDispatch();
     const [socket, setSocket] = useState(null);
     const { userLoginInfo, role } = useSelector((state) => state.auth)
     const { currentRoute } = useSelector((state) => state.app)
+    const { response } = useSelector((state) => state.uploadChatImage)
     const user_id = userLoginInfo?.user?.id
     const { showAlert } = useAlert()
     const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState('');
     const giftedChatRef = useRef(null);
     const [imageUri, setImageUri] = useState(null);
+    const [uploadedImage, setUploadedImage] = useState(null);
     const refRBSheet = useRef();
     const [modalVisible, setModalVisible] = useState(false);
     const [deleteModal, setDeleteModal] = useState(false);
@@ -78,7 +81,7 @@ export default function GeneralChat({ navigation }) {
             console.log('Socket connected--->chat screen');
         });
 
-        if (newSocket && firstLoad) {
+        if (newSocket) {
 
             newSocket.emit("getMessages", { userId, contactId: currentRoute?.receiver_id });
 
@@ -121,14 +124,18 @@ export default function GeneralChat({ navigation }) {
     useEffect(() => {
 
         if (socket) {
-            //socket.emit("registerUser", userId);
+            socket.emit("userOnline", userId);
+            socket.emit("registerUser", userId);
+            socket.on('getUnreadChatsCount', ({ userId }) => {
+                socket.emit("userChatCountget", userId);
+            });
             socket.on("receiveMessage", (message) => {
                 console.log('receiveMessage', message)
                 const transformedMessage = {
                     _id: Math.round(Math.random() * 1000000),
                     text: message.message,
                     image: message?.image_url,
-                    createdAt: new Date(message.timestamp),
+                    createdAt: new Date(message.created_at),
                     user: {
                         _id: parseInt(message.sender_id),
                     }
@@ -140,13 +147,18 @@ export default function GeneralChat({ navigation }) {
                 //     contactId: receivedMessage.receiver_id,
                 // });
             });
-        }
-        return () => {
-            if (socket) {
-                socket.disconnect("receiveMessage");
-            }
 
-        };
+            socket.emit("markMessagesAsRead", {
+                userId: userId,
+                contactId: currentRoute?.receiver_id,
+            });
+        }
+        // return () => {
+        //     if (socket) {
+        //         socket.disconnect("receiveMessage");
+        //     }
+
+        // };
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket])
@@ -168,6 +180,7 @@ export default function GeneralChat({ navigation }) {
             } else {
                 const { uri } = response.assets[0];
                 setImageUri(uri);
+                handleImageUpload(uri)
             }
         });
     };
@@ -185,17 +198,17 @@ export default function GeneralChat({ navigation }) {
 
             <View style={styles.inputContainer}>
 
-                {imageUri && (
-                    <View style={{ width: 120, height: 120, borderRadius: 16, overflow: 'hidden', marginTop: 10 }}>
-                        <Image source={{ uri: imageUri }} style={{ flex: 1 }} resizeMode="cover" />
+                {/* {imageUri && (
+                    <View style={styles.imagePreviewContainer}>
+                        <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="cover" />
                         <TouchableOpacity
-                            style={{ position: 'absolute', top: 2, right: 3, elevation: 4, shadowOpacity: 0.5 }}
+                            style={styles.removeImageButton}
                             onPress={() => setImageUri(null)}
                         >
-                            <Icon name="times-circle" size={24} color={theme.dark.transparentBg} />
+                            <Icon name="times-circle" size={24} color={theme.dark.secondary} />
                         </TouchableOpacity>
                     </View>
-                )}
+                )} */}
 
                 <View style={styles.inputIconContainer}>
 
@@ -421,23 +434,24 @@ export default function GeneralChat({ navigation }) {
                 senderId: user_id,
                 receiverId: currentRoute?.receiver_id,
                 message: inputText.trim(),
-                imageUrl: imageUri
+                imageUrl: response?.imageUrls ? response?.imageUrls[0] : imageUri
                 //createdAt: new Date(),
             }
             socket.emit("sendMessage", newMessage);
-            console.log("message has been sent", newMessage);
-            // const transformedMessage = {
-            //     _id: Math.round(Math.random() * 1000000),
-            //     text: newMessage.message,
-            //     image: newMessage?.image_url,
-            //     createdAt: new Date(),
-            //     user: {
-            //         _id: parseInt(newMessage.sender_id),
-            //     }
-            // };
-            // setMessages((previousMessages) => GiftedChat.append(previousMessages, transformedMessage));
+            //console.log("message has been sent", newMessage);
+            const transformedMessage = {
+                _id: Math.round(Math.random() * 1000000),
+                text: newMessage.message,
+                image: response?.imageUrls ? response?.imageUrls[0] : newMessage?.imageUrl,
+                createdAt: new Date(),
+                user: {
+                    _id: parseInt(newMessage.senderId),
+                }
+            };
+            setMessages((previousMessages) => GiftedChat.append(previousMessages, transformedMessage));
             setInputText('');
             setImageUri(null);
+            dispatch(clearResponse());
         }
     };
 
@@ -446,25 +460,54 @@ export default function GeneralChat({ navigation }) {
         setMessages(previousMessages => GiftedChat.append(previousMessages, newMessage));
     };
 
-    const handleDeleteChat = () => {
+    const handleDeleteChat = async () => {
+        try {
+            console.log('Deleting chat', userId, currentRoute?.receiver_id);
 
-        socket.on("chatDeleted", ({ userId, contactId }) => {
+            // Emit the deleteChat event
+            socket.emit("deleteChat", { userId, contactId: currentRoute?.receiver_id });
+
             // Handle chat deletion on the sender's side
-            setMessages((prevMessages) =>
-              prevMessages.filter(
-                (msg) =>
-                  !(
-                    (msg.sender_id === userId && msg.receiver_id === contactId) ||
-                    (msg.sender_id === contactId && msg.receiver_id === userId)
-                  )
-              )
-            );
-          });
+            const handleChatDeleted = ({ userId, contactId }) => {
+                console.log('Chat deleted', userId, contactId);
+                setMessages((prevMessages) =>
+                    prevMessages.filter(
+                        (msg) =>
+                            !(
+                                (msg.sender_id === userId && msg.receiver_id === contactId) ||
+                                (msg.sender_id === contactId && msg.receiver_id === userId)
+                            )
+                    )
+                );
+            };
 
-    }
+            // Listen for the chatDeleted event
+            socket.once("chatDeleted", handleChatDeleted);
+        } catch (error) {
+            console.error('Error deleting chat:', error);
+        }
+    };
+
 
     const renderLoader = () => {
         return <FullScreenLoader loading={loadingMessages} />
+    }
+
+    const handleImageUpload = (uploadImageUri) => {
+        const imageType = uploadImageUri?.endsWith('.png') ? 'image/png' : 'image/jpeg';
+        const formData = new FormData();
+        formData.append('files', {
+            uri: uploadImageUri,
+            type: imageType,
+            name: `image_${Date.now()}.${imageType.split('/')[1]}`,
+        });
+        dispatch(uploadChatImage(formData)).then((result) => {
+            if (result?.payload?.status === "success") {
+                console.log('chat image uploaded', result?.payload)
+            } else if (result?.payload?.status === "error") {
+                console.log('Error chat image uploaded', result?.payload)
+            }
+        })
     }
 
     return (
@@ -491,6 +534,22 @@ export default function GeneralChat({ navigation }) {
             {
                 loadingMessages ? renderLoader() : <>
                     <View style={{ flex: 1 }}>
+
+                        {imageUri && (
+                            <View style={styles.imagePreviewContainer}>
+                                <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="cover" />
+                                <TouchableOpacity
+                                    style={styles.removeImageButton}
+                                    onPress={() => {
+                                        setImageUri(null);
+                                        dispatch(clearResponse());
+                                    }}
+                                >
+                                    <Icon name="times-circle" size={24} color={theme.dark.secondary} />
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
                         <GiftedChat
                             ref={giftedChatRef}
                             messages={messages}
@@ -625,5 +684,24 @@ const styles = StyleSheet.create({
         color: 'white',
         fontFamily: fonts.fontsType.regular,
         fontSize: scaleHeight(13)
-    }
+    },
+    imagePreviewContainer: {
+        width: '90%',
+        height: '80%',
+        borderRadius: 16,
+        marginTop: 20,
+        // overflow: 'hidden',
+
+        alignSelf: 'center',
+    },
+    imagePreview: {
+        flex: 1,
+    },
+    removeImageButton: {
+        position: 'absolute',
+        top: 2,
+        right: 3,
+        elevation: 4,
+        shadowOpacity: 0.5,
+    },
 });

@@ -166,7 +166,13 @@ const AddLocation = ({ navigation }) => {
         setModalVisible(true);
         setTimeout(() => {
             setModalVisible(false);
-            dispatch(login({ email: credentials?.email, password: credentials?.password, device_token: fcmToken }));
+            dispatch(login({
+                email: credentials?.email,
+                ...(!credentials?.isGoogleAuth && { password: credentials?.password }),
+                device_token: fcmToken,
+                signup_type: credentials?.isGoogleAuth ? "GOOGLE" : "EMAIL",
+                ...(credentials?.isGoogleAuth && { token_google: credentials?.token_google }),
+            }));
         }, 6000);
     };
 

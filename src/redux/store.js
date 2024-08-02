@@ -63,6 +63,7 @@ import checkStripeRequirementsReducer from './PaymentSlices/checkStripeRequireme
 import refreshTokenReducer from './AuthModule/refreshTokenSlice';
 import warningModalReducer from './warningModalSlice';
 import verifyMeetingCodeReducer from './BuddyDashboard/verifyMeetingCodeSlice';
+import uploadChatImageReducer from './uploadChatImageSlice';
 
 const persistConfig = {
     key: 'root',
@@ -131,7 +132,8 @@ const rootReducer = combineReducers({
     checkStripeRequirements: checkStripeRequirementsReducer,
     refreshToken: refreshTokenReducer,
     warningContent: warningModalReducer,
-    verifyMeetingCode: verifyMeetingCodeReducer
+    verifyMeetingCode: verifyMeetingCodeReducer,
+    uploadChatImage: uploadChatImageReducer
 
 });
 

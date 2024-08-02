@@ -1,21 +1,97 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, Animated } from 'react-native';
 import { theme } from '../../../assets';
-import { googleIcon, onboardingCurveCenter, onboardingCurveTop, onboardingLabelImg, onboardingLogo, onboarding_img } from '../../../assets/images';
+import { alertLogo, googleIcon, onboardingCurveCenter, onboardingCurveTop, onboardingLabelImg, onboardingLogo, onboarding_img, successText } from '../../../assets/images';
 import { scaleHeight, scaleWidth } from '../../../styles/responsive';
 import fonts from '../../../styles/fonts';
 import Button from '../../../components/ButtonComponent';
 import { resetNavigation } from '../../../utils/resetNavigation';
 import { SCREENS } from '../../../constant/constants';
 import * as Animatable from 'react-native-animatable';
+import { firebase } from '@react-native-firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import auth from '@react-native-firebase/auth';
+import { WEB_CLIENT_ID } from '@env'
+import { useDispatch } from 'react-redux';
+import { login } from '../../../redux/AuthModule/signInSlice';
+import { getFcmToken } from '../../../configs/firebaseConfig';
+import { setAsRemember } from '../../../redux/rememberMeSlice';
+import { setTempCred } from '../../../redux/setTempCredentialsSlice';
+import { setTempToken } from '../../../redux/AuthModule/signupSlice';
+import { useAlert } from '../../../providers/AlertContext';
+import Spinner from '../../../components/Spinner';
+import Modal from "react-native-modal";
+import { configureGoogleSignin, onGoogleButtonPress } from '../../../configs/googleAuth';
 
 const Onboarding = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const [user, setUser] = useState(null);
+    const [idToken, setIdToken] = useState(null);
+    const [fcmToken, setFcmToken] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
+    const { showAlert } = useAlert();
+    const rotateAnim = useRef(new Animated.Value(0)).current;
 
     const handleNavigation = () => {
         resetNavigation(navigation, SCREENS.LOGIN)
     }
 
-    const rotateAnim = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+        configureGoogleSignin();
+    }, [])
+
+    useEffect(() => {
+        getFcmToken().then(token => {
+            setFcmToken(token);
+        });
+    }, []);
+
+    async function handleGoogleSignIn() {
+        try {
+            const result = await onGoogleButtonPress();
+            if (result.user && result.idToken) {
+                setUser(result.user);
+                setIdToken(result.idToken);
+                const credentials = {
+                    email: result?.user?.email,
+                    device_token: fcmToken,
+                    signup_type: "GOOGLE"
+                }
+                var googleToken = result?.idToken;
+                dispatch(login(credentials)).then((result) => {
+
+                    if (result?.payload?.status === "success") {
+                        const { is_requirements_completed } = result?.payload?.result?.user
+                        const { role, token } = result?.payload?.result
+                        if (!is_requirements_completed && role === "BUDDY") {
+                            dispatch(setTempCred({ email: result.user?.email, isGoogleAuth: true, token_google: googleToken }));
+                            dispatch(setAsRemember(null));
+                            dispatch(setTempToken(token))
+                            resetNavigation(navigation, SCREENS.STRIPE_ACCOUNT_CREATION)
+                            return
+                        }
+                        showHideModal();
+
+                    } else {
+                        showAlert("Error", "error", result?.payload?.message)
+                    }
+
+                })
+            } else {
+                console.error('Sign-In failed: No user or token returned');
+            }
+        } catch (error) {
+            console.error('Sign-In Error:', error);
+        }
+    }
+
+
+    const showHideModal = () => {
+        setModalVisible(true);
+        setTimeout(() => {
+            setModalVisible(false);
+        }, 3000);
+    };
 
     useEffect(() => {
         Animated.timing(rotateAnim, {
@@ -33,6 +109,56 @@ const Onboarding = ({ navigation }) => {
     const animatedStyle = {
         transform: [{ rotate: rotateInterpolate }],
     };
+
+
+    const showModalView = () => {
+
+        return <Modal
+            backdropOpacity={0.90}
+            backdropColor={'rgba(85, 85, 85, 0.70)'}
+            isVisible={modalVisible}
+            animationIn={'bounceIn'}
+            animationOut={'bounceOut'}
+            animationInTiming={1000}
+            animationOutTiming={1000}
+        >
+            <View style={{
+                backgroundColor: '#111111',
+                width: '90%',
+                height: '50%',
+                alignSelf: 'center',
+                borderRadius: 20,
+                elevation: 20,
+                padding: 20
+            }}>
+
+                <Image
+                    resizeMode='contain'
+                    source={alertLogo}
+                    style={{
+                        width: scaleWidth(120),
+                        height: scaleHeight(120),
+                        alignSelf: 'center'
+                    }}
+                />
+
+                <Image
+                    resizeMode='contain'
+                    source={successText}
+                    style={{
+                        width: scaleWidth(130),
+                        height: scaleHeight(45),
+                        alignSelf: 'center',
+                        marginTop: 10
+                    }}
+                />
+                <Text style={[styles.subTitle, { alignSelf: 'center', textAlign: 'center', }]}>
+                    {`Please wait...${'\n'}You will be directed to the homepage.`}
+                </Text>
+                <Spinner />
+            </View>
+        </Modal>
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -81,7 +207,7 @@ const Onboarding = ({ navigation }) => {
                 <View style={styles.buttonContainer2}>
                     <Button
                         onPress={() => {
-                            
+                            handleGoogleSignIn();
                         }}
                         title={'Continue with Google'}
                         icon={<Image
@@ -124,7 +250,7 @@ const Onboarding = ({ navigation }) => {
 
 
             </View>
-
+            {showModalView()}
         </SafeAreaView>
     );
 };

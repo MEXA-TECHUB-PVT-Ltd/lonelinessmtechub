@@ -118,6 +118,7 @@ const Login = ({ navigation }) => {
                 email: email,
                 password: password,
                 device_token: fcmToken,
+                signup_type: "EMAIL"
             }
             dispatch(login(credentials)).then((result) => {
                 if (result?.payload?.status === "success") {
