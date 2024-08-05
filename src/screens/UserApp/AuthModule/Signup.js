@@ -152,12 +152,15 @@ const Signup = ({ navigation }) => {
                     email: result.user?.email,
                     role: "USER",
                     signup_type: "GOOGLE",
-                    token_google: result.idToken
+                    token_google: result.idToken,
+                    password: 'Mtechub1@',
+                    confirm_password: 'Mtechub1@',
                 }
                 var googleToken = result?.idToken;
+                var email = result.user?.email;
                 dispatch(signupUser(credentials)).then((result) => {
                     if (result?.payload?.status === "success") {
-                        dispatch(setTempCred({ email: result.user?.email, isGoogleAuth: true, token_google: googleToken }));
+                        dispatch(setTempCred({ email: email, isGoogleAuth: true, token_google: googleToken }));
                         handleSuccessNavigation(result?.payload?.message)
                     } else if (result?.payload?.errors) {
                         showAlert("Error", "error", result?.payload?.errors)

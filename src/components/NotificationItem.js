@@ -1,7 +1,7 @@
 // NotificationComponent.js
 
 import React from 'react';
-import { View, Image, Text, StyleSheet } from 'react-native';
+import { View, Image, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import fonts from '../styles/fonts';
 import { scaleHeight } from '../styles/responsive';
 import { theme } from '../assets';
@@ -9,19 +9,22 @@ import { notiImg, notiImg2, notiImg3, notiImg4 } from '../assets/images';
 import moment from 'moment';
 import { ArrowForward } from '../assets/svgs';
 
-const NotificationItem = ({ item }) => {
+const NotificationItem = ({ item, onPress }) => {
+    console.log(item)
     const images = [notiImg, notiImg2, notiImg3, notiImg4];
     const randomImage = images[Math.floor(Math.random() * images.length)];
     return (
-        <View style={styles.container}>
+        <TouchableOpacity
+            onPress={onPress}
+            style={styles.container}>
             <Image source={randomImage} style={styles.image} />
             <View style={styles.notificationContent}>
                 <Text style={styles.title}>{item?.title}</Text>
                 <Text style={styles.description}>{item?.body}</Text>
                 <Text style={styles.time}>{moment(item?.created_at, "HH:mm:ss").format('hh:mm A')}</Text>
             </View>
-            <ArrowForward/>
-        </View>
+            <ArrowForward />
+        </TouchableOpacity>
     );
 };
 

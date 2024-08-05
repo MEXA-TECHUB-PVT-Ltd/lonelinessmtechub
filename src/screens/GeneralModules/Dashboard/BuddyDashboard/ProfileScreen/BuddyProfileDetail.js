@@ -20,6 +20,8 @@ import { getAddressByLatLong } from '../../../../../redux/getAddressByLatLongSli
 import DetailItem from '../../../../../components/DetailItem';
 import FullScreenLoader from '../../../../../components/FullScreenLoader';
 import { setRoute } from '../../../../../redux/appSlice';
+import { MAP_API_KEY } from '@env';
+import { reverseGeocode } from '../../../../../utils/geoCodeUtils';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -31,8 +33,11 @@ const BuddyProfileDetail = ({ navigation }) => {
     const { address } = useSelector((state) => state.getAddress)
     const { currentRoute } = useSelector((state) => state.app)
     const { userLoginInfo } = useSelector((state) => state.auth)
+    const [placeName, setPlaceName] = useState('')
     const user_id = userLoginInfo?.user?.id
     const [activeIndex, setActiveIndex] = useState(0);
+
+
 
 
     const handleBackPress = () => {
@@ -50,16 +55,51 @@ const BuddyProfileDetail = ({ navigation }) => {
         dispatch(getUserDetail(currentRoute?.chat_id || user_id))
     }, [dispatch, user_id, currentRoute])
 
-    useEffect(() => {
+
+    const handleLocation = async () => {
+
         if (userDetail) {
             const { longitude, latitude } = userDetail?.location
-            dispatch(getAddressByLatLong({
-                lat: latitude,
-                long: longitude
-            }));
+            const address = await reverseGeocode(latitude, longitude);
+            setPlaceName(address)
+            // dispatch(getAddressByLatLong({
+            //     lat: latitude,
+            //     long: longitude
+            // }));
         }
+    };
 
-    }, [dispatch, userDetail])
+    useEffect(() => {
+        handleLocation();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userDetail])
+
+
+    // const reverseGeocode = async (latitude, longitude) => {
+    //     try {
+    //         const response = await fetch(
+    //             `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${MAP_API_KEY}`
+    //         );
+    //         const data = await response.json();
+    //         if (data.results.length > 0) {
+    //             return data.results[0].formatted_address;
+    //         } else {
+    //             return null;
+    //         }
+    //     } catch (error) {
+    //         console.error(error);
+    //         return null;
+    //     }
+    // };
+
+
+    const userLocation = userDetail?.location?.country && userDetail?.location?.city
+        ? `${userDetail.location.country}, ${userDetail.location.city}`
+        : null;
+
+    const addressLocation = (address?.city || address?.town || address?.suburb || address?.country) && address?.country
+        ? `${address.city || address.town || address.suburb || address.county || address.state}, ${address.country}`
+        : null;
 
     const renderItem = ({ item, index }) => (
         <View style={[styles.carouselItem]}>
@@ -230,13 +270,15 @@ const BuddyProfileDetail = ({ navigation }) => {
                                 alignSelf: 'center',
 
                             }} source={locationPin} />
-
-                        <Text style={styles.locationText}>{userDetail?.location?.country && userDetail?.location?.city ?
+                        <Text style={styles.locationText}>
+                            {userLocation || placeName || 'Location not available'}
+                        </Text>
+                        {/* <Text style={styles.locationText}>{userDetail?.location?.country && userDetail?.location?.city ?
                             `${userDetail?.location?.country}, ${userDetail?.location?.city}` :
                             (address?.city || address?.town) && address?.country ?
                                 `${address.city || address.town}, ${address.country}` :
                                 'Location not available'
-                        }</Text>
+                        }</Text> */}
 
                     </View>
 
@@ -265,9 +307,7 @@ const BuddyProfileDetail = ({ navigation }) => {
                         marginBottom: scaleHeight(30)
                     }}>
                         {userDetail?.image_urls?.length > 0 && (
-                            <TouchableOpacity onPress={() => {
-                                // handlePress(0)
-                            }}>
+                            <View>
                                 <Image
                                     style={{
                                         width: '100%',
@@ -277,15 +317,13 @@ const BuddyProfileDetail = ({ navigation }) => {
                                     }}
                                     source={{ uri: userDetail?.image_urls[0] }}
                                 />
-                            </TouchableOpacity>
+                            </View>
                         )}
 
                         {userDetail?.image_urls?.length > 1 && (
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                                 {userDetail?.image_urls?.slice(1, 3).map((image, index) => (
-                                    image && <TouchableOpacity key={index} onPress={() => {
-                                        //handlePress(index + 1)
-                                    }}>
+                                    image && <View key={index}>
                                         <Image
                                             style={{
                                                 width: scaleWidth(150),
@@ -295,7 +333,7 @@ const BuddyProfileDetail = ({ navigation }) => {
                                             }}
                                             source={{ uri: image }}
                                         />
-                                    </TouchableOpacity>
+                                    </View>
                                 ))}
                             </View>
                         )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Image, SafeAreaView, StyleSheet, Dimensions,
     View, FlatList, Text, TouchableOpacity,
@@ -61,23 +61,30 @@ import { checkChatPayment } from '../../../../redux/PaymentSlices/checkChatPayme
 import { attachPaymentMethod } from '../../../../redux/PaymentSlices/attachPaymentMethodSlice';
 import { cardWalletPaymentTransfer } from '../../../../redux/UserDashboard/cardWalletPaymentTransferSlice';
 import { createCustomer } from '../../../../redux/PaymentSlices/createCustomerSlice';
-import { useStripe, CardField } from '@stripe/stripe-react-native';
+import { useStripe, CardField, StripeProvider } from '@stripe/stripe-react-native';
 import * as Animatable from 'react-native-animatable';
 import CrossIcon from 'react-native-vector-icons/AntDesign'
 import { setCurrentUserIndex } from '../../../../redux/currentUserIndexSlice';
 import io from 'socket.io-client';
 import { SOCKET_URL } from '@env'
 import { requestLocationPermission } from '../../../../utils/cameraPermission';
+import { Dropdown } from 'react-native-element-dropdown';
+import { getAllCategories } from '../../../../redux/getAllCategoriesSlice';
+import { openPaymentSheet } from '../../../../utils/paymentUtils';
+import { getUserDetail } from '../../../../redux/BuddyDashboard/userLikesDetailSlice';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
+
 const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
     const dispatch = useDispatch();
-    const { createPaymentMethod } = useStripe();
+    const { createPaymentMethod, initPaymentSheet, presentPaymentSheet } = useStripe();
     const { response, loading } = useSelector((state) => state.nearByBuddy)
     const { filteredData, filterLoader } = useSelector((state) => state.applyFilter)
     const blockUserLoader = useSelector((state) => state.userBuddyAction)
+    const { categories } = useSelector((state) => state.getCategories)
     const { userLoginInfo } = useSelector((state) => state.auth)
+    const { userDetail } = useSelector((state) => state.getUserDetail)
     const { address } = useSelector((state) => state.getAddress)
     const { isAppOpened } = useSelector((state) => state.appOpened)
     const { isPremiumPlan } = useSelector((state) => state.accountSubscription)
@@ -116,6 +123,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
     const [paymentLoader, setPaymentLoader] = useState(false);
     const [cardDetails, setCradDetails] = useState({});
     const [keyboardStatus, setKeyboardStatus] = useState(false);
+    const [selectedValue, setSelectedValue] = useState('');
     const [socket, setSocket] = useState(null);
     const [form, setForm] = useState({
         category: '',
@@ -139,17 +147,43 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
 
     });
 
+    //user profile lat long....
+
+    useEffect(() => {
+        dispatch(getUserDetail(id))
+    }, [dispatch, id])
+
+    if (userDetail) {
+        const { longitude, latitude } = userDetail?.location
+        dispatch(getAddressByLatLong({
+            lat: latitude,
+            long: longitude
+        }));
+    }
+
     const getAllNearByBuddies = async () => {
-        requestLocationPermission();
-        const getPosition = () => new Promise((resolve, reject) => {
-            Geolocation.getCurrentPosition(resolve, reject);
-        });
-        const { coords: { latitude, longitude } } = await getPosition();
-        setForm({ ...form, latitude, longitude })
+        let latitude, longitude;
+        if (userDetail?.location?.latitude && userDetail?.location?.longitude) {
+                // Use userDetail location if available
+                ({ latitude, longitude } = userDetail.location);
+        } else {
+            // Request location permission and get current location
+            await requestLocationPermission();
+            const getPosition = () => new Promise((resolve, reject) => {
+                Geolocation.getCurrentPosition(resolve, reject);
+            });
+            const { coords } = await getPosition();
+            latitude = coords.latitude;
+            longitude = coords.longitude;
+        }
+
+        setForm({ ...form, latitude, longitude });
+
         const payload = {
             latitude,
             longitude
-        }
+        };
+
         dispatch(getAllNearbyBuddy(payload));
     }
 
@@ -159,6 +193,10 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
         }
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dispatch, userDetail])
+
+    useEffect(() => {
+        dispatch(getAllCategories())
     }, [dispatch])
 
     useEffect(() => {
@@ -437,7 +475,6 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
     };
 
     const handleCheckBoxStatusChange = (formField, label, isChecked) => {
-        //console.log(`${label} is ${isChecked ? 'checked' : 'unchecked'}`);
         if (formField === "top_rated_profile" || formField === "top_liked_profile") {
             handleChange(formField, isChecked);
         } else {
@@ -467,6 +504,23 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
         setFilter(false)
         setFilterApplied(false)
     }
+
+    const renderCategoryItem = item => {
+
+        return (
+            <View style={styles.item}>
+                <Text style={styles.textItem}>{item.name}</Text>
+                {item.name === selectedValue && (
+                    <MaterialIcons
+                        color={theme.dark.secondary}
+                        name="check-circle"
+                        size={20}
+                    />
+                )}
+
+            </View>
+        );
+    };
 
     const renderFilterModal = () => {
         return <Modal
@@ -665,7 +719,31 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                         marginTop: 20
                     }} />
 
-                    <CustomTextInput
+
+                    <Dropdown
+                        style={[styles.dropdown]}
+                        placeholderStyle={styles.placeholderStyle}
+                        selectedTextStyle={styles.selectedTextStyle}
+                        iconStyle={styles.iconStyle}
+                        data={categories}
+                        maxHeight={250}
+                        dropdownPosition='auto'
+                        containerStyle={{
+                            backgroundColor: theme.dark.primary,
+                            borderColor: theme.dark.inputLabel
+                        }}
+                        labelField="name"
+                        valueField="name"
+                        placeholder={'Select Category'}
+                        value={selectedValue}
+                        onChange={item => {
+                            handleChange('category', item?.name)
+                            setSelectedValue(item?.name);
+                        }}
+                        renderItem={renderCategoryItem}
+                    />
+
+                    {/* <CustomTextInput
                         label={'Category'}
                         placeholder={"Select Category"}
                         identifier={'category'}
@@ -680,7 +758,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                                 }} name={"keyboard-arrow-down"} size={24}
                                 color={theme.dark.text} />
                         }
-                    />
+                    /> */}
 
                     <HorizontalDivider customStyle={{
                         marginTop: 20
@@ -928,7 +1006,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
 
                     <CustomTextInput
                         label={'City'}
-                        placeholder={"Select City"}
+                        placeholder={"Enter city name"}
                         identifier={'city'}
                         value={form.city}
                         onValueChange={(value) => handleChange('city', value)}
@@ -1040,7 +1118,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
             dispatch(setRoute({
                 route: SCREENS.MAIN_DASHBOARD,
                 buddy_id: currentUser?.id,
-                hourly_rate: currentUser?.hourly_rate,
+                hourly_rate: currentUser?.hourly_rate ? currentUser?.hourly_rate : 50,
                 categories: currentUser?.categories
             }))
             resetNavigation(navigation, SCREENS.SEND_REQUEST)
@@ -1130,7 +1208,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
         })
     }
 
-    const handleWalletPayment = (method, payment_method_id = "pm_xyz-testing-id") => {
+    const handleWalletPayment = (method = "CARD", payment_method_id = "pm_xyz-testing-id") => {
         const payload = {
             payment_method_id: payment_method_id,
             buddy_id: currentUser?.id,
@@ -1306,7 +1384,6 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
         );
     };
 
-
     return (
         <LinearGradient
             colors={[theme.dark.primary, '#4C4615', '#4C4615']}
@@ -1320,41 +1397,41 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                     width: scaleWidth(150),
                     height: scaleHeight(150),
                 }}
-            /> : (response?.data?.length > 0 || filteredData?.data?.length > 0) ? <SafeAreaView style={styles.container}>
+            /> : !isAppOpened ? (
+                <>
+                    <LottieView
+                        ref={lottieRef}
+                        style={styles.lottieView}
+                        source={require('../../../../assets/ripple_lottie.json')}
+                        autoPlay
+                        loop
+                        speed={0.5}
+                    />
 
-                {!isAppOpened ? (
-                    <>
-                        <LottieView
-                            ref={lottieRef}
-                            style={styles.lottieView}
-                            source={require('../../../../assets/ripple_lottie.json')}
-                            autoPlay
-                            loop
-                            speed={0.5}
+                    <View style={styles.imageCircle}>
+                        <Image
+                            style={styles.imageStyle}
+                            resizeMode='cover'
+                            source={{ uri: userLoginInfo?.image_url }}
                         />
+                    </View>
 
-                        <View style={styles.imageCircle}>
-                            <Image
-                                style={styles.imageStyle}
-                                resizeMode='cover'
-                                source={{ uri: userLoginInfo?.image_url }}
-                            />
-                        </View>
+                    <View style={{
+                        flex: 1,
+                        bottom: scaleHeight(180),
+                        position: 'absolute',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        alignSelf: 'center'
+                    }}>
+                        <Text style={styles.lottieText}>
+                            Finding people near you...
+                        </Text>
+                    </View>
+                </>
+            ) : (response?.data?.length > 0 || filteredData?.data?.length > 0) ? <SafeAreaView style={styles.container}>
 
-                        <View style={{
-                            flex: 1,
-                            bottom: scaleHeight(180),
-                            position: 'absolute',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            alignSelf: 'center'
-                        }}>
-                            <Text style={styles.lottieText}>
-                                Finding people near you...
-                            </Text>
-                        </View>
-                    </>
-                ) : (
+                {(
                     <ScrollView
                         onScroll={handleScroll}
                         scrollEventThrottle={1}
@@ -1735,7 +1812,8 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
                         handleWalletPayment("WALLET");
                     }}
                     parallelButtonPress2={() => {
-                        setOverlayOpened(true);
+                        openPaymentSheet(100, handleWalletPayment, 'user@gmail.com', 'usd', 'Test User')
+                        //setOverlayOpened(true);
                         handleCloseModal3();
                     }}
                 />
@@ -1766,6 +1844,7 @@ const UserHomeContent = ({ showFilterModal, setFilterModal, setFilter }) => {
             {renderFilterModal()}
 
         </LinearGradient>
+
     );
 };
 
@@ -1972,6 +2051,46 @@ const styles = StyleSheet.create({
         color: theme.dark.primary,
         alignSelf: 'center',
         marginBottom: 20
+    },
+
+    dropdown: {
+        backgroundColor: theme.dark.inputBg,
+        marginTop: scaleHeight(30),
+        height: scaleHeight(50),
+        borderRadius: 30,
+        borderWidth: 1,
+        borderColor: theme.dark.text,
+        paddingHorizontal: 8,
+    },
+    iconStyle: {
+        width: 20,
+        height: 20,
+    },
+    placeholderStyle: {
+        fontSize: scaleHeight(16),
+        color: theme.dark.text,
+        marginHorizontal: 10
+    },
+    selectedTextStyle: {
+        fontFamily: fonts.fontsType.medium,
+        fontSize: scaleHeight(18),
+        color: theme.dark.inputLabel,
+        marginHorizontal: 10
+    },
+
+    item: {
+        padding: 17,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: theme.dark.primary,
+
+    },
+    textItem: {
+        flex: 1,
+        fontFamily: fonts.fontsType.medium,
+        fontSize: scaleHeight(16),
+        color: theme.dark.white
     },
 });
 

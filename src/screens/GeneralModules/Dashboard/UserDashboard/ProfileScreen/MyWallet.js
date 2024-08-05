@@ -73,7 +73,7 @@ const MyWallet = ({ navigation }) => {
     };
 
     const renderItem = ({ item, index }) => (
-        <TransactionListItem item={item} index={index}  />
+        <TransactionListItem item={item} index={index} />
     );
 
     const showLoader = () => {
@@ -184,19 +184,19 @@ const MyWallet = ({ navigation }) => {
 
             <View style={styles.walletContainer}>
 
-                <View style={styles.walletCard}>
-                    <Text style={styles.walletAmount}>
+                <View style={[styles.walletCard, role === 'USER' && { justifyContent: 'center' }]}>
+                    <Text style={[styles.walletAmount, { marginTop: role === 'USER' ? 0 : 20 }]}>
                         {`$${walletAmount}`}
                     </Text>
                     <Text style={styles.totalBalance}>
                         Total Balance
                     </Text>
-                    <Button
+                    {role === "BUDDY" && <Button
                         onPress={() => { handleSheetOpen() }}
                         title={role === "USER" ? "Top-Up" : "Withdraw"}
                         customStyle={styles.withdrawButton}
                         textCustomStyle={styles.withdrawButtonText}
-                    />
+                    />}
                 </View>
                 <Image style={styles.bottomWalletImg} source={bottomWalletImg} />
                 <Image style={styles.topWalletImg} source={topWalletImg} />

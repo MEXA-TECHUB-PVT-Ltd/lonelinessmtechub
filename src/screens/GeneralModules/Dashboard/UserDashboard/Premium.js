@@ -31,6 +31,7 @@ const Premium = ({ navigation }) => {
     const { subscription, loading } = useSelector((state) => state.getSubscription)
     const { loading: cancelLoader } = useSelector((state) => state.cancelSubscription)
     const { userLoginInfo } = useSelector((state) => state.auth)
+    // const [selectedPlan, setSelectedPlan] = useState('1 Months');
     const [selectedPlan, setSelectedPlan] = useState('1 Months');
     const [planDetail, setPlanDetail] = useState(null);
     const [isOverlayOpened, setOverlayOpened] = useState(false);
@@ -151,14 +152,15 @@ const Premium = ({ navigation }) => {
 
     const handleAttachPaymentMethod = (paymentMethodId) => {
         const payload = {
-            payment_method_id: paymentMethodId
+            // payment_method_id: paymentMethodId
+            payment_method_id: "pm_card_bypassPending"
         }
         dispatch(attachPaymentMethod(payload)).then((result) => {
             if (result?.payload?.status === "success") {
-                //console.log("attachPayment--->", result?.payload)
+
                 const paymentPayload = {
                     stripe_price_id: planDetail?.stripe_price_id,
-                    payment_method_id: paymentMethodId
+                    payment_method_id: result?.payload?.result?.card_id
                 }
                 dispatch(payToSubscribe(paymentPayload)).then((result) => {
                     if (result?.payload?.status === "success") {
@@ -199,6 +201,7 @@ const Premium = ({ navigation }) => {
     }
 
     const handleCreatePaymentMethod = async () => {
+        setPaymentLoader(true)
         console.log('cardDetails', cardDetails)
         try {
             const { paymentMethod, error } = await createPaymentMethod({
@@ -210,6 +213,7 @@ const Premium = ({ navigation }) => {
             if (error) {
                 showAlert("Error", "error", error?.message)
                 console.error('Error creating payment method:', error);
+                setPaymentLoader(false)
             } else {
                 console.log('Created payment method:', paymentMethod?.id);
                 //call create customer api here..

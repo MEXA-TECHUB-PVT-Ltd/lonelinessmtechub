@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useDispatch, useSelector } from 'react-redux';
@@ -18,6 +18,7 @@ import CategoryList from '../../../../../components/CategoryList';
 import { calculateAge } from '../../../../../utils/calculateAge';
 import { setRoute } from '../../../../../redux/appSlice';
 import { SCREENS } from '../../../../../constant/constants';
+import { reverseGeocode } from '../../../../../utils/geoCodeUtils';
 
 const UserProfileDetail = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -26,14 +27,15 @@ const UserProfileDetail = ({ navigation }) => {
     const { address } = useSelector((state) => state.getAddress)
     const { currentRoute } = useSelector((state) => state.app)
     const { userLoginInfo } = useSelector((state) => state.auth)
+    const [placeName, setPlaceName] = useState('')
     const user_id = userLoginInfo?.user?.id
 
     const userLocation = userDetail?.location?.country && userDetail?.location?.city
         ? `${userDetail.location.country}, ${userDetail.location.city}`
         : null;
 
-    const addressLocation = (address?.city || address?.town || address?.suburb) && address?.country
-        ? `${address.city || address.town || address.suburb}, ${address.country}`
+        const addressLocation = (address?.city || address?.town || address?.suburb || address?.country) && address?.country
+        ? `${address.city || address.town || address.suburb || address.county  || address.state}, ${address.country}`
         : null;
 
     const handleBackPress = () => {
@@ -50,16 +52,34 @@ const UserProfileDetail = ({ navigation }) => {
         dispatch(getUserDetail(currentRoute?.chat_id || user_id))
     }, [dispatch, user_id, currentRoute])
 
-    useEffect(() => {
+    const handleLocation = async () => {
+
         if (userDetail) {
             const { longitude, latitude } = userDetail?.location
-            console.log(longitude, latitude)
-            dispatch(getAddressByLatLong({
-                lat: latitude,
-                long: longitude
-            }));
+            const address = await reverseGeocode(latitude, longitude);
+            setPlaceName(address)
+            // dispatch(getAddressByLatLong({
+            //     lat: latitude,
+            //     long: longitude
+            // }));
         }
-    }, [dispatch, userDetail])
+    };
+
+    useEffect(() => {
+        handleLocation();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userDetail])
+
+    // useEffect(() => {
+    //     if (userDetail) {
+    //         const { longitude, latitude } = userDetail?.location
+    //         console.log(longitude, latitude)
+    //         dispatch(getAddressByLatLong({
+    //             lat: latitude,
+    //             long: longitude
+    //         }));
+    //     }
+    // }, [dispatch, userDetail])
 
     const renderLoader = () => {
         return <FullScreenLoader
@@ -120,7 +140,7 @@ const UserProfileDetail = ({ navigation }) => {
                     <View style={styles.locationSection}>
                         <Icon style={styles.locationIcon} name="location-on" type="material" color={theme.dark.secondary} />
                         <Text style={styles.locationText}>
-                            {userLocation || addressLocation || 'Location not available'}
+                            {userLocation || placeName || 'Location not available'}
                         </Text>
                     </View>
 

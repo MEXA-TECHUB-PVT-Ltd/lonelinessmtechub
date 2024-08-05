@@ -30,8 +30,10 @@ const CustomBottomTabBar = ({ state, descriptors, navigation, icons }) => {
 
         if (socket) {
             const userId = parseInt(id)
+            socket.emit("userOnline", userId);
             socket.emit("registerUser", userId);
             socket.on("unreadChatsCount", ({userId,count}) => {
+                console.log('bottom count',count)
                 setUnreadCount(count);
               });
                socket.on('getUnreadChatsCount', ({ userId }) => {
@@ -42,8 +44,8 @@ const CustomBottomTabBar = ({ state, descriptors, navigation, icons }) => {
 
         return () => {
             if (socket) {
-                socket.disconnect("unreadChatsCount");
-                socket.disconnect("getUnreadChatsCount");
+                socket.off("unreadChatsCount");
+                socket.off("getUnreadChatsCount");
             }
 
         };

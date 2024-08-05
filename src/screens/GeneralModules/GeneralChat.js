@@ -50,6 +50,7 @@ export default function GeneralChat({ navigation }) {
     const userId = parseInt(user_id);
     const blockTitle = role === "USER" ? "Block Buddy?" : "Block User?"
 
+
     const handleOpenModal = () => {
         setModalVisible(true);
         refRBSheet.current.close()
@@ -130,7 +131,7 @@ export default function GeneralChat({ navigation }) {
                 socket.emit("userChatCountget", userId);
             });
             socket.on("receiveMessage", (message) => {
-                console.log('receiveMessage', message)
+                // console.log('receiveMessage', message)
                 const transformedMessage = {
                     _id: Math.round(Math.random() * 1000000),
                     text: message.message,
@@ -186,6 +187,8 @@ export default function GeneralChat({ navigation }) {
     };
 
     const renderInputToolbar = () => {
+
+        console.log(currentRoute)
 
         if (currentRoute?.blockStatus) {
             return (

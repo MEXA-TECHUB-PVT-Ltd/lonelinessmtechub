@@ -2,7 +2,7 @@ import React, { Component, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, RefreshControl, ScrollView, TouchableOpacity } from 'react-native';
 import RequestListItem from '../../../../components/RequestListItem';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { scaleHeight } from '../../../../styles/responsive';
+import { scaleHeight, scaleWidth } from '../../../../styles/responsive';
 import fonts from '../../../../styles/fonts';
 import { theme } from '../../../../assets';
 import ServicesListItem from '../../../../components/ServicesListItem';
@@ -44,22 +44,24 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setF
     const [selectedOption, setSelectedOption] = useState(null);
     const [relesePaymentModal, setReleasePaymentModal] = useState(false);
     const [releasePaymentDetail, setReleasePaymentDetail] = useState(null);
+    const [loader, setLoader] = useState(true);
     const navigation = useNavigation();
     const buttons = ['Upcoming', 'Requested', 'Completed'];
     const refRBSheet = useRef();
 
 
     const handleSelectedChange = (button, index) => {
+        setLoader(true)
         setSelectedIndex(index)
         setCurrentIndex(index)
-        //console.log(`Selected Index: ${index}`)
+        setPage(1);
     };
 
     const getStatusByIndex = (index) => {
         switch (index) {
             case 0:
                 return 'ACCEPTED';
-                // return 'PAID';
+            // return 'PAID';
             case 1:
                 return '';
             case 2:
@@ -70,6 +72,16 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setF
     };
 
     const selectedStatus = getStatusByIndex(selectedIndex);
+
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoader(false);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedIndex]);
 
     useEffect(() => {
         dispatch(getAllServiceRequests({ page, limit: 10, status: selectedStatus }))
@@ -286,6 +298,12 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setF
 
     const filteredServiceRequests = filterServiceRequests(serviceRequests, searchQuery);
 
+    const showFooterSpinner = () => {
+        return <FullScreenLoader
+            spinnerStyle={styles.footerSpinner}
+            loading={loading} />;
+    };
+
     return (
 
         <SafeAreaView style={styles.container}>
@@ -301,7 +319,7 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setF
                     selectedIndex={selectedIndex}
                 />
                 {
-                    loading && !refreshing ? showLoader() : filteredServiceRequests?.length > 0 ? <View>
+                    loader && !refreshing ? showLoader() : filteredServiceRequests?.length > 0 ? <View>
 
                         <FlatList
                             data={filteredServiceRequests}
@@ -309,6 +327,7 @@ const UserServicesContent = ({ setCurrentIndex, initialIndex = 0, isFilter, setF
                             keyExtractor={(item, index) => item + index}
                             onEndReached={handleLoadMore}
                             onEndReachedThreshold={0.5}
+                            ListFooterComponent={loading && !refreshing && showFooterSpinner}
                             refreshControl={
                                 <RefreshControl
                                     refreshing={refreshing}
@@ -389,7 +408,11 @@ const styles = StyleSheet.create({
         fontFamily: fonts.fontsType.regular,
         fontSize: scaleHeight(16),
 
-    }
+    },
+    footerSpinner: {
+        width: scaleWidth(120),
+        height: scaleHeight(120),
+    },
 });
 
 export default UserServicesContent;

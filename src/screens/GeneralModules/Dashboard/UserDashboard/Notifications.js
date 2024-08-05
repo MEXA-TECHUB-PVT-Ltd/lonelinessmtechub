@@ -15,8 +15,9 @@ import { getNotifications } from '../../../../redux/notificationsSlice';
 import moment from 'moment';
 import fonts from '../../../../styles/fonts';
 import HorizontalDivider from '../../../../components/HorizontalDivider';
+import { setRoute } from '../../../../redux/appSlice';
 
-const NotificationSection = ({ date, notifications }) => {
+const NotificationSection = ({ date, notifications, onPress }) => {
     return (
         <View style={styles.sectionContainer}>
             <View style={styles.dateContainer}>
@@ -24,14 +25,14 @@ const NotificationSection = ({ date, notifications }) => {
                 <HorizontalDivider customStyle={{ width: '60%' }} />
             </View>
             {notifications.map(notification => (
-                <NotificationItem key={notification.id} item={notification} />
+                <NotificationItem onPress={onPress} key={notification.id} item={notification} />
             ))}
         </View>
     );
 };
 
 const groupNotificationsByDate = (notifications) => {
-    return notifications.reduce((acc, notification) => {
+    return notifications?.reduce((acc, notification) => {
         const date = moment(notification.created_at).format('YYYY-MM-DD');
         if (!acc[date]) {
             acc[date] = [];
@@ -45,6 +46,7 @@ const groupNotificationsByDate = (notifications) => {
 const Notification = ({ navigation }) => {
     const dispatch = useDispatch();
     const { notifications, loading, currentPage, totalPages } = useSelector((state) => state.notifications);
+    const { role } = useSelector((state) => state.auth);
     const [refreshing, setRefreshing] = useState(false);
     const [loader, setLoader] = useState(true);
     const [page, setPage] = useState(1);
@@ -96,8 +98,22 @@ const Notification = ({ navigation }) => {
 
     const groupedNotifications = groupNotificationsByDate(notifications);
 
+    const handleNotificationPress = (item) => {
+        const routePayload = {
+            request_id: item[0].request_id,
+            route: SCREENS.MAIN_DASHBOARD,
+            isNoti: true
+        }
+        dispatch(setRoute(routePayload))
+        if (role === "USER") {
+            resetNavigation(navigation, SCREENS.USER_SERVICE_DETAIL)
+        } else {
+            resetNavigation(navigation, SCREENS.BUDDY_SERVICE_DETAIL)
+        }
+    }
+
     const renderSection = ({ item }) => (
-        <NotificationSection date={item} notifications={groupedNotifications[item]} />
+        <NotificationSection onPress={() => { handleNotificationPress(groupedNotifications[item]) }} date={item} notifications={groupedNotifications[item]} />
     );
 
     // const renderItem = ({ item, index }) => (

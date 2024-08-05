@@ -7,7 +7,7 @@ import fonts from '../styles/fonts';
 const LanguagesItem = ({ languages }) => {
     return (
         <View style={styles.container}>
-            {languages.map((language, index) => (
+            {languages?.map((language, index) => (
                 <View key={index} style={styles.languageContainer}>
                     <Text style={styles.languageText}>{language}</Text>
                 </View>
@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        padding: 10,
+        paddingVertical: 10,
     },
     languageContainer: {
         backgroundColor: theme.dark.inputBg,
@@ -28,16 +28,17 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: theme.dark.heading,
         paddingVertical: 5,
-        paddingHorizontal: 15,
+        paddingHorizontal: 8,
         margin: 5,
         flexBasis: '30%',
         alignItems: 'center',
         justifyContent: 'center',
+        flex:1
     },
     languageText: {
         color: theme.dark.heading,
         fontSize: scaleHeight(15),
-        fontFamily: fonts.fontsType.medium
+        fontFamily: fonts.fontsType.medium,
     },
 });
 

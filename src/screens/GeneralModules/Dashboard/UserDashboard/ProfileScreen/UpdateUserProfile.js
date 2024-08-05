@@ -27,6 +27,7 @@ import { HeartIcon } from '../../../../../assets/svgs';
 import { useAlert } from '../../../../../providers/AlertContext';
 import CategoryList from '../../../../../components/CategoryList';
 import { updateProfile } from '../../../../../redux/AuthModule/updateProfileSlice';
+import { reverseGeocode } from '../../../../../utils/geoCodeUtils';
 
 const UpdateBuddyProfile = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -40,6 +41,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
     const [selectedImage, setSelectedImage] = useState('');
     const [selectedOption, setSelectedOption] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
+    const [placeName, setPlaceName] = useState('')
     const [inputValues, setInputValues] = useState({
         full_name: '',
         about: '',
@@ -51,8 +53,8 @@ const UpdateBuddyProfile = ({ navigation }) => {
         ? `${userDetail.location.country}, ${userDetail.location.city}`
         : null;
 
-    const addressLocation = (address?.city || address?.town || address?.suburb) && address?.country
-        ? `${address.city || address.town || address.suburb}, ${address.country}`
+        const addressLocation = (address?.city || address?.town || address?.suburb || address?.country) && address?.country
+        ? `${address.city || address.town || address.suburb || address.county  || address.state}, ${address.country}`
         : null;
 
     const handleBackPress = () => {
@@ -70,16 +72,34 @@ const UpdateBuddyProfile = ({ navigation }) => {
         dispatch(getUserDetail(user_id))
     }, [dispatch, user_id])
 
-    useEffect(() => {
+    // useEffect(() => {
+    //     if (userDetail) {
+    //         const { longitude, latitude } = userDetail?.location
+    //         dispatch(getAddressByLatLong({
+    //             lat: latitude,
+    //             long: longitude
+    //         }));
+    //     }
+
+    // }, [dispatch, userDetail])
+
+    const handleLocation = async () => {
+
         if (userDetail) {
             const { longitude, latitude } = userDetail?.location
-            dispatch(getAddressByLatLong({
-                lat: latitude,
-                long: longitude
-            }));
+            const address = await reverseGeocode(latitude, longitude);
+            setPlaceName(address)
+            // dispatch(getAddressByLatLong({
+            //     lat: latitude,
+            //     long: longitude
+            // }));
         }
+    };
 
-    }, [dispatch, userDetail])
+    useEffect(() => {
+        handleLocation();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userDetail])
 
 
     useEffect(() => {
@@ -497,7 +517,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
                                 }} source={locationPin} />
 
                             <Text style={styles.locationText}>
-                                {userLocation || addressLocation || 'Location not available'}
+                                {userLocation || placeName || 'Location not available'}
                             </Text>
 
                         </View>

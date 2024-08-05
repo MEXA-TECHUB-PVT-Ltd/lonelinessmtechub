@@ -13,13 +13,13 @@ const generateUniqueId = () => {
 };
 
 // Configure PushNotification
-// PushNotification.configure({
-//     onNotification: function (notification) {
-//         console.log('LOCAL NOTIFICATION ==>', notification);
-//         // Process the notification
-//     },
-//     requestPermissions: true,
-// });
+PushNotification.configure({
+    onNotification: function (notification) {
+        console.log('LOCAL NOTIFICATION ==>', notification);
+        // Process the notification
+    },
+    requestPermissions: true,
+});
 
 // PushNotification.createChannel(
 //     {

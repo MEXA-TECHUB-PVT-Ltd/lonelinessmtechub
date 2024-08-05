@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, StyleSheet, StatusBar, LogBox } from 'react-native';
 import { AlertProvider } from './src/providers/AlertContext';
 import DynamicAlert from './src/components/DynamicAlert';
@@ -15,14 +15,63 @@ import { warningImg } from './src/assets/images';
 import { setWarningContent } from './src/redux/warningModalSlice';
 import { scaleHeight } from './src/styles/responsive';
 import { STRIPE_KEY } from '@env'
-import { foregroundNotificationListener } from './src/configs/NotificationHandler';
-
+import { backgroundMessageHandler, foregroundNotificationListener } from './src/configs/NotificationHandler';
+import PushNotification from 'react-native-push-notification';
+import messaging from '@react-native-firebase/messaging';
+import { navigationRef } from './src/utils/navigationRef';
+import { SCREENS } from './src/constant/constants';
+import { resetNavigation } from './src/utils/resetNavigation';
+import { setRoute } from './src/redux/appSlice';
 
 const MainApp = () => {
   const dispatch = useDispatch();
-  const { userLoginInfo } = useSelector((state) => state.auth);
+  const { userLoginInfo, role } = useSelector((state) => state.auth);
   const { warningContent } = useSelector((state) => state.warningContent);
   const { expires_at } = userLoginInfo || {};
+
+
+  PushNotification.configure({
+    onNotification: function (notification) {
+      console.log('LOCAL NOTIFICATION ==>', notification);
+
+      if (notification.userInteraction) {
+        if (notification?.data?.type === "SERVICES" || notification?.data?.type === "PAYMENT" || notification?.data?.type === "Service Completed") {
+          const routePayload = {
+            request_id: notification?.data?.request_id,
+            route: SCREENS.MAIN_DASHBOARD
+          }
+          dispatch(setRoute(routePayload))
+          if (role === "USER") {
+            navigationRef.reset({
+              index: 0,
+              routes: [{ name: SCREENS.USER_SERVICE_DETAIL }],
+            });
+          } else {
+            navigationRef.reset({
+              index: 0,
+              routes: [{ name: SCREENS.BUDDY_SERVICE_DETAIL }],
+            });
+          }
+
+        }
+      }
+
+
+    },
+    onAction: function (notification) {
+      console.log("ACTION:", notification.action);
+      console.log("NOTIFICATIONS:", notification);
+      // Process the action here
+    },
+    permissions: {
+      alert: true,
+      badge: true,
+      sound: true,
+    },
+    popInitialNotification: true,
+    requestPermissions: true
+  });
+
 
   useEffect(() => {
     const TOKEN_REFRESH_PERIOD = 1; // days
@@ -87,11 +136,45 @@ const MainApp = () => {
   }, [warningContent]);
 
   useEffect(() => {
-    const unsubscribe = foregroundNotificationListener();
+    const unsubscribeBackground = backgroundMessageHandler();
+    const unsubscribeForeground = foregroundNotificationListener();
+
+    messaging().onNotificationOpenedApp(remoteMessage => {
+      console.log(
+        'Notification caused app to open from background state:',
+        remoteMessage.notification,
+      );
+
+      if (remoteMessage?.notification?.data?.type === "SERVICES" || remoteMessage?.notification?.data?.type === "PAYMENT" || remoteMessage?.notification?.data?.type === "Service Completed") {
+        const routePayload = {
+          request_id: remoteMessage?.notification?.data?.request_id,
+          route: SCREENS.MAIN_DASHBOARD
+        }
+        dispatch(setRoute(routePayload))
+        if (role === "USER") {
+          navigationRef.reset({
+            index: 0,
+            routes: [{ name: SCREENS.USER_SERVICE_DETAIL }],
+          });
+        } else {
+          navigationRef.reset({
+            index: 0,
+            routes: [{ name: SCREENS.BUDDY_SERVICE_DETAIL }],
+          });
+        }
+
+      }
+      // handleNotificationTap(remoteMessage.notification);
+      //handle notification click
+    });
+
     return () => {
-      if (unsubscribe) unsubscribe();
+      if (unsubscribeBackground) unsubscribeBackground();
+      if (unsubscribeForeground) unsubscribeForeground();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
 
   return (

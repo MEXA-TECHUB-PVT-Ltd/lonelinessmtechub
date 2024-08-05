@@ -19,11 +19,13 @@ import { sendRequest } from '../../../../redux/UserDashboard/sendRequestSlice';
 import { setWarningContent } from '../../../../redux/warningModalSlice';
 import { Dropdown } from 'react-native-element-dropdown';
 import * as Animatable from 'react-native-animatable';
-import { useStripe, CardField } from '@stripe/stripe-react-native';
+import { useStripe, CardField, StripeProvider } from '@stripe/stripe-react-native';
 import { attachPaymentMethod } from '../../../../redux/PaymentSlices/attachPaymentMethodSlice';
 import { createCustomer } from '../../../../redux/PaymentSlices/createCustomerSlice';
 import { getTransactionHistory } from '../../../../redux/PaymentSlices/getTransactionHistorySlice';
 import AntDesign from 'react-native-vector-icons/AntDesign'
+import { API_BASE_URL } from '@env'
+import { openPaymentSheet } from '../../../../utils/paymentUtils';
 
 const data = [
     { label: 'Card', value: 'CARD', description: 'The full amount will be charged to your card.' },
@@ -32,7 +34,7 @@ const data = [
 
 const SendRequest = ({ navigation }) => {
     const dispatch = useDispatch();
-    const { createPaymentMethod } = useStripe();
+    const { createPaymentMethod, initPaymentSheet, presentPaymentSheet } = useStripe();
     const { loading } = useSelector((state) => state.sendRequest)
     const { categories } = useSelector((state) => state.getCategories)
     const { walletAmount } = useSelector((state) => state.getTransactionHistory);
@@ -68,7 +70,6 @@ const SendRequest = ({ navigation }) => {
         location: '',
         number_of_hours: ''
     });
-
     const dayRef = useRef(null);
     const monthRef = useRef(null);
     const yearRef = useRef(null);
@@ -177,6 +178,62 @@ const SendRequest = ({ navigation }) => {
         };
     }, []);
 
+    // useEffect(() => {
+    //     initializePaymentSheet();
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, []);
+
+    // const initializePaymentSheet = async (booking_price) => {
+    //     console.log('booking priceee', booking_price)
+
+    //     const response = await fetch(`https://lone-be.mtechub.com/create-payment`, {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //         },
+    //         body: JSON.stringify({
+    //             email: userLoginInfo?.user?.email, // Replace with customer email
+    //             currency: 'usd', // Replace with the currency
+    //             amount: booking_price, // Replace with the amount in cents
+    //         }),
+    //     });
+    //     const { customer_id, ephemeral_key, payment_intent } = await response.json();
+    //     console.log('customer_id', customer_id)
+    //     console.log('ephemeral_key', ephemeral_key)
+    //     console.log('payment_intent', payment_intent)
+
+    //     const { error } = await initPaymentSheet({
+    //         customerId: customer_id,
+    //         customerEphemeralKeySecret: ephemeral_key,
+    //         paymentIntentClientSecret: payment_intent,
+    //         merchantDisplayName: 'Test User', // Optional
+    //         // Optional settings
+    //         applePay: { merchantCountryCode: 'US' },
+    //         googlePay: { merchantCountryCode: 'US' },
+    //         primaryButtonLabel: `Pay $${(booking_price).toFixed(2)}`
+    //     });
+
+    //     if (error) {
+    //         console.log('Error initializing payment sheet:', error);
+    //     }
+    //     else {
+    //         console.log('Payment sheet initialized');
+    //     }
+    // };
+
+    // const openPaymentSheet = async (booking_price) => {
+    //     await initializePaymentSheet(booking_price);
+    //     const { error } = await presentPaymentSheet();
+
+    //     if (error) {
+    //         console.log('Error presenting payment sheet:', error);
+    //     } else {
+    //         console.log('Payment successful');
+    //         handleSendRequest();
+    //         // Handle successful payment
+    //     }
+    // };
+
     const handleAttachPaymentMethod = (paymentMethodId) => {
         setPaymentLoader(true)
         const payload = {
@@ -237,7 +294,7 @@ const SendRequest = ({ navigation }) => {
         }
     }
 
-    const handleSendRequest = (payment_method_id = 'default_payment_id') => {
+    const handleSendRequest = (payment_method_id = 'pm_card_bypassPending') => {
         let isValid = true;
         const newErrors = {};
         ['day', 'month', 'year'].forEach(field => {
@@ -263,8 +320,8 @@ const SendRequest = ({ navigation }) => {
             const booking_time = `${hours}:${minutes}:00 ${period}`
             const booking_date = `${year}-${month}-${day}`
             let booking_price = parseInt(number_of_hours * currentRoute?.hourly_rate)
-            const method = (selectedValue === "WALLET" && walletAmount < booking_price) ? "WALLET_CARD" : selectedValue;
-
+            // const method = (selectedValue === "WALLET" && walletAmount < booking_price) ? "WALLET_CARD" : selectedValue;
+            const method = (selectedValue === "WALLET" && walletAmount < booking_price) ? "CARD" : selectedValue;
             const payload = {
                 buddy_id: currentRoute?.buddy_id,
                 category_id: category,
@@ -300,16 +357,26 @@ const SendRequest = ({ navigation }) => {
         }
     };
 
-    const handleButtonClick = () => {
+    const handleButtonClick = async () => {
         const booking_price = parseInt(form?.number_of_hours * currentRoute?.hourly_rate);
         const isWalletInsufficient = selectedValue === "WALLET" && walletAmount < booking_price;
+        console.log('booking_price', booking_price)
 
         if (selectedValue === "CARD" || isWalletInsufficient) {
-            setOverlayOpened(true);
+            openPaymentSheet(booking_price, handleSendRequest, 'user@gmail.com', 'usd', 'Test User')
+            //await openPaymentSheet(booking_price);
+            // const isInitialized = await initializePaymentSheet(booking_price);
+            // if (isInitialized) {
+            //     // Only open the payment sheet if initialization was successful
+            //     openPaymentSheet();
+            // }
+
+            //setOverlayOpened(true);
             if (isWalletInsufficient) {
                 setDescription(`Your wallet balance is ${walletAmount}, the remaining amount would be deducted from the card.`);
             }
-        } else {
+        }
+        else {
             handleSendRequest();
         }
     };
@@ -396,174 +463,182 @@ const SendRequest = ({ navigation }) => {
 
 
     return (
-        <SafeAreaView style={styles.container}>
-            <TouchableOpacity
-                onPress={() => {
-                    handleBackPress();
-                }}
-                style={styles.backButton}>
-                <Icon name={'arrow-back'} size={28} color={theme.dark.secondary} />
-            </TouchableOpacity>
-            <CustomLayout>
-                <View style={styles.contentContainer}>
-                    <Text style={styles.welcomeText}>
-                        Send Request
-                    </Text>
-                    <Text style={styles.subTitle}>
-                        You're just one step away from getting the service you want.
-                    </Text>
-                    <Text style={styles.categoryText}>
-                        Select Category
-                    </Text>
-                    <CategoryList
-                        categories={currentRoute?.categories}
-                        onPress={handleCategoryPress} />
+        <StripeProvider
+            publishableKey="pk_test_51Ml3wJGui44lwdb4K6apO4rnFrF2ckySwM1TfDcj0lVdSekGOVGrB1uHNlmaO7wZPxwHfRZani73KlHQKOiX4JmK00E0l7opJO" // Replace with your Stripe publishable key
+        // merchantIdentifier="merchant.com.your-identifier" // Optional for Apple Pay
+        >
+            <SafeAreaView style={styles.container}>
+                <TouchableOpacity
+                    onPress={() => {
+                        handleBackPress();
+                    }}
+                    style={styles.backButton}>
+                    <Icon name={'arrow-back'} size={28} color={theme.dark.secondary} />
+                </TouchableOpacity>
+                <CustomLayout>
+                    <View style={styles.contentContainer}>
+                        <Text style={styles.welcomeText}>
+                            Send Request
+                        </Text>
+                        <Text style={styles.subTitle}>
+                            You're just one step away from getting the service you want.
+                        </Text>
+                        <Text style={styles.categoryText}>
+                            Select Category
+                        </Text>
+                        <CategoryList
+                            categories={currentRoute?.categories}
+                            onPress={handleCategoryPress} />
 
-                    <Text style={styles.label}>{"Date of Services"}</Text>
-                    <View style={styles.inputContainerStyle}>
-                        <TextInput
-                            ref={dayRef}
-                            placeholder='DD'
-                            placeholderTextColor={theme.dark.text}
-                            maxLength={2}
-                            keyboardType='number-pad'
-                            style={styles.inputStyle}
-                            value={form.day}
-                            onChangeText={(value) => handleChange('day', value)}
-                            onKeyPress={({ nativeEvent }) => handleKeyPress('day', nativeEvent.key)}
+                        <Text style={styles.label}>{"Date of Services"}</Text>
+                        <View style={styles.inputContainerStyle}>
+                            <TextInput
+                                ref={dayRef}
+                                placeholder='DD'
+                                placeholderTextColor={theme.dark.text}
+                                maxLength={2}
+                                keyboardType='number-pad'
+                                style={styles.inputStyle}
+                                value={form.day}
+                                onChangeText={(value) => handleChange('day', value)}
+                                onKeyPress={({ nativeEvent }) => handleKeyPress('day', nativeEvent.key)}
+                            />
+                            <View style={styles.verticleLine}></View>
+                            <TextInput
+                                ref={monthRef}
+                                placeholder='MM'
+                                placeholderTextColor={theme.dark.text}
+                                maxLength={2}
+                                keyboardType='number-pad'
+                                style={styles.inputStyle}
+                                value={form.month}
+                                onChangeText={(value) => handleChange('month', value)}
+                                onKeyPress={({ nativeEvent }) => handleKeyPress('month', nativeEvent.key)}
+                            />
+                            <View style={styles.verticleLine}></View>
+                            <TextInput
+                                ref={yearRef}
+                                placeholder='YYYY'
+                                placeholderTextColor={theme.dark.text}
+                                maxLength={4}
+                                keyboardType='number-pad'
+                                style={styles.inputStyle}
+                                value={form.year}
+                                onChangeText={(value) => handleChange('year', value)}
+                                onKeyPress={({ nativeEvent }) => handleKeyPress('year', nativeEvent.key)}
+                            />
+                        </View>
+
+                        <Text style={styles.label}>{"Time of Services"}</Text>
+                        <View style={styles.inputContainerStyle}>
+                            <TextInput
+                                ref={hoursRef}
+                                placeholder='00'
+                                placeholderTextColor={theme.dark.text}
+                                maxLength={2}
+                                keyboardType='number-pad'
+                                style={styles.inputStyle}
+                                value={form.hours}
+                                onChangeText={(value) => handleChange('hours', value)}
+                                onKeyPress={({ nativeEvent }) => handleKeyPress('hours', nativeEvent.key)}
+                            />
+                            <Text style={[styles.label, { top: 0 }]}>{":"}</Text>
+                            <TextInput
+                                ref={minutesRef}
+                                placeholder='00'
+                                placeholderTextColor={theme.dark.text}
+                                maxLength={2}
+                                keyboardType='number-pad'
+                                style={styles.inputStyle}
+                                value={form.minutes}
+                                onChangeText={(value) => handleChange('minutes', value)}
+                                onKeyPress={({ nativeEvent }) => handleKeyPress('minutes', nativeEvent.key)}
+                            />
+                            <Text style={[styles.label, { top: 0 }]}>{":"}</Text>
+                            <TextInput
+                                ref={periodRef}
+                                placeholder='PM'
+                                autoCapitalize='characters'
+                                placeholderTextColor={theme.dark.text}
+                                maxLength={2}
+                                style={styles.inputStyle}
+                                value={form.period}
+                                onChangeText={(value) => handleChange('period', value)}
+                                onKeyPress={({ nativeEvent }) => handleKeyPress('period', nativeEvent.key)}
+                            />
+                        </View>
+
+                        <CustomTextInput
+                            label={'No. of Hours'}
+                            identifier={'number_of_hours'}
+                            inputType='number-pad'
+                            value={form.number_of_hours}
+                            onValueChange={(value) => handleChange('number_of_hours', value)}
+                            mainContainer={{ marginTop: 10 }}
                         />
-                        <View style={styles.verticleLine}></View>
-                        <TextInput
-                            ref={monthRef}
-                            placeholder='MM'
-                            placeholderTextColor={theme.dark.text}
-                            maxLength={2}
-                            keyboardType='number-pad'
-                            style={styles.inputStyle}
-                            value={form.month}
-                            onChangeText={(value) => handleChange('month', value)}
-                            onKeyPress={({ nativeEvent }) => handleKeyPress('month', nativeEvent.key)}
+
+                        <CustomTextInput
+                            label={'Location'}
+                            identifier={'location'}
+                            value={form.location}
+                            onValueChange={(value) => handleChange('location', value)}
+                            mainContainer={{ marginTop: 10 }}
                         />
-                        <View style={styles.verticleLine}></View>
-                        <TextInput
-                            ref={yearRef}
-                            placeholder='YYYY'
-                            placeholderTextColor={theme.dark.text}
-                            maxLength={4}
-                            keyboardType='number-pad'
-                            style={styles.inputStyle}
-                            value={form.year}
-                            onChangeText={(value) => handleChange('year', value)}
-                            onKeyPress={({ nativeEvent }) => handleKeyPress('year', nativeEvent.key)}
+
+                        <Dropdown
+                            style={[styles.dropdown]}
+                            placeholderStyle={styles.placeholderStyle}
+                            selectedTextStyle={styles.selectedTextStyle}
+                            iconStyle={styles.iconStyle}
+                            data={data}
+                            maxHeight={250}
+                            dropdownPosition='top'
+                            containerStyle={{
+                                backgroundColor: theme.dark.primary,
+                                borderColor: theme.dark.inputLabel
+                            }}
+                            labelField="label"
+                            valueField="value"
+                            placeholder={'Select Payment Method'}
+                            value={selectedValue}
+                            onChange={item => {
+                                setSelectedValue(item?.value);
+                                setDescription(item?.description)
+                                if (item?.value === "WALLET") {
+                                    fetchWalletAmount()
+                                }
+                                // if (item?.value === "CARD") {
+                                //     openPaymentSheet();
+                                // }
+                            }}
+                            renderItem={renderItem}
                         />
+
+                        <Text style={{
+                            fontFamily: fonts.fontsType.regular,
+                            fontSize: scaleHeight(14),
+                            color: theme.dark.success,
+                            marginTop: 10,
+                            marginHorizontal: 10
+                        }}>{description}</Text>
+
+
                     </View>
 
-                    <Text style={styles.label}>{"Time of Services"}</Text>
-                    <View style={styles.inputContainerStyle}>
-                        <TextInput
-                            ref={hoursRef}
-                            placeholder='00'
-                            placeholderTextColor={theme.dark.text}
-                            maxLength={2}
-                            keyboardType='number-pad'
-                            style={styles.inputStyle}
-                            value={form.hours}
-                            onChangeText={(value) => handleChange('hours', value)}
-                            onKeyPress={({ nativeEvent }) => handleKeyPress('hours', nativeEvent.key)}
-                        />
-                        <Text style={[styles.label, { top: 0 }]}>{":"}</Text>
-                        <TextInput
-                            ref={minutesRef}
-                            placeholder='00'
-                            placeholderTextColor={theme.dark.text}
-                            maxLength={2}
-                            keyboardType='number-pad'
-                            style={styles.inputStyle}
-                            value={form.minutes}
-                            onChangeText={(value) => handleChange('minutes', value)}
-                            onKeyPress={({ nativeEvent }) => handleKeyPress('minutes', nativeEvent.key)}
-                        />
-                        <Text style={[styles.label, { top: 0 }]}>{":"}</Text>
-                        <TextInput
-                            ref={periodRef}
-                            placeholder='PM'
-                            autoCapitalize='characters'
-                            placeholderTextColor={theme.dark.text}
-                            maxLength={2}
-                            style={styles.inputStyle}
-                            value={form.period}
-                            onChangeText={(value) => handleChange('period', value)}
-                            onKeyPress={({ nativeEvent }) => handleKeyPress('period', nativeEvent.key)}
-                        />
-                    </View>
 
-                    <CustomTextInput
-                        label={'No. of Hours'}
-                        identifier={'number_of_hours'}
-                        inputType='number-pad'
-                        value={form.number_of_hours}
-                        onValueChange={(value) => handleChange('number_of_hours', value)}
-                        mainContainer={{ marginTop: 10 }}
+                </CustomLayout>
+                <View style={styles.buttonContainer}>
+                    <HorizontalDivider customStyle={{ marginTop: 10 }} />
+                    <Button
+                        loading={loading}
+                        onPress={handleButtonClick}
+                        title={'Send Request'}
+                        customStyle={{ marginBottom: scaleHeight(20) }}
                     />
-
-                    <CustomTextInput
-                        label={'Location'}
-                        identifier={'location'}
-                        value={form.location}
-                        onValueChange={(value) => handleChange('location', value)}
-                        mainContainer={{ marginTop: 10 }}
-                    />
-
-                    <Dropdown
-                        style={[styles.dropdown]}
-                        placeholderStyle={styles.placeholderStyle}
-                        selectedTextStyle={styles.selectedTextStyle}
-                        iconStyle={styles.iconStyle}
-                        data={data}
-                        maxHeight={250}
-                        dropdownPosition='top'
-                        containerStyle={{
-                            backgroundColor: theme.dark.primary,
-                            borderColor: theme.dark.inputLabel
-                        }}
-                        labelField="label"
-                        valueField="value"
-                        placeholder={'Select Payment Method'}
-                        value={selectedValue}
-                        onChange={item => {
-                            setSelectedValue(item?.value);
-                            setDescription(item?.description)
-                            if (item?.value === "WALLET") {
-                                fetchWalletAmount()
-                            }
-                        }}
-                        renderItem={renderItem}
-                    />
-
-                    <Text style={{
-                        fontFamily: fonts.fontsType.regular,
-                        fontSize: scaleHeight(14),
-                        color: theme.dark.success,
-                        marginTop: 10,
-                        marginHorizontal: 10
-                    }}>{description}</Text>
-
-
                 </View>
-
-
-            </CustomLayout>
-            <View style={styles.buttonContainer}>
-                <HorizontalDivider customStyle={{ marginTop: 10 }} />
-                <Button
-                    loading={loading}
-                    onPress={handleButtonClick}
-                    title={'Send Request'}
-                    customStyle={{ marginBottom: scaleHeight(20) }}
-                />
-            </View>
-            {isOverlayOpened && Overlay()}
-        </SafeAreaView>
+                {isOverlayOpened && Overlay()}
+            </SafeAreaView>
+        </StripeProvider>
     );
 };
 
