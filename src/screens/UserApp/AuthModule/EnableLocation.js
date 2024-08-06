@@ -38,7 +38,7 @@ const EnableLocation = ({ navigation }) => {
     const [isWarning, setIsWarning] = useState(true);
     const [fcmToken, setFcmToken] = useState(null);
     //console.log('dataPayload', dataPayload)
-    // console.log('credentials', credentials)
+    console.log('credentials', credentials)
 
 
     const handleBackPress = () => {

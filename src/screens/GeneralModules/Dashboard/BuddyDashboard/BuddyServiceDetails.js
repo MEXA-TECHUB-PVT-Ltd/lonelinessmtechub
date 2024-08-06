@@ -62,9 +62,13 @@ const BuddyServiceDetails = ({ navigation }) => {
     const buttonBackgroundColor = isPaymentRequested ? theme.dark.disableButton : theme.dark.secondary;
 
     const handleBackPress = () => {
-        if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
+        if (currentRoute?.route === SCREENS.MAIN_DASHBOARD && !currentRoute?.isNoti) {
             resetNavigation(navigation, currentRoute?.route, { screen: SCREENS.SERVICES })
-        } else {
+        } else if (currentRoute?.isNoti && currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
+            resetNavigation(navigation, SCREENS.NOTIFICATION)
+        }
+
+        else {
             resetNavigation(navigation, currentRoute?.route)
         }
         return true;
@@ -256,16 +260,21 @@ const BuddyServiceDetails = ({ navigation }) => {
         }
 
         dispatch(verifyMeetingCode(payload)).then((result) => {
-            setModalVisible(false)
+
             if (result?.payload?.status === "success") {
+                setModalVisible(false)
                 showAlert("Success", "success", result?.payload?.message)
                 const timer = setTimeout(() => {
                     getServiceDetail();
                 }, 3000);
 
                 return () => clearTimeout(timer);
-            } else if (result?.payload?.status === "error") {
-                showAlert("Success", "success", result?.payload?.message)
+            } else if (result?.payload?.errors) {
+                showAlert("Error", "error", result?.payload?.errors)
+            }
+
+            else if (result?.payload?.status === "error") {
+                showAlert("Error", "error", result?.payload?.message)
             }
         })
     }
@@ -288,7 +297,7 @@ const BuddyServiceDetails = ({ navigation }) => {
             <View style={{
                 backgroundColor: '#111111',
                 width: '100%',
-                height: !keyboardStatus ? '50%' : '80%',
+                height: !keyboardStatus ? '55%' : '90%',
                 alignSelf: 'center',
 
                 borderRadius: 20,
@@ -305,8 +314,7 @@ const BuddyServiceDetails = ({ navigation }) => {
                     }}
                 />
 
-                <Text style={styles.textStyle}>{"Enter your meeting code"}</Text>
-
+                <Text style={styles.textStyle}>{"Enter meeting code"}</Text>
 
                 <CodeField
                     ref={ref}
@@ -428,12 +436,12 @@ const BuddyServiceDetails = ({ navigation }) => {
                             <DetailItem label="Time" value={moment(userDetail?.booking_time, 'HH:mm').format('hh:mm A')} />
                             <DetailItem label="Hours For Booking" value={`${userDetail?.hours} HOURS`} />
                             <DetailItem label="Total Price" value={`$${userDetail?.booking_price}`} />
-                            {userDetail?.status == "ACCEPTED" &&
+                            {/* {userDetail?.status == "ACCEPTED" &&
                                 <DetailItem label="Meeting Code" value={`${userDetail?.meeting_code}`} customTextStyle={{
                                     color: theme.dark.secondary,
                                     fontFamily: fonts.fontsType.bold,
                                     fontSize: scaleHeight(17),
-                                }} />}
+                                }} />} */}
                             {/* {(userDetail?.status !== "PAID" && userDetail?.status !== "COMPLETED") && <DetailItem label="Status" value={getNameByStatus(userDetail?.status)} customTextStyle={{
                                 color: getColorByStatus(userDetail?.status)
                             }} />} */}
@@ -580,7 +588,7 @@ const BuddyServiceDetails = ({ navigation }) => {
 
                         <View style={styles.buttonSection}>
                             {
-                                userDetail?.status === "ACCEPTED" && !userDetail?.meeting_code_verified && <Button
+                                (userDetail?.status === "ACCEPTED" || userDetail?.buddy_request_back?.buddy_status === "ACCEPTED") && !userDetail?.meeting_code_verified && <Button
                                     onPress={() => {
                                         setModalVisible(true)
                                     }}
@@ -595,7 +603,7 @@ const BuddyServiceDetails = ({ navigation }) => {
 
 
                             {/* {userDetail?.status === "PAID" && userDetail?.canceled_status == null && <Button */}
-                            {userDetail?.status === "ACCEPTED" && userDetail?.canceled_status == null && userDetail?.meeting_code_verified && <Button
+                            {(userDetail?.status === "ACCEPTED" || userDetail?.buddy_request_back?.buddy_status === "ACCEPTED") && userDetail?.canceled_status == null && userDetail?.meeting_code_verified && <Button
                                 disabled={isPaymentRequested}
                                 onPress={handleRequestForPayment}
                                 title={buttonTitle}

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, FlatList, RefreshControl, ScrollV
 import { theme } from '../../../../assets';
 import RequestListItem from '../../../../components/RequestListItem';
 import { useNavigation } from '@react-navigation/native';
-import { scaleHeight } from '../../../../styles/responsive';
+import { scaleHeight, scaleWidth } from '../../../../styles/responsive';
 import fonts from '../../../../styles/fonts';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAllBuddyRequest } from '../../../../redux/BuddyDashboard/getAllBuddyRequestSlice';
@@ -59,11 +59,12 @@ const BuddyHomeContent = () => {
         setRequestData(updatedRequests);
     };
 
-    const renderItem = ({ item }) => (
+    const renderItem = ({ item, index }) => (
         <RequestListItem
             item={item}
             navigation={navigation}
             onRequestStatusChange={updateRequestStatus}
+            index={index}
         />
     );
 
@@ -79,6 +80,12 @@ const BuddyHomeContent = () => {
     const showLoader = () => {
         return <SkeletonLoader />
     }
+
+    const showFooterSpinner = () => {
+        return <FullScreenLoader
+            spinnerStyle={styles.footerSpinner}
+            loading={loading} />;
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -103,7 +110,8 @@ const BuddyHomeContent = () => {
                             renderItem={renderItem}
                             keyExtractor={(item, index) => item + index}
                             onEndReached={handleLoadMore}
-                            onEndReachedThreshold={0.5}
+                            onEndReachedThreshold={1}
+                            ListFooterComponent={loading && !loader && showFooterSpinner}
                             refreshControl={
                                 <RefreshControl
                                     refreshing={loader}
@@ -142,6 +150,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.dark.primary
+    },
+    footerSpinner: {
+        width: scaleWidth(120),
+        height: scaleHeight(120),
     },
 });
 

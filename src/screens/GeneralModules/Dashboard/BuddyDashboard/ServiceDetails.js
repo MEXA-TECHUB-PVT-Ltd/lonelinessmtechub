@@ -238,7 +238,7 @@ const ServiceDetails = ({ navigation }) => {
                         <DetailItem label="Time" value={time} />
                         <DetailItem label="Hours For Booking" value={`${hours} HOURS`} />
                         <DetailItem label="Total Price" value={`$${hourly_rate}`} />
-                        {(status !== "PAID" && status !== "COMPLETED") && <DetailItem label="Status" value={getNameByStatus(status)} customTextStyle={{
+                        {(status !== "ACCEPTED" && status !== "COMPLETED") && <DetailItem label="Status" value={getNameByStatus(status)} customTextStyle={{
                             color: getColorByStatus(status)
                         }} />}
                     </View>

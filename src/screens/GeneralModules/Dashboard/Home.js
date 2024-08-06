@@ -19,6 +19,7 @@ import UserHomeContent from './UserDashboard/UserHomeContent';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../../redux/AuthModule/signInSlice';
 import { getFcmToken, onMessageListener } from '../../../configs/firebaseConfig';
+import { StripeProvider } from '@stripe/stripe-react-native';
 
 const Home = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -27,6 +28,10 @@ const Home = ({ navigation }) => {
     const [isFilter, setFilter] = useState(false);
 
     return (
+        <StripeProvider
+        publishableKey="pk_test_51Ml3wJGui44lwdb4K6apO4rnFrF2ckySwM1TfDcj0lVdSekGOVGrB1uHNlmaO7wZPxwHfRZani73KlHQKOiX4JmK00E0l7opJO" // Replace with your Stripe publishable key
+    // merchantIdentifier="merchant.com.your-identifier" // Optional for Apple Pay
+    >
         <SafeAreaView style={styles.container}>
 
             <View style={styles.headerContainer}>
@@ -57,6 +62,7 @@ const Home = ({ navigation }) => {
                 )
             }
         </SafeAreaView>
+        </StripeProvider>
     );
 };
 

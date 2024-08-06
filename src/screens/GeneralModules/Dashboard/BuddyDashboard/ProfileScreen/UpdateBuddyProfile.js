@@ -27,6 +27,7 @@ import { useAlert } from '../../../../../providers/AlertContext';
 import { setRoute } from '../../../../../redux/appSlice';
 import { updateProfile } from '../../../../../redux/AuthModule/updateProfileSlice';
 import LanguagesItem from '../../../../../components/LanguagesItem';
+import { reverseGeocode } from '../../../../../utils/geoCodeUtils';
 
 const UpdateBuddyProfile = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -44,6 +45,8 @@ const UpdateBuddyProfile = ({ navigation }) => {
     const [errors, setErrors] = useState({ birthDate: '' });
     const [selectedOption, setSelectedOption] = useState('');
     const [loader, setLoader] = useState(false)
+    const [isFirstLoad, setFirstLoad] = useState(true)
+    const [placeName, setPlaceName] = useState('')
     const [inputValues, setInputValues] = useState({
         height_ft: '',
         height_in: '',
@@ -85,7 +88,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
             [name]: value
         }));
 
-        if (name === 'day' && value.length === 2) {
+        if (name === 'day' && value.length === 2 && !isFirstLoad) {
             monthRef.current.focus();
         } else if (name === 'month' && value.length === 2) {
             yearRef.current.focus();
@@ -105,6 +108,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
     const [weightKgSelected, setWeightKgSelected] = useState(true);
     const [weightLbSelected, setWeightLbSelected] = useState(false);
 
+
     const handleBackPress = () => {
         if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
             resetNavigation(navigation, SCREENS.MAIN_DASHBOARD, { screen: SCREENS.PROFILE })
@@ -120,16 +124,44 @@ const UpdateBuddyProfile = ({ navigation }) => {
         dispatch(getUserDetail(user_id))
     }, [dispatch, user_id])
 
-    useEffect(() => {
+    const handleLocation = async () => {
+
         if (userDetail) {
             const { longitude, latitude } = userDetail?.location
-            dispatch(getAddressByLatLong({
-                lat: latitude,
-                long: longitude
-            }));
+            const address = await reverseGeocode(latitude, longitude);
+            setPlaceName(address)
+            // dispatch(getAddressByLatLong({
+            //     lat: latitude,
+            //     long: longitude
+            // }));
         }
+    };
 
-    }, [dispatch, userDetail])
+    useEffect(() => {
+        handleLocation();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userDetail])
+
+    // useEffect(() => {
+    //     if (userDetail) {
+    //         const { longitude, latitude } = userDetail?.location
+    //         console.log(longitude, latitude)
+    //         dispatch(getAddressByLatLong({
+    //             lat: latitude,
+    //             long: longitude
+    //         }));
+    //     }
+
+    // }, [dispatch, userDetail])
+
+    const userLocation = userDetail?.location?.country && userDetail?.location?.city
+        ? `${userDetail.location.country}, ${userDetail.location.city}`
+        : null;
+
+
+    const addressLocation = (address?.city || address?.town || address?.suburb || address?.country) && address?.country
+        ? `${address.city || address.town || address.suburb || address.county || address.state}, ${address.country}`
+        : null;
 
     const updateImages = (image_urls) => {
         let updatedImages = [...selectedImages];
@@ -264,6 +296,7 @@ const UpdateBuddyProfile = ({ navigation }) => {
 
 
     const handleKeyPress = (name, key) => {
+        setFirstLoad(false)
         if (key === 'Backspace') {
             if (name === 'month' && form.month === '') {
                 dayRef.current.focus();
@@ -738,7 +771,9 @@ const UpdateBuddyProfile = ({ navigation }) => {
                                 keyboardType='number-pad'
                                 style={styles.inputStyle}
                                 value={form.year}
-                                onChangeText={(value) => handleChange('year', value)}
+                                onChangeText={(value) => {
+                                    handleChange('year', value)
+                                }}
                                 onKeyPress={({ nativeEvent }) => handleKeyPress('year', nativeEvent.key)}
                             />
 
@@ -838,12 +873,16 @@ const UpdateBuddyProfile = ({ navigation }) => {
 
                                 }} source={locationPin} />
 
-                            <Text style={styles.locationText}>{userDetail?.location?.country && userDetail?.location?.city ?
+                            <Text style={styles.locationText}>
+                                {userLocation || placeName || 'Location not available'}
+                            </Text>
+
+                            {/* <Text style={styles.locationText}>{userDetail?.location?.country && userDetail?.location?.city ?
                                 `${userDetail?.location?.country}, ${userDetail?.location?.city}` :
                                 (address?.city || address?.town) && address?.country ?
                                     `${address.city || address.town}, ${address.country}` :
                                     'Location not available'
-                            }</Text>
+                            }</Text> */}
 
                         </View>
                         <Button
@@ -901,8 +940,8 @@ const UpdateBuddyProfile = ({ navigation }) => {
                         />
 
                     </View>
-
-                    {userDetail?.languages != null && <LanguagesItem languages={userDetail?.languages} />}
+                    
+                    {JSON.parse(userDetail?.languages) != null && <LanguagesItem languages={JSON.parse(userDetail?.languages)} />}
 
                     <Button
                         loading={loader}

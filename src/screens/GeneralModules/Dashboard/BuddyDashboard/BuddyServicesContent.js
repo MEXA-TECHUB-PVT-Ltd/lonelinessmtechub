@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, FlatList, RefreshControl, ScrollV
 import { theme } from '../../../../assets';
 import RequestListItem from '../../../../components/RequestListItem';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { scaleHeight } from '../../../../styles/responsive';
+import { scaleHeight, scaleWidth } from '../../../../styles/responsive';
 import fonts from '../../../../styles/fonts';
 import BuddyServiceListItem from '../../../../components/BuddyServiceListItem';
 import ButtonGroup from '../../../../components/ButtonGroup';
@@ -22,18 +22,22 @@ const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0, searchQuery }
     const [selectedIndex, setSelectedIndex] = useState(initialIndex);
     const [requestData, setRequestData] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [loader, setLoader] = useState(true);
     const navigation = useNavigation()
 
     const handleSelectedChange = (button, index) => {
+        setRequestData([]);
+        setLoader(true)
         setSelectedIndex(index)
         setCurrentIndex(index)
+        setPage(1);
     };
 
     const getStatusByIndex = (index) => {
         switch (index) {
             case 0:
                 return 'ACCEPTED';
-                // return 'PAID';
+            // return 'PAID';
             case 1:
                 return 'COMPLETED';
             case 2:
@@ -46,7 +50,16 @@ const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0, searchQuery }
     const selectedStatus = getStatusByIndex(selectedIndex);
 
     useEffect(() => {
-        setRequestData([]);
+        const timer = setTimeout(() => {
+            setLoader(false);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedIndex]);
+
+    useEffect(() => {
+        //setRequestData([]);
         dispatch(getAllBuddyServices({ page, limit: 10, status: selectedStatus }))
     }, [dispatch, page, selectedStatus])
 
@@ -117,6 +130,12 @@ const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0, searchQuery }
         return <SkeletonLoader />
     }
 
+    const showFooterSpinner = () => {
+        return <FullScreenLoader
+            spinnerStyle={styles.footerSpinner}
+            loading={loading} />;
+    };
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -132,13 +151,14 @@ const BuddyServicesContent = ({ setCurrentIndex, initialIndex = 0, searchQuery }
                     selectedIndex={selectedIndex}
                 />
                 {
-                    loading && !refreshing ? showLoader() : requestData?.length > 0 ? <View>
+                    loader && !refreshing ? showLoader() : requestData?.length > 0 ? <View>
                         <FlatList
                             data={requestData}
                             renderItem={renderItem}
                             keyExtractor={(item, index) => item + index}
                             onEndReached={handleLoadMore}
                             onEndReachedThreshold={0.5}
+                            ListFooterComponent={loading && !refreshing && showFooterSpinner}
                             refreshControl={
                                 <RefreshControl
                                     refreshing={refreshing}
@@ -175,6 +195,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.dark.primary
+    },
+    footerSpinner: {
+        width: scaleWidth(120),
+        height: scaleHeight(120),
     },
 });
 

@@ -199,7 +199,7 @@ const BuddySendRequest = ({ navigation }) => {
 
                         <TextInput
                             ref={hoursRef}
-                            placeholder='12'
+                            placeholder='00'
                             placeholderTextColor={theme.dark.text}
                             maxLength={2}
                             keyboardType='number-pad'
@@ -231,7 +231,7 @@ const BuddySendRequest = ({ navigation }) => {
                             placeholderTextColor={theme.dark.text}
                             maxLength={2}
                             keyboardType='ascii-capable'
-                            autoCapitalize='none'
+                            autoCapitalize='characters'
                             style={styles.inputStyle}
                             value={form.format}
                             onChangeText={(value) => handleChange('format', value)}

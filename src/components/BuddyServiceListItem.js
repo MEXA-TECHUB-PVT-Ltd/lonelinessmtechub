@@ -145,6 +145,8 @@ const BuddyServiceListItem = ({ item, navigation, index, onRequestStatusChange }
             status: status
         }
 
+        console.log('acceptRejectPayload',acceptRejectPayload)
+
         dispatch(acceptRejectUserRequest(acceptRejectPayload)).then((result) => {
             setLoading(false);
             if (result?.payload?.status === "success") {

@@ -13,9 +13,9 @@ import moment from 'moment';
 import { useDispatch, useSelector } from 'react-redux';
 import { acceptRejectUserRequest } from '../redux/BuddyDashboard/acceptRejectUserRequestSlice';
 import { setRoute } from '../redux/appSlice';
+import * as Animatable from 'react-native-animatable';
 
-
-const RequestListItem = ({ item, navigation, onRequestStatusChange }) => {
+const RequestListItem = ({ item, navigation, onRequestStatusChange, index }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
     //const dateTime = moment(`${item?.booking_date?.split('T')[0]}T${item?.booking_time}Z`);
@@ -116,6 +116,10 @@ const RequestListItem = ({ item, navigation, onRequestStatusChange }) => {
     }
 
     return (
+        // <Animatable.View
+        //     animation={'flipInX'}
+        //     duration={500}
+        //     delay={index}>
         <TouchableOpacity
             onPress={() => {
                 handleRequestDetail(item?.id)
@@ -200,6 +204,7 @@ const RequestListItem = ({ item, navigation, onRequestStatusChange }) => {
                 />
             </View>}
         </TouchableOpacity>
+        // </Animatable.View>
     );
 };
 

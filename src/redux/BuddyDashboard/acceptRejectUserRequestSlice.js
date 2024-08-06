@@ -14,7 +14,8 @@ export const acceptRejectUserRequest = createAsyncThunk(
         try {
             const { token } = getState().auth
             const bearerToken = `Bearer ${token}`
-            const data = await makeRequest('PATCH', '/requests/actions/buddy', acceptRejectPayload, null, bearerToken);
+            // const data = await makeRequest('PATCH', '/requests/actions/buddy', acceptRejectPayload, null, bearerToken);
+            const data = await makeRequest('PATCH', '/requests/actionsv2/buddy', acceptRejectPayload, null, bearerToken);
             return data;
         } catch (error) {
             return error

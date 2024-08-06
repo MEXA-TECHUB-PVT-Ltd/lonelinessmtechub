@@ -55,16 +55,17 @@ const Onboarding = ({ navigation }) => {
                 const credentials = {
                     email: result?.user?.email,
                     device_token: fcmToken,
-                    signup_type: "GOOGLE"
+                    signup_type: "GOOGLE",
                 }
                 var googleToken = result?.idToken;
+                var email = result.user?.email;
                 dispatch(login(credentials)).then((result) => {
 
                     if (result?.payload?.status === "success") {
                         const { is_requirements_completed } = result?.payload?.result?.user
                         const { role, token } = result?.payload?.result
                         if (!is_requirements_completed && role === "BUDDY") {
-                            dispatch(setTempCred({ email: result.user?.email, isGoogleAuth: true, token_google: googleToken }));
+                            dispatch(setTempCred({ email: email, isGoogleAuth: true, token_google: googleToken }));
                             dispatch(setAsRemember(null));
                             dispatch(setTempToken(token))
                             resetNavigation(navigation, SCREENS.STRIPE_ACCOUNT_CREATION)

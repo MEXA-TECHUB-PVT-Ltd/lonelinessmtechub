@@ -104,18 +104,15 @@ const MyLikes = ({ navigation }) => {
     const renderItem = ({ item, index }) => (
         item?.id != null && <Animatable.View
             animation={'flipInX'}
-            //  animation={'fadeInDownBig'}
-            // animation={'zoomInLeft'}
-            //animation={'fadeInUp'}
             duration={1200}
-            delay={index * 300} style={styles.itemContainer}>
+            delay={index} style={styles.itemContainer}>
             <TouchableOpacity onPress={() => {
                 handleNavigation(item?.id)
             }}>
                 <Image source={{ uri: item?.images[0]?.image_url }} style={styles.image} />
                 <LinearGradient
                     colors={['transparent', 'rgba(0, 0, 0, 0.7)']}
-                    locations={[0, 1]} // Gradient starts transparent and ends blackish
+                    locations={[0, 1]}
                     style={styles.gradient}
                 >
                     <Text style={styles.name}>{`${item?.full_name?.split(" ")[0]} (${calculateAge(moment(item?.dob).format("YYYY-MM-DD"))})`}</Text>

@@ -21,7 +21,7 @@ const ChatHeader = ({ onPress, backPress, profilePress, userName, status, image_
                 <Image source={{ uri: image_url }} style={styles.profilePic} />
                 <View style={styles.profileInfo}>
                     <Text style={styles.profileName}>{userName}</Text>
-                    <View style={{ flexDirection: 'row' }}>
+                    {/* <View style={{ flexDirection: 'row' }}>
                         <Text style={styles.onlineStatus}>{status === "offline" ? "Offline" : "Online"}</Text>
                         {status != "offline" && <Badge containerStyle={{
                             alignSelf: 'center',
@@ -30,14 +30,14 @@ const ChatHeader = ({ onPress, backPress, profilePress, userName, status, image_
                             bottom: 0,
                             left: -25
                         }} status="success" />}
-                    </View>
+                    </View> */}
 
                 </View>
             </TouchableOpacity>
 
-            <View style={styles.backButtonContainer}>
+            {/* <View style={styles.backButtonContainer}>
                 <Icon name="more-vert" size={30} color={theme.dark.secondary} onPress={onPress} />
-            </View>
+            </View> */}
 
         </View>
     );

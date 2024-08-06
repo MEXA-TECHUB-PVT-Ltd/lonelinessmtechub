@@ -13,11 +13,9 @@ const TransactionListItem = ({ item, index }) => {
     const { role } = useSelector((state) => state.auth)
     return (
         <Animatable.View
-            // animation={'fadeInUpBig'}
-            // animation={'zoomInLeft'}
             animation={'fadeInUp'}
             duration={1000}
-            delay={index * 300}
+            delay={index}
             style={styles.container}>
             <View style={styles.imageContainer}>
                 <Image

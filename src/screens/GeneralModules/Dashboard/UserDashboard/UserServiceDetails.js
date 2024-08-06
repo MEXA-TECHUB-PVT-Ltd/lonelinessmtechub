@@ -62,7 +62,8 @@ const UserServiceDetails = ({ navigation }) => {
     const { customer_id } = userLoginInfo?.user
 
     //Rate buddy and release button conditions
-    const isPaid = buddyDetail?.status === "PAID";
+    // const isPaid = buddyDetail?.status === "PAID";
+    const isPaid = buddyDetail?.status === "ACCEPTED" || buddyDetail?.buddy_request_back?.buddy_status === "ACCEPTED";
     const hasNoRating = buddyDetail?.status === "COMPLETED" && buddyDetail?.rating?.id === null;
     const canRateBuddy = (isPaid || hasNoRating) && !loading;
     const canReleasePayment = isPaid || buddyDetail?.rating?.id !== null;
@@ -77,15 +78,21 @@ const UserServiceDetails = ({ navigation }) => {
     // pay for service section show/hide conditions 
 
     const isAccepted = buddyDetail?.status === "ACCEPTED" || buddyDetail?.buddy_request_back?.buddy_status === "ACCEPTED";
-    const isNotPaidOrCompleted = buddyDetail?.status !== "PAID" && buddyDetail?.status !== "COMPLETED";
+    // const isNotPaidOrCompleted = buddyDetail?.status !== "PAID" && buddyDetail?.status !== "COMPLETED";
+    const isNotPaidOrCompleted = buddyDetail?.status !== "ACCEPTED" && buddyDetail?.status !== "COMPLETED";
     const canPayForService = isAccepted && isNotPaidOrCompleted && !loading;
 
 
 
     const handleBackPress = () => {
-        if (currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
+        if (currentRoute?.route === SCREENS.MAIN_DASHBOARD && !currentRoute?.isNoti) {
             resetNavigation(navigation, currentRoute?.route, { screen: SCREENS.SERVICES })
-        } else {
+        }
+        else if (currentRoute?.isNoti && currentRoute?.route === SCREENS.MAIN_DASHBOARD) {
+            resetNavigation(navigation, SCREENS.NOTIFICATION)
+        }
+
+        else {
             resetNavigation(navigation, currentRoute?.route)
         }
 
@@ -755,9 +762,18 @@ const UserServiceDetails = ({ navigation }) => {
                             <DetailItem label="Date" value={moment(buddyDetail?.booking_date?.split('T')[0]).format('DD/MM/YYYY')} />
                             <DetailItem label="Time" value={moment(buddyDetail?.booking_time, 'HH:mm').format('hh:mm A')} />
                             <DetailItem label="Hour" value={`${buddyDetail?.hours} hours`} />
-                            {(buddyDetail?.status !== "PAID" && buddyDetail?.status !== "COMPLETED") && <DetailItem label="Status" value={getNameByStatus(buddyDetail?.status)} customTextStyle={{
+                            {(buddyDetail?.status !== "ACCEPTED" && buddyDetail?.status !== "COMPLETED") && <DetailItem label="Status" value={getNameByStatus(buddyDetail?.status)} customTextStyle={{
                                 color: getColorByStatus(buddyDetail?.status)
                             }} />}
+
+                            {console.log(buddyDetail)}
+
+                            {(buddyDetail?.status == "ACCEPTED" || buddyDetail?.buddy_request_back?.buddy_status === "ACCEPTED") &&
+                                <DetailItem label="Meeting Code" value={`${buddyDetail?.meeting_code}`} customTextStyle={{
+                                    color: theme.dark.secondary,
+                                    fontFamily: fonts.fontsType.bold,
+                                    fontSize: scaleHeight(17),
+                                }} />}
 
                             {/* requested back section */}
 
@@ -892,8 +908,8 @@ const UserServiceDetails = ({ navigation }) => {
                 </ScrollView>
             }
 
-
-            {canPayForService && (
+            {/* payment mechanism changed */}
+            {/* {canPayForService && (
                 <Button
                     onPress={handleServicePayOpenModal}
                     title="Pay for Service"
@@ -901,7 +917,7 @@ const UserServiceDetails = ({ navigation }) => {
                         marginBottom: 20
                     }}
                 />
-            )}
+            )} */}
 
 
             {/* requested buttons show here..... */}

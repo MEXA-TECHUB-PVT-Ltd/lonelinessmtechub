@@ -15,12 +15,13 @@ import fonts from '../../../../../styles/fonts';
 import { updateProfile } from '../../../../../redux/AuthModule/updateProfileSlice';
 import Header from '../../../../../components/Header';
 import { setRoute } from '../../../../../redux/appSlice';
+import FullScreenLoader from '../../../../../components/FullScreenLoader';
 
 
 const UpdateLanguages = ({ navigation }) => {
     const dispatch = useDispatch();
     const { showAlert } = useAlert();
-    const { languages } = useSelector((state) => state.getLanguages);
+    const { languages, loading: languageLoader } = useSelector((state) => state.getLanguages);
     const { currentRoute } = useSelector((state) => state.app);
     const { loading } = useSelector((state) => state.createProfile)
     const [selectedLanguages, setSelectedLanguages] = useState([]);
@@ -70,6 +71,7 @@ const UpdateLanguages = ({ navigation }) => {
         formData.append('languages', JSON.stringify(selectedLanguages));
         dispatch(updateProfile(formData)).then((result) => {
             if (result?.payload?.status === "success") {
+                showAlert("Success", "success", "Languages Changed Successfully.")
                 setTimeout(() => {
                     handleBackPress();
                 }, 3000);
@@ -83,7 +85,7 @@ const UpdateLanguages = ({ navigation }) => {
         return (
             <TouchableOpacity
                 key={index}
-                onPress={() => { handleLanguageSelect(item?.name); }}
+                onPress={() => { handleLanguageSelect(item?.name) }}
                 style={styles.languageContainer}
             >
                 <View style={styles.languageRow}>
@@ -100,6 +102,12 @@ const UpdateLanguages = ({ navigation }) => {
                 <HorizontalDivider customStyle={styles.divider} />
             </TouchableOpacity>
         );
+    };
+
+    const showLoader = () => {
+        return <FullScreenLoader
+            title={"Please wait..."}
+            loading={languageLoader} />;
     };
 
     return (
@@ -127,12 +135,13 @@ const UpdateLanguages = ({ navigation }) => {
                     </View>
                 </View>
                 <View style={styles.languageListContainer}>
-                    <FlatList
+
+                    {languageLoader ? showLoader() : <FlatList
                         data={filteredLanguages}
                         renderItem={renderLanguages}
                         extraData={(index) => index}
                         keyboardShouldPersistTaps='always'
-                    />
+                    />}
                 </View>
 
             </View>

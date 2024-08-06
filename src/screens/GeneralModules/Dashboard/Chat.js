@@ -54,10 +54,11 @@ const Chat = ({ navigation }) => {
     const [isSearching, setIsSearching] = useState(false);
     const [selectedUser, setSelectedUser] = useState({
         user_name: '',
-        user_id: ''
+        user_id: '',
+        blockStatus: false
     });
     const user_id = userLoginInfo?.user?.id;
-    const blockTitle = role === "USER" ? "Block Buddy?" : "Block User?";
+    const blockTitle = role === "USER" ? "Buddy?" : "User?";
 
 
     useEffect(() => {
@@ -92,7 +93,7 @@ const Chat = ({ navigation }) => {
 
             });
             socket.on("contactStatusChange", ({ userId, status }) => {
-                console.log('status--->', status)
+
             });
             // socket.on('contacts', (contactList) => {
             //     const filteredContacts = contactList?.filter(contact => contact?.userId !== userId);
@@ -166,10 +167,27 @@ const Chat = ({ navigation }) => {
             buddy_id: userId,
             type: "BLOCK"
         };
+
         const finalPayload = role === "USER" ? buddyPayload : userPayload;
         dispatch(userBuddyAction(finalPayload)).then((result) => {
             if (result?.payload?.status === "success") {
                 showAlert("Success", "success", result?.payload?.message);
+                //update contact list after block user....
+                const updatedAllContacts = allContacts.map(contact =>
+                    contact.userId === userId
+                        ? { ...contact, blockStatus: !contact.blockStatus }
+                        : contact
+                );
+                const updatedFilteredContacts = filteredContacts.map(contact =>
+                    contact.userId === userId
+                        ? { ...contact, blockStatus: !contact.blockStatus }
+                        : contact
+                );
+
+                setAllContacts(updatedAllContacts);
+                setFilteredContacts(updatedFilteredContacts);
+
+
                 handleBlockCloseModal();
             } else if (result?.payload?.status === "error") {
                 showAlert("Error", "error", result?.payload?.message);
@@ -215,7 +233,12 @@ const Chat = ({ navigation }) => {
                 <TouchableOpacity
                     style={styles.swiperButton}
                     onPress={() => {
-                        setSelectedUser({ ...selectedUser, user_name: item?.fullName, user_id: item?.userId });
+                        setSelectedUser({
+                            ...selectedUser,
+                            user_name: item?.fullName,
+                            user_id: item?.userId,
+                            blockStatus: item?.blockStatus
+                        });
                         handleBlockOpenModal();
                     }}>
                     <Image
@@ -226,7 +249,12 @@ const Chat = ({ navigation }) => {
                     style={styles.swiperButton}
                     onPress={() => {
                         setSelectedUser(prevState => {
-                            const updatedUser = { ...prevState, user_name: item?.fullName, user_id: item?.userId };
+                            const updatedUser = {
+                                ...prevState,
+                                user_name: item?.fullName,
+                                user_id: item?.userId,
+                                blockStatus: item?.blockStatus
+                            };
                             handleReportNavigation(updatedUser);
                             return updatedUser;
                         });
@@ -238,7 +266,12 @@ const Chat = ({ navigation }) => {
                 <TouchableOpacity
                     style={styles.swiperButton}
                     onPress={() => {
-                        setSelectedUser({ ...selectedUser, user_name: item?.fullName, user_id: item?.userId });
+                        setSelectedUser({
+                            ...selectedUser,
+                            user_name: item?.fullName,
+                            user_id: item?.userId,
+                            blockStatus: item?.blockStatus
+                        });
                         handleDeleteOpenModal();
                     }}>
                     <Image
@@ -290,7 +323,7 @@ const Chat = ({ navigation }) => {
                 <View style={styles.item}>
                     <View style={styles.avatar}>
                         <Image source={{ uri: item?.images[0]?.image_url }} style={styles.avatarImage} />
-                        {item?.status !== "offline" && <View style={styles.greenDot} />}
+                        {/* {item?.status !== "offline" && <View style={styles.greenDot} />} */}
                     </View>
                     <View style={styles.messageContainer}>
                         <View style={styles.nameAndTime}>
@@ -382,12 +415,12 @@ const Chat = ({ navigation }) => {
                 <CustomModal
                     isVisible={modalVisible}
                     onClose={handleBlockCloseModal}
-                    headerTitle={blockTitle}
+                    headerTitle={`${selectedUser?.blockStatus ? `Unblock ${blockTitle}` : `Block ${blockTitle}`}`}
                     imageSource={blockUser}
                     isParallelButton={true}
-                    text={`Are you sure you want to Block ${selectedUser?.user_name}?`}
+                    text={`Are you sure you want to ${selectedUser?.blockStatus ? "Unblock" : "Block"} ${selectedUser?.user_name}?`}
                     parallelButtonText1={"Cancel"}
-                    parallelButtonText2={"Yes, Block"}
+                    parallelButtonText2={selectedUser?.blockStatus ? "Unblock" : "Yes, Block"}
                     parallelButtonPress1={() => {
                         handleBlockCloseModal();
                     }}
